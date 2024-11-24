@@ -34,7 +34,7 @@
       "serviceHost": null,
       "serviceBasePath": null,
       "serviceSchemes": [],
-      "infoTitle": "CleanArchitecture.Northwind API",
+      "infoTitle": "CleanArchitecture.Northwind WebAPI",
       "infoDescription": null,
       "infoVersion": "1.0.0",
       "documentTemplate": null,

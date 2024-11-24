@@ -2,7 +2,6 @@ using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
 public class IdentityService : IIdentityService

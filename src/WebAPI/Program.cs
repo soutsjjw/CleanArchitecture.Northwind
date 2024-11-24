@@ -26,26 +26,32 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.MapControllers();
+
+//app.UseAuthentication();
+//app.UseAuthorization();
+
 app.UseSwaggerUi(settings =>
 {
     settings.Path = "/api";
     settings.DocumentPath = "/api/specification.json";
 });
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller}/{action=Index}/{id?}");
 
-app.MapRazorPages();
+//app.MapRazorPages();
 
-app.MapFallbackToFile("index.html");
+//app.MapFallbackToFile("index.html");
 
-app.UseExceptionHandler(options => { });
+//app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("/api"));
+//app.Map("/", () => Results.Redirect("/api"));
 
-app.MapEndpoints();
+//app.MapEndpoints();
 
 app.Run();
 
+// 單元測試用
 public partial class Program { }

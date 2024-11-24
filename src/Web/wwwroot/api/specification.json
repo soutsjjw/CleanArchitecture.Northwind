@@ -357,6 +357,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -411,6 +412,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -442,6 +444,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -468,18 +471,18 @@
           {
             "name": "userId",
             "in": "query",
+            "required": true,
             "schema": {
-              "type": "string",
-              "nullable": true
+              "type": "string"
             },
             "x-position": 1
           },
           {
             "name": "code",
             "in": "query",
+            "required": true,
             "schema": {
-              "type": "string",
-              "nullable": true
+              "type": "string"
             },
             "x-position": 2
           },
@@ -515,6 +518,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -539,6 +543,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -573,6 +578,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -607,6 +613,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
@@ -692,6 +699,7 @@
               }
             }
           },
+          "required": true,
           "x-position": 1
         },
         "responses": {
