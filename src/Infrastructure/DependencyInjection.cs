@@ -79,6 +79,8 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddApiEndpoints();
 
+        services.AddScoped<RoleManager<IdentityRole>>();
+
         services.AddSingleton(System.TimeProvider.System);
         services.AddTransient<IIdentityService, IdentityService>();
 

@@ -82,6 +82,39 @@
         }
       }
     },
+    "/api/Account/refresh": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "Account_Refresh",
+        "requestBody": {
+          "x-name": "refreshRequest",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/TodoItems": {
       "get": {
         "tags": [
@@ -497,6 +530,15 @@
           "twoFactorRecoveryCode": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "refreshToken": {
+            "type": "string"
           }
         }
       },

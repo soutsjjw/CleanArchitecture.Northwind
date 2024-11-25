@@ -1,6 +1,5 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -40,46 +39,39 @@ public class JwtTokenService : IJwtTokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public string GenerateRefreshToken()
+    public string GenerateRefreshToken(string userId)
     {
-        var randomNumber = new byte[32];
-        using (var rng = RandomNumberGenerator.Create())
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtOptions:RefreshKey"] ?? ""));
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
+            Subject = new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            }),
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 
-    private ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
     {
-        var key = _configuration["JwtOptions:Key"] ?? "";
-        var issuer = _configuration["JwtOptions:Issuer"] ?? "";
-        var audience = _configuration["JwtOptions:Audience"] ?? "";
-
-        var tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = issuer,
-            ValidAudience = audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-            // 指定從 JWT 聲明中提取哪個字段作為用戶名
-            NameClaimType = "name",
-            ValidAlgorithms = new string[] { "HS512" },
-            // 允許服務器和客戶端之間的時間不同步，避免因小的時間偏移而導致 JWT 驗證失敗
-            ClockSkew = TimeSpan.Zero,
-        };
-
         var tokenHandler = new JwtSecurityTokenHandler();
-        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-        if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
-            StringComparison.InvariantCultureIgnoreCase))
+        var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
         {
-            throw new SecurityTokenException("Invalid token");
-        }
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JwtOptions:RefreshKey"])),
+            ClockSkew = TimeSpan.Zero
+        }, out SecurityToken securityToken);
 
+        var jwtToken = securityToken as JwtSecurityToken;
+        if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            throw new SecurityTokenException("Invalid token");
         return principal;
     }
 }

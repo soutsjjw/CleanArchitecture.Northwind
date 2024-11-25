@@ -6,5 +6,7 @@ public interface IJwtTokenService
 {
     string GenerateAccessToken(IEnumerable<Claim> claims);
 
-    string GenerateRefreshToken();
+    string GenerateRefreshToken(string userId);
+
+    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
 }
