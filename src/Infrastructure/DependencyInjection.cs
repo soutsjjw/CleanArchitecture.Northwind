@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
@@ -87,8 +88,13 @@ public static class DependencyInjection
         services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
 
-
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+        services.AddTransient<IDateTimeService, DateTimeService>();
+
+        services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"));
+        services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
+        services.AddTransient<IMailService, SMTPMailService>();
 
         return services;
     }
