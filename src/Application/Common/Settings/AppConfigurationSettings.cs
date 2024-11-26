@@ -2,5 +2,7 @@
 
 public class AppConfigurationSettings
 {
-    public string ApplicationName { get; set; }
+    public string SystemName { get; set; }
+
+    public string SiteUrl { get; set; }
 }

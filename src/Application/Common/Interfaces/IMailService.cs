@@ -4,5 +4,7 @@ namespace CleanArchitecture.Northwind.Application.Common.Interfaces;
 
 public interface IMailService
 {
-    Task SendAsync(MailRequest request);
+    Task<bool> SendAsync(MailRequest request);
+
+    Task<string> GetMailContentAsync<T>(T model, string templatePath) where T : class;
 }

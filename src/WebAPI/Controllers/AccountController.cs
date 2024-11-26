@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Application.Common.Models.Letter;
 using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.BearerToken;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -26,6 +28,7 @@ public class AccountController : ControllerBase
     private readonly IUserStore<ApplicationUser> _userStore;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IMailService _mailService;
+    private readonly IFileService _fileService;
     private readonly IOptions<AppConfigurationSettings> _appConfig;
 
     private static readonly EmailAddressAttribute _emailAddressAttribute = new();
@@ -38,6 +41,7 @@ public class AccountController : ControllerBase
         IUserStore<ApplicationUser> userStore,
         IJwtTokenService jwtTokenService,
         IMailService mailService,
+        IFileService fileService,
         IOptions<AppConfigurationSettings> appConfig)
     {
         _configuration = configuration;
@@ -47,6 +51,7 @@ public class AccountController : ControllerBase
         _userStore = userStore;
         _jwtTokenService = jwtTokenService;
         _mailService = mailService;
+        _fileService = fileService;
         _appConfig = appConfig;
     }
 
@@ -161,6 +166,130 @@ public class AccountController : ControllerBase
         return Ok(tokenResponse);
     }
 
+    [AllowAnonymous]
+    [HttpGet("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] string email, [FromQuery] string token, [FromQuery] string? changedEmail)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            // We could respond with a 404 instead of a 401 like Identity UI, but that feels like unnecessary information.
+            return Unauthorized();
+        }
+
+        try
+        {
+            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+        }
+        catch (FormatException)
+        {
+            return Unauthorized();
+        }
+
+        IdentityResult result;
+
+        if (string.IsNullOrEmpty(changedEmail))
+        {
+            result = await _userManager.ConfirmEmailAsync(user, token);
+        }
+        else
+        {
+            // As with Identity UI, email and user name are one and the same. So when we update the email,
+            // we need to update the user name.
+            result = await _userManager.ChangeEmailAsync(user, changedEmail, token);
+
+            if (result.Succeeded)
+            {
+                result = await _userManager.SetUserNameAsync(user, changedEmail);
+            }
+        }
+
+        if (!result.Succeeded)
+        {
+            return Unauthorized();
+        }
+
+        return Content("Thank you for confirming your email.");
+    }
+
+    [AllowAnonymous]
+    [HttpGet("resend-confirmation-email")]
+    public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        await SendConfirmationEmailAsync(user, true);
+
+        return Ok();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
+    {
+        var user = await _userManager.FindByEmailAsync(resetRequest.Email);
+
+        if (user != null && await _userManager.IsEmailConfirmedAsync(user))
+        {
+            var resetCode = await _userManager.GeneratePasswordResetTokenAsync(user);
+            resetCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
+
+            var letterModel = new ForgotPasswordLetterModel()
+            {
+                SystemName = _appConfig.Value.SystemName,
+                SiteUrl = _appConfig.Value.SiteUrl,
+
+                UserName = user.UserName ?? "",
+                ResetCodeLink = Url.Action("ResetPassword", "Account", new { resetCode, email = user.Email }, Request.Scheme) ?? ""
+            };
+
+            await _mailService.SendAsync(new MailRequest
+            {
+                To = user.Email ?? "",
+                Subject = $"重設你的 {_appConfig.Value.SystemName} 密碼",
+                Body = await _mailService.GetMailContentAsync(letterModel, "ForgotPasswordLetter"),
+            });
+        }
+
+        // Don't reveal that the user does not exist or is not confirmed
+        return Ok();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
+    {
+        var user = await _userManager.FindByEmailAsync(resetRequest.Email);
+
+        if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+        {
+            // Don't reveal that the user does not exist or is not confirmed
+            return ValidationProblem(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken()).ToString());
+        }
+
+        IdentityResult result;
+        try
+        {
+            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
+            result = await _userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
+        }
+        catch (FormatException)
+        {
+            result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
+        }
+
+        if (!result.Succeeded)
+        {
+            return ValidationProblem(result.ToString());
+        }
+
+        return Ok();
+    }
+
     #region Private
 
     private async Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
@@ -217,35 +346,26 @@ public class AccountController : ControllerBase
     private async Task SendConfirmationEmailAsync(ApplicationUser user, bool resend = false)
     {
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = System.Net.WebUtility.UrlEncode(token);
-        var confirmEmailUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/api/account/confirm-email;token={encodedToken}";
+        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-        var subject = $"歡迎加入 {_appConfig.Value.ApplicationName}！請驗證你的電子郵件地址";
-        if (resend) subject += " - Resend";
+        // 信件內容
+        var letterModel = new ConfirmationEmailLetterModel()
+        {
+            SystemName = _appConfig.Value.SystemName,
+            SiteUrl = _appConfig.Value.SiteUrl,
 
-        var sbBody = new StringBuilder();
-        sbBody.AppendLine($"親愛的 {user.UserName}：");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine($"感謝你註冊 {_appConfig.Value.ApplicationName}！我們非常高興你加入我們的社群。");
-        sbBody.AppendLine("為了完成註冊，我們需要你驗證你的電子郵件地址。請點擊下方的鏈接來驗證你的賬戶：");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine($"<a href='{confirmEmailUrl}'>驗證你的電子郵件地址</a>");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine("如果你無法點擊上面的鏈接，請將以下網址複製並粘貼到你的瀏覽器中：");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine($"{confirmEmailUrl}");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine($"如果你並未註冊 {_appConfig.Value.ApplicationName}，請忽略此郵件。我們對任何不便表示歉意。");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine("感謝你的配合！");
-        sbBody.AppendLine("<br /><br />");
-        sbBody.AppendLine($"最好的祝福，{_appConfig.Value.ApplicationName} 團隊");
+            UserName = user.UserName ?? "",
+            ConfirmationLink = Url.Action("ConfirmEmail", "Account", new { token, email = user.Email }, Request.Scheme) ?? ""
+        };
+
+        // 取得範本
+        var html = await _mailService.GetMailContentAsync(letterModel, "ConfirmationEmailLetter");
 
         await _mailService.SendAsync(new MailRequest
         {
-            To = user.Email,
-            Subject = subject,
-            Body = sbBody.ToString(),
+            To = user.Email ?? "",
+            Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
+            Body = html,
         });
     }
 

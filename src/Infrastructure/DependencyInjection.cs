@@ -18,6 +18,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        #region 資料庫
+
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         Guard.Against.Null(connectionString, message: "Connection string 'DefaultConnection' not found.");
@@ -36,7 +38,9 @@ public static class DependencyInjection
 
         services.AddScoped<ApplicationDbContextInitialiser>();
 
-        services.AddTransient<IDateTimeService, DateTimeService>();
+        #endregion
+
+        #region 驗證
 
         //services
         //.AddAuthentication()
@@ -88,13 +92,23 @@ public static class DependencyInjection
         services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
 
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        #endregion
 
+        #region 服務
+
+        services.AddTransient<IFileService, FileService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddTransient<IDateTimeService, DateTimeService>();
+        services.AddTransient<IMailService, MailService>();
+
+        #endregion
+
+        #region 設置
 
         services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
-        services.AddTransient<IMailService, SMTPMailService>();
+
+        #endregion
 
         return services;
     }
