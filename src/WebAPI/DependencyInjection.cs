@@ -2,6 +2,7 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.WebAPI.Services;
+using CleanArchitecture.Northwind.WebAPI.StartupExtensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,8 +12,10 @@ using NSwag.Generation.Processors.Security;
 namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
 {
-    public static IServiceCollection AddWebServices(this IServiceCollection services)
+    public static IServiceCollection AddWebServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
     {
+        services.AddCustomizedSerilog(configuration);
+
         services.AddDatabaseDeveloperPageExceptionFilter();
 
         services.AddScoped<IUser, CurrentUser>();
