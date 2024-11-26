@@ -1,4 +1,6 @@
 using CleanArchitecture.Northwind.Infrastructure.Data;
+using CleanArchitecture.Northwind.WebAPI.Middleware;
+using CleanArchitecture.Northwind.WebAPI.StartupExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +9,7 @@ builder.Services.AddKeyVaultIfConfigured(builder.Configuration);
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
-builder.Services.AddWebServices();
+builder.Services.AddWebServices(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 
@@ -22,7 +24,9 @@ else
     app.UseHsts();
 }
 
-app.UseHealthChecks("/health");
+HealthCheckExtension.UseCustomizedHealthCheck(app, builder.Configuration, builder.Environment);
+app.UseMiddleware<HealthCheckIpRestrictionMiddleware>(builder.Configuration);
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
