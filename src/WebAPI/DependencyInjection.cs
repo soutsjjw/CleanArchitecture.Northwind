@@ -13,6 +13,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddWebServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
     {
+        services.AddCustomizedSerilog(configuration);
+
         services.AddDatabaseDeveloperPageExceptionFilter();
 
         services.AddScoped<IUser, CurrentUser>();
