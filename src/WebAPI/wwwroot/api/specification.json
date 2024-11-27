@@ -2,34 +2,12 @@
   "x-generator": "NSwag v14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))",
   "openapi": "3.0.0",
   "info": {
-    "title": "CleanArchitecture.Northwind WebAPI",
-    "version": "1.0.0"
+    "title": "CleanArchitecture.Northwind WebAPI - v1",
+    "description": "A simple ASP.NET Core Web API - Version 1",
+    "version": "v1"
   },
   "paths": {
-    "/api/WeatherForecast": {
-      "get": {
-        "tags": [
-          "WeatherForecast"
-        ],
-        "operationId": "WeatherForecast_Get",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Account/register": {
+    "/api/v1/Account/register": {
       "post": {
         "tags": [
           "Account"
@@ -62,7 +40,7 @@
         }
       }
     },
-    "/api/Account/login": {
+    "/api/v1/Account/login": {
       "post": {
         "tags": [
           "Account"
@@ -115,7 +93,7 @@
         }
       }
     },
-    "/api/Account/refresh": {
+    "/api/v1/Account/refresh": {
       "post": {
         "tags": [
           "Account"
@@ -148,7 +126,7 @@
         }
       }
     },
-    "/api/Account/confirm-email": {
+    "/api/v1/Account/confirm-email": {
       "get": {
         "tags": [
           "Account"
@@ -196,7 +174,7 @@
         }
       }
     },
-    "/api/Account/resend-confirmation-email": {
+    "/api/v1/Account/resend-confirmation-email": {
       "get": {
         "tags": [
           "Account"
@@ -227,7 +205,7 @@
         }
       }
     },
-    "/api/Account/forgot-password": {
+    "/api/v1/Account/forgot-password": {
       "post": {
         "tags": [
           "Account"
@@ -260,7 +238,7 @@
         }
       }
     },
-    "/api/Account/reset-password": {
+    "/api/v1/Account/reset-password": {
       "post": {
         "tags": [
           "Account"
@@ -293,7 +271,7 @@
         }
       }
     },
-    "/api/TodoItems": {
+    "/api/v1/TodoItems": {
       "get": {
         "tags": [
           "TodoItems"
@@ -383,7 +361,7 @@
         ]
       }
     },
-    "/api/TodoItems/{id}": {
+    "/api/v1/TodoItems/{id}": {
       "put": {
         "tags": [
           "TodoItems"
@@ -469,7 +447,7 @@
         ]
       }
     },
-    "/api/TodoItems/UpdateDetail/{id}": {
+    "/api/v1/TodoItems/UpdateDetail/{id}": {
       "put": {
         "tags": [
           "TodoItems"
@@ -519,7 +497,7 @@
         ]
       }
     },
-    "/api/TodoLists": {
+    "/api/v1/TodoLists": {
       "get": {
         "tags": [
           "TodoLists"
@@ -580,7 +558,7 @@
         ]
       }
     },
-    "/api/TodoLists/{id}": {
+    "/api/v1/TodoLists/{id}": {
       "put": {
         "tags": [
           "TodoLists"
@@ -665,32 +643,33 @@
           }
         ]
       }
+    },
+    "/api/v1/WeatherForecast": {
+      "get": {
+        "tags": [
+          "WeatherForecast"
+        ],
+        "operationId": "WeatherForecast_Get",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
-      "WeatherForecast": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "temperatureC": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "temperatureF": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "summary": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
       "RegisterRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -979,6 +958,28 @@
             "format": "int32"
           },
           "title": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "WeatherForecast": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "temperatureC": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "temperatureF": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "summary": {
             "type": "string",
             "nullable": true
           }

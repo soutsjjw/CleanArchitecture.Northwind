@@ -5,9 +5,6 @@ using CleanArchitecture.Northwind.WebAPI.StartupExtensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-using NSwag;
-using NSwag.Generation.Processors.Security;
-
 namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
 {
@@ -36,23 +33,11 @@ public static class DependencyInjection
         services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);
 
-        //services.AddEndpointsApiExplorer();
+        services.AddEndpointsApiExplorer();
 
-        services.AddOpenApiDocument((configure, sp) =>
-        {
-            configure.Title = "CleanArchitecture.Northwind WebAPI";
+        services.AddCustomizedApiVersion();
 
-            // Add JWT
-            configure.AddSecurity("JWT", Enumerable.Empty<string>(), new OpenApiSecurityScheme
-            {
-                Type = OpenApiSecuritySchemeType.ApiKey,
-                Name = "Authorization",
-                In = OpenApiSecurityApiKeyLocation.Header,
-                Description = "Type into the textbox: Bearer {your JWT token}."
-            });
-
-            configure.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
-        });
+        services.AddCustomizedSwagger(env);
 
         return services;
     }

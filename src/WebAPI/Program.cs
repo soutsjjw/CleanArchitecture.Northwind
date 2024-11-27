@@ -32,28 +32,10 @@ app.UseStaticFiles();
 
 app.MapControllers();
 
-//app.UseAuthentication();
-//app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseSwaggerUi(settings =>
-{
-    settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
-});
-
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller}/{action=Index}/{id?}");
-
-//app.MapRazorPages();
-
-//app.MapFallbackToFile("index.html");
-
-//app.UseExceptionHandler(options => { });
-
-//app.Map("/", () => Results.Redirect("/api"));
-
-//app.MapEndpoints();
+app.UseCustomizedSwagger(app.Environment);
 
 app.Run();
 

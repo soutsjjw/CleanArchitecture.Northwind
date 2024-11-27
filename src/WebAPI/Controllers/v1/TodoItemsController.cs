@@ -1,4 +1,5 @@
-﻿using CleanArchitecture.Northwind.Application.Common.Models;
+﻿using Asp.Versioning;
+using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
 using CleanArchitecture.Northwind.Application.TodoItems.Commands.DeleteTodoItem;
 using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItem;
@@ -7,11 +8,10 @@ using CleanArchitecture.Northwind.Application.TodoItems.Queries.GetTodoItemsWith
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitecture.Northwind.WebAPI.Controllers;
+namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
-[Route("api/[controller]")]
-[ApiController]
-public class TodoItemsController : ControllerBase
+[ApiVersion("1.0")]
+public class TodoItemsController : ApiController
 {
     private readonly ISender _sender;
 

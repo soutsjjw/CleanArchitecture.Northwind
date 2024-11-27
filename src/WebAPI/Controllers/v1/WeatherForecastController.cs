@@ -1,11 +1,11 @@
+using Asp.Versioning;
 using CleanArchitecture.Northwind.WebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebAPI.Controllers;
+namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
-[ApiController]
-[Route("api/[controller]")]
-public class WeatherForecastController : ControllerBase
+[ApiVersion("1.0")]
+public class WeatherForecastController : ApiController
 {
     private static readonly string[] Summaries = new[]
     {
@@ -26,7 +26,7 @@ public class WeatherForecastController : ControllerBase
         {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
             TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            Summary = Summaries[Random.Shared.Next(Summaries.Length)] + " - V1"
         })
         .ToArray();
     }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
+using Asp.Versioning;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
@@ -15,11 +16,10 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace CleanArchitecture.Northwind.WebAPI.Controllers;
+namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
-[Route("api/[controller]")]
-[ApiController]
-public class AccountController : ControllerBase
+[ApiVersion("1.0")]
+public class AccountController : ApiController
 {
     private readonly IConfiguration _configuration;
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -265,7 +265,7 @@ public class AccountController : ControllerBase
     {
         var user = await _userManager.FindByEmailAsync(resetRequest.Email);
 
-        if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+        if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
         {
             // Don't reveal that the user does not exist or is not confirmed
             return ValidationProblem(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken()).ToString());

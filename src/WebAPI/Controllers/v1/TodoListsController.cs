@@ -1,15 +1,15 @@
-﻿using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
+﻿using Asp.Versioning;
+using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
 using CleanArchitecture.Northwind.Application.TodoLists.Commands.DeleteTodoList;
 using CleanArchitecture.Northwind.Application.TodoLists.Commands.UpdateTodoList;
 using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitecture.Northwind.WebAPI.Controllers;
+namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
-[Route("api/[controller]")]
-[ApiController]
-public class TodoListsController : ControllerBase
+[ApiVersion("1.0")]
+public class TodoListsController : ApiController
 {
     private readonly ISender _sender;
 
