@@ -2,37 +2,33 @@
 using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using Microsoft.Extensions.Configuration;
+using CleanArchitecture.Northwind.Application.Common.Settings;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Services;
 
 public class JwtTokenService : IJwtTokenService
 {
-    private readonly IConfiguration _configuration;
+    private readonly JwtOptionSettings _jwtOptionSettings;
 
-    public JwtTokenService(IConfiguration configuration)
+    public JwtTokenService(IOptions<JwtOptionSettings> jwtOptionSettings)
     {
-        _configuration = configuration;
+        _jwtOptionSettings = jwtOptionSettings.Value;
     }
 
     public string GenerateAccessToken(IEnumerable<Claim> claims)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtOptions:Key"] ?? ""));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptionSettings.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
-        var issuer = _configuration["JwtOptions:Issuer"] ?? "";
-        var audience = _configuration["JwtOptions:Audience"] ?? "";
-
-        if (!int.TryParse(_configuration["JwtOptions:ExpiresInMinutes"], out int expiresInMinutes))
-        {
-            expiresInMinutes = 60;
-        }
+        var issuer = _jwtOptionSettings.Issuer;
+        var audience = _jwtOptionSettings.Audience;
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.Now.AddMinutes(expiresInMinutes),
+            expires: DateTime.Now.AddMinutes(_jwtOptionSettings.ExpiresInMinutes),
             signingCredentials: creds
         );
 
@@ -42,7 +38,7 @@ public class JwtTokenService : IJwtTokenService
     public string GenerateRefreshToken(string userId)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtOptions:RefreshKey"] ?? ""));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptionSettings.RefreshKey));
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new Claim[]
@@ -65,7 +61,7 @@ public class JwtTokenService : IJwtTokenService
             ValidateAudience = false,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["JwtOptions:RefreshKey"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptionSettings.RefreshKey)),
             ClockSkew = TimeSpan.Zero
         }, out SecurityToken securityToken);
 

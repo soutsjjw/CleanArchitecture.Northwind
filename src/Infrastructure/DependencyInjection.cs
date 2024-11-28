@@ -42,10 +42,6 @@ public static class DependencyInjection
 
         #region 驗證
 
-        //services
-        //.AddAuthentication()
-        //.AddBearerToken(IdentityConstants.BearerScheme)
-
         services.AddAuthentication(options =>
         {
             // 指定默認的身份驗證方案，使用 JWT Bearer 的身份驗證方案來處理身份驗證請求
@@ -79,7 +75,28 @@ public static class DependencyInjection
         services.AddAuthorizationBuilder();
 
         services
-            .AddIdentityCore<ApplicationUser>()
+            .AddIdentityCore<ApplicationUser>(options =>
+            {
+                // SignIn 設定
+                options.SignIn.RequireConfirmedEmail = true;
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+
+                // 密碼規則設定
+                options.Password.RequireDigit = true;               // 是否需要數字
+                options.Password.RequiredLength = 12;               // 最小長度
+                options.Password.RequireNonAlphanumeric = true;     // 是否需要非字母數字字符
+                options.Password.RequireUppercase = true;           // 是否需要大寫字母
+                options.Password.RequireLowercase = true;           // 是否需要小寫字母
+                options.Password.RequiredUniqueChars = 4;           // 需要的唯一字符數量
+
+                // 鎖定設定
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);  // 鎖定時間
+                options.Lockout.MaxFailedAccessAttempts = 5;                        // 登入失敗次數
+                options.Lockout.AllowedForNewUsers = true;                          // 新使用者是否可以被鎖定
+
+                // 使用 Email 傳遞密碼重置令牌
+                options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
+            })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddApiEndpoints();
@@ -106,6 +123,7 @@ public static class DependencyInjection
         #region 設置
 
         services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"));
+        services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
 
         #endregion
