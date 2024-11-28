@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
-using Asp.Versioning;
+using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
 using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
@@ -30,6 +29,7 @@ public class AccountController : ApiController
     private readonly IMailService _mailService;
     private readonly IFileService _fileService;
     private readonly IOptions<AppConfigurationSettings> _appConfig;
+    private readonly IIdentityService _identityService;
 
     private static readonly EmailAddressAttribute _emailAddressAttribute = new();
 
@@ -42,6 +42,7 @@ public class AccountController : ApiController
         IJwtTokenService jwtTokenService,
         IMailService mailService,
         IFileService fileService,
+        IIdentityService identityService,
         IOptions<AppConfigurationSettings> appConfig)
     {
         _configuration = configuration;
@@ -52,6 +53,8 @@ public class AccountController : ApiController
         _jwtTokenService = jwtTokenService;
         _mailService = mailService;
         _fileService = fileService;
+        _identityService = identityService;
+
         _appConfig = appConfig;
     }
 
@@ -91,35 +94,9 @@ public class AccountController : ApiController
     [HttpPost("login")]
     public async Task<ActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
     {
-        var user = await _userManager.FindByEmailAsync(login.Email);
+        var result = await Mediator.Send(new UserLoginCommand { UserName = login.Email, Password = login.Password });
 
-        if (user == null)
-        {
-            return Unauthorized("Invalid login attempt.");
-        }
-
-        var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, lockoutOnFailure: true);
-
-        if (result.RequiresTwoFactor)
-        {
-            if (!string.IsNullOrEmpty(login.TwoFactorCode))
-            {
-                result = await _signInManager.TwoFactorAuthenticatorSignInAsync(login.TwoFactorCode, false, rememberClient: false);
-            }
-            else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
-            {
-                result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
-            }
-        }
-
-        if (!result.Succeeded)
-        {
-            return Problem(result.ToString(), statusCode: StatusCodes.Status401Unauthorized);
-        }
-
-        var tokenResponse = await GenerateTokenResponseAsync(user);
-
-        return Ok(tokenResponse);
+        return Ok(result);
     }
 
     [AllowAnonymous]
@@ -292,7 +269,7 @@ public class AccountController : ApiController
 
     #region Private
 
-    private async Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
+    private async Task<Microsoft.AspNetCore.Authentication.BearerToken.AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
     {
         var token = _jwtTokenService.GenerateAccessToken(await GetClaimsAsync(user));
         var refreshToken = _jwtTokenService.GenerateRefreshToken(user.Id);
@@ -307,7 +284,7 @@ public class AccountController : ApiController
 
         await _userManager.UpdateAsync(user);
 
-        var tokenResponse = new AccessTokenResponse
+        var tokenResponse = new Microsoft.AspNetCore.Authentication.BearerToken.AccessTokenResponse
         {
             AccessToken = token,
             ExpiresIn = expiresInMinutes * 60,

@@ -39,6 +39,8 @@ public static class DependencyInjection
 
         services.AddCustomizedSwagger(env);
 
+        services.AddCustomizedMiddleware();
+
         return services;
     }
 

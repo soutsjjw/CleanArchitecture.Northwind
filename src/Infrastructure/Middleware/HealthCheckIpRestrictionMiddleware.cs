@@ -1,26 +1,27 @@
-﻿namespace CleanArchitecture.Northwind.WebAPI.Middleware;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
-public class HealthCheckIpRestrictionMiddleware
+namespace CleanArchitecture.Northwind.Infrastructure.Middleware;
+
+public class HealthCheckIpRestrictionMiddleware : IMiddleware
 {
-    private readonly RequestDelegate _next;
     private readonly string _Uri;
     private readonly string _UIPath;
     private readonly string _ApiPath;
     private readonly List<string> _AllowedIps;
 
-    public HealthCheckIpRestrictionMiddleware(RequestDelegate next, IConfiguration configuration)
+    public HealthCheckIpRestrictionMiddleware(IConfiguration configuration)
     {
-        _next = next;
         _AllowedIps = configuration.GetSection("HealthChecksUI:AllowIPs").Get<string[]>()?.ToList() ?? new List<string>();
         _Uri = configuration["HealthChecksUI:HealthChecks:0:Uri"] ?? "";
         _UIPath = configuration["HealthChecksUI:UIPath"] ?? "";
         _ApiPath = configuration["HealthChecksUI:ApiPath"] ?? "";
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         if (_AllowedIps == null || _AllowedIps.Count == 0)
-            await _next(context);
+            await next(context);
 
         var path = context.Request.Path.ToString().ToLower();
         if (path.StartsWith(_Uri) || path.StartsWith(_UIPath) || path.StartsWith(_ApiPath))
@@ -35,6 +36,6 @@ public class HealthCheckIpRestrictionMiddleware
             }
         }
 
-        await _next(context);
+        await next(context);
     }
 }

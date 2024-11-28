@@ -1,5 +1,4 @@
 using CleanArchitecture.Northwind.Infrastructure.Data;
-using CleanArchitecture.Northwind.WebAPI.Middleware;
 using CleanArchitecture.Northwind.WebAPI.StartupExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +24,7 @@ else
 }
 
 HealthCheckExtension.UseCustomizedHealthCheck(app, builder.Configuration, builder.Environment);
-app.UseMiddleware<HealthCheckIpRestrictionMiddleware>(builder.Configuration);
+app.UseCustomizedMiddleware();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

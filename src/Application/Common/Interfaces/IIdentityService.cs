@@ -1,8 +1,11 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Models;
 
 namespace CleanArchitecture.Northwind.Application.Common.Interfaces;
+
 public interface IIdentityService
 {
+    Task<AccessTokenResponse> UserLoginByAPI(string userName, string password);
+
     Task<string?> GetUserNameAsync(string userId);
 
     Task<bool> IsInRoleAsync(string userId, string role);

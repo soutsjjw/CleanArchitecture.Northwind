@@ -3,6 +3,7 @@ using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
+using CleanArchitecture.Northwind.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -47,6 +48,10 @@ public static class DependencyInjectionWeb
 
         services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+
+        // 不加入，編譯時會出錯
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
         return services;
     }

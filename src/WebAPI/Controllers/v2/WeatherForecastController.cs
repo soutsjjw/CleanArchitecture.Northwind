@@ -1,5 +1,4 @@
-using Asp.Versioning;
-using CleanArchitecture.Northwind.WebAPI.Models;
+﻿using CleanArchitecture.Northwind.Application.WeatherForecasts.Queries.GetWeatherForecasts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Northwind.WebAPI.Controllers.v2;
@@ -7,11 +6,6 @@ namespace CleanArchitecture.Northwind.WebAPI.Controllers.v2;
 [ApiVersion("2.0")]
 public class WeatherForecastController : ApiController
 {
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
-
     private readonly ILogger<WeatherForecastController> _logger;
 
     public WeatherForecastController(ILogger<WeatherForecastController> logger)
@@ -20,14 +14,10 @@ public class WeatherForecastController : ApiController
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public async Task<IEnumerable<WeatherForecast>> Get(ISender sender)
     {
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)] + " - V2"
-        })
-        .ToArray();
+        _logger.LogInformation("使用 v2");
+
+        return await sender.Send(new GetWeatherForecastsQuery());
     }
 }

@@ -117,6 +117,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddTransient<IDateTimeService, DateTimeService>();
         services.AddTransient<IMailService, MailService>();
+        services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
         #endregion
 
