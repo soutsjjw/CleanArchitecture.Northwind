@@ -14,11 +14,11 @@
         ],
         "operationId": "Account_Register",
         "requestBody": {
-          "x-name": "registration",
+          "x-name": "request",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
+                "$ref": "#/components/schemas/UserRegisterCommand"
               }
             }
           },
@@ -46,6 +46,26 @@
           "Account"
         ],
         "operationId": "Account_Login",
+        "parameters": [
+          {
+            "name": "useCookies",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "useSessionCookies",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
         "requestBody": {
           "x-name": "login",
           "content": {
@@ -62,9 +82,10 @@
           "200": {
             "description": "",
             "content": {
-              "application/json": {
+              "application/octet-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResultOfUserLoginVm"
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -649,7 +670,7 @@
   },
   "components": {
     "schemas": {
-      "RegisterRequest": {
+      "UserRegisterCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -658,71 +679,6 @@
           },
           "password": {
             "type": "string"
-          }
-        }
-      },
-      "ResultOfUserLoginVm": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Result"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "data": {
-                "nullable": true,
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/UserLoginVm"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "UserLoginVm": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "tokenType": {
-            "type": "string"
-          },
-          "accessToken": {
-            "type": "string"
-          },
-          "expiresIn": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "refreshToken": {
-            "type": "string"
-          }
-        }
-      },
-      "Result": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "succeeded": {
-            "type": "boolean"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "statusCode": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },

@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
+using CleanArchitecture.Northwind.Application.Account.Commands.UserRegister;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
@@ -60,34 +61,11 @@ public class AccountController : ApiController
 
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest registration)
+    public async Task<IActionResult> Register([FromBody] UserRegisterCommand request)
     {
-        if (!_userManager.SupportsUserEmail)
-        {
-            return BadRequest("User store with email support is required.");
-        }
+        var result = await Mediator.Send(request);
 
-        var emailStore = (IUserEmailStore<ApplicationUser>)_userStore;
-        var email = registration.Email;
-
-        if (string.IsNullOrEmpty(email) || !_emailAddressAttribute.IsValid(email))
-        {
-            return ValidationProblem(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidEmail(email)).ToString());
-        }
-
-        var user = new ApplicationUser();
-        await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-        var result = await _userManager.CreateAsync(user, registration.Password);
-
-        if (!result.Succeeded)
-        {
-            return ValidationProblem(result.ToString());
-        }
-
-        await SendConfirmationEmailAsync(user);
-
-        return Ok();
+        return Ok(result);
     }
 
     [AllowAnonymous]

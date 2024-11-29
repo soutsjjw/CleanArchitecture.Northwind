@@ -18,17 +18,10 @@ public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<
 
     public async Task<Result<UserLoginVm>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await _identityService.UserLoginByAPI(request.UserName, request.Password);
+        var result = await _identityService.UserLoginByAPI(request.UserName, request.Password);
 
-            var model = _mapper.Map<UserLoginVm>(result);
+        var model = _mapper.Map<UserLoginVm>(result);
 
-            return await Result<UserLoginVm>.SuccessAsync(model);
-        }
-        catch (ArgumentException ex)
-        {
-            return await Result<UserLoginVm>.FailureAsync(ex.Message, 401);
-        }
+        return await Result<UserLoginVm>.SuccessAsync(model);
     }
 }

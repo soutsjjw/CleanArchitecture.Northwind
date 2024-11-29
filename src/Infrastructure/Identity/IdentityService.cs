@@ -1,9 +1,14 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Text;
+using CleanArchitecture.Northwind.Application.Common.Exceptions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
 
@@ -18,6 +23,10 @@ public class IdentityService : IIdentityService
     private readonly IUserClaimsPrincipalFactory<ApplicationUser> _userClaimsPrincipalFactory;
     private readonly IAuthorizationService _authorizationService;
 
+    private static readonly EmailAddressAttribute _emailAddressAttribute = new();
+
+    private readonly ILogger<IdentityService> _logger;
+
     public IdentityService(
         IConfiguration configuration,
         UserManager<ApplicationUser> userManager,
@@ -26,38 +35,75 @@ public class IdentityService : IIdentityService
         IUserStore<ApplicationUser> userStore,
         IJwtTokenService jwtTokenService,
         IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactory,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        ILogger<IdentityService> logger)
     {
         _configuration = configuration;
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
         _userStore = userStore;
+
         _jwtTokenService = jwtTokenService;
+
         _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
         _authorizationService = authorizationService;
+
+        _logger = logger;
     }
 
-    //private async Task<Result<AccessTokenResponse>> UserLoginByAPI(string userName, string password)
-    //{
-    //    var user = await _userManager.FindByNameAsync(userName);
+    public async Task<string> UserRegisterAsync(string userName, string password)
+    {
+        if (!_userManager.SupportsUserEmail)
+        {
+            throw new BadRequestException("需要具有電子郵件支援的使用者儲存");
+        }
 
-    //    if (user == null)
-    //    {
-    //        return await Result<AccessTokenResponse>.FailureAsync("Invalid login attempt.");
-    //    }
+        var emailStore = (IUserEmailStore<ApplicationUser>)_userStore;
+        var email = userName;
 
-    //    var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        if (string.IsNullOrEmpty(email) || !_emailAddressAttribute.IsValid(email))
+        {
+            throw new BadRequestException(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidEmail(email)).ToString());
+        }
 
-    //    if (!result.Succeeded)
-    //    {
-    //        return await Result<AccessTokenResponse>.FailureAsync(result.ToString(), StatusCodes.Status401Unauthorized);
-    //    }
+        if ((await _userManager.FindByEmailAsync(email)) != null)
+        {
+            _logger.LogError("帳號 {Email} 重複註冊", email);
 
-    //    var tokenResponse = await GenerateTokenResponseAsync(user);
+            throw new ArgumentException("帳號註冊失敗");
+        }
 
-    //    return await Result<AccessTokenResponse>.SuccessAsync(tokenResponse);
-    //}
+        var user = new ApplicationUser();
+        // 設置或更改帳號名稱
+        await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+        // 設置或更改帳號的電子郵件地址
+        await emailStore.SetEmailAsync(user, email, CancellationToken.None);
+        // CreateAsync 方法可以建立帳號，但並不會自動設置帳號名稱和電子郵件地址
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            throw new BadRequestException(result.ToString());
+        }
+
+        return user.Id;
+    }
+
+    public async Task<string> GenerateEmailConfirmationTokenAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            throw new UnauthorizedException("未找到使用者");
+        }
+
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        return token;
+    }
 
     public async Task<AccessTokenResponse> UserLoginByAPI(string userName, string password)
     {
@@ -65,14 +111,14 @@ public class IdentityService : IIdentityService
 
         if (user == null)
         {
-            throw new ArgumentException("帳號或密碼錯誤");
+            throw new BadRequestException("帳號或密碼錯誤");
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
 
         if (!result.Succeeded)
         {
-            throw new ArgumentException("帳號或密碼錯誤");
+            throw new BadRequestException("帳號或密碼錯誤");
         }
 
         var tokenResponse = await GenerateTokenResponseAsync(user);

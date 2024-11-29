@@ -4,7 +4,11 @@ namespace CleanArchitecture.Northwind.Application.Common.Interfaces;
 
 public interface IIdentityService
 {
+    Task<string> UserRegisterAsync(string userName, string password);
+
     Task<AccessTokenResponse> UserLoginByAPI(string userName, string password);
+
+    Task<string> GenerateEmailConfirmationTokenAsync(string userId);
 
     Task<string?> GetUserNameAsync(string userId);
 
