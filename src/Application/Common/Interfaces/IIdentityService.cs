@@ -10,6 +10,8 @@ public interface IIdentityService
 
     Task<string> GenerateEmailConfirmationTokenAsync(string userId);
 
+    Task<AccessTokenResponse> RefreshByAPI(string refreshToken);
+
     Task<string?> GetUserNameAsync(string userId);
 
     Task<bool> IsInRoleAsync(string userId, string role);

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
+using CleanArchitecture.Northwind.Application.Account.Commands.Refresh;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserRegister;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
@@ -14,7 +15,6 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 
 namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
@@ -81,44 +81,9 @@ public class AccountController : ApiController
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest refreshRequest)
     {
-        if (refreshRequest is null)
-        {
-            return Unauthorized("Invalid Client Token.");
-        }
+        var result = await Mediator.Send(new RefreshCommand { RefreshToken = refreshRequest.RefreshToken });
 
-        ClaimsPrincipal userPrincipal = null;
-        string userId = string.Empty;
-
-        try
-        {
-            userPrincipal = _jwtTokenService.GetPrincipalFromExpiredToken(refreshRequest.RefreshToken);
-            userId = userPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-        }
-        catch (SecurityTokenSignatureKeyNotFoundException ex)
-        {
-            return Unauthorized("Invalid Client Token.");
-        }
-        catch (SecurityTokenMalformedException ex)
-        {
-            return Unauthorized("Invalid Client Token.");
-        }
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized("Invalid Client Token.");
-        }
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-            return Unauthorized("User Not Found.");
-
-        if (user.RefreshToken != refreshRequest.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
-            return Unauthorized("Invalid Client Token.");
-
-        var tokenResponse = await GenerateTokenResponseAsync(user);
-
-        return Ok(tokenResponse);
+        return Ok(result);
     }
 
     [AllowAnonymous]

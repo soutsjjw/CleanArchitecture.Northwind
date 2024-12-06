@@ -3,12 +3,14 @@ using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Exceptions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
 
@@ -109,22 +111,92 @@ public class IdentityService : IIdentityService
     {
         var user = await _userManager.FindByNameAsync(userName);
 
+        // 這段邏輯用於防止駭客根據錯誤訊息獲知帳號是否存在
         if (user == null)
         {
-            throw new BadRequestException("帳號或密碼錯誤");
+            // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
+            await Task.Delay(100);
+            _logger.LogError(LoggingEvents.Account.Login.UserNotFoundFormat, userName);
+            throw new UnauthorizedException(LoggingEvents.Account.Login.UserNotFound);
         }
 
-        var result = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+        // 密碼正確但帳號被鎖定或Email未認證的情況
+        var isLockedOutAsync = await _userManager.IsLockedOutAsync(user);
+        var isEmailNotConfirmed = !await _userManager.IsEmailConfirmedAsync(user);
 
+        if (isLockedOutAsync || isEmailNotConfirmed)
+        {
+            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
+
+            // 僅當密碼正確時才拋出具體的錯誤
+            if (isPasswordCorrect)
+            {
+                if (isLockedOutAsync)
+                {
+                    _logger.LogWarning(LoggingEvents.Account.Login.AccountLockedFormat, userName);
+                    throw new UnauthorizedException(LoggingEvents.Account.Login.AccountLocked);
+                }
+
+                if (isEmailNotConfirmed)
+                {
+                    _logger.LogWarning(LoggingEvents.Account.Login.EmailNotConfirmedFormat, userName);
+                    throw new UnauthorizedException(LoggingEvents.Account.Login.EmailNotConfirmed);
+                }
+            }
+        }
+
+        var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
+
+        // 密碼錯誤或其他登入失敗的情況
         if (!result.Succeeded)
         {
-            throw new BadRequestException("帳號或密碼錯誤");
+            _logger.LogWarning(LoggingEvents.Account.Login.InvalidLoginAttemptFormat, userName);
+            throw new UnauthorizedException(LoggingEvents.Account.Login.InvalidLoginAttempt);
         }
+
+        // 生成 Token
+        var tokenResponse = await GenerateTokenResponseAsync(user);
+        return tokenResponse;
+    }
+
+    public async Task<AccessTokenResponse> RefreshByAPI(string refreshToken)
+    {
+        ClaimsPrincipal userPrincipal = null;
+        string userId = string.Empty;
+
+        try
+        {
+            userPrincipal = _jwtTokenService.GetPrincipalFromExpiredToken(refreshToken);
+            userId = userPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        catch (SecurityTokenSignatureKeyNotFoundException ex)
+        {
+            throw new UnauthorizedException("無效的客戶端令牌");
+        }
+        catch (SecurityTokenMalformedException ex)
+        {
+            throw new UnauthorizedException("無效的客戶端令牌");
+        }
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new UnauthorizedException("無效的客戶端令牌");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+            throw new UnauthorizedException("未找到使用者");
+
+        if (user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+            throw new UnauthorizedException("無效的客戶端令牌");
 
         var tokenResponse = await GenerateTokenResponseAsync(user);
 
         return tokenResponse;
     }
+
+
+
 
     public async Task<string?> GetUserNameAsync(string userId)
     {
@@ -235,32 +307,6 @@ public class IdentityService : IIdentityService
 
         return claims;
     }
-
-    //private async Task SendConfirmationEmailAsync(ApplicationUser user, bool resend = false)
-    //{
-    //    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-    //    token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-    //    // 信件內容
-    //    var letterModel = new ConfirmationEmailLetterModel()
-    //    {
-    //        SystemName = _appConfig.Value.SystemName,
-    //        SiteUrl = _appConfig.Value.SiteUrl,
-
-    //        UserName = user.UserName ?? "",
-    //        ConfirmationLink = Url.Action("ConfirmEmail", "Account", new { token, email = user.Email }, Request.Scheme) ?? ""
-    //    };
-
-    //    // 取得範本
-    //    var html = await _mailService.GetMailContentAsync(letterModel, "ConfirmationEmailLetter");
-
-    //    await _mailService.SendAsync(new MailRequest
-    //    {
-    //        To = user.Email ?? "",
-    //        Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
-    //        Body = html,
-    //    });
-    //}
 
     #endregion
 }

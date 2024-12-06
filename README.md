@@ -56,3 +56,7 @@ dotnet test
 
 ## Help
 To learn more about the template go to the [project website](https://github.com/jasontaylordev/CleanArchitecture). Here you can find additional guidance, request new features, report a bug, and discuss the template with other users.
+
+## 設置 Swagger 起啟版本
+
+至 `CleanArchitecture.Northwind\src\WebAPI\StartupExtensions\SwaggerExtension.cs` 中的 `UseCustomizedSwagger`，將要預設的起始版本放在前面

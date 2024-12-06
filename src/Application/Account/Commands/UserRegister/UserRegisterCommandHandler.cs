@@ -36,7 +36,7 @@ public class UserRegisterCommandHandler : IRequestHandler<UserRegisterCommand, R
     private async Task<bool> SendConfirmationEmailAsync(string userId, UserRegisterCommand request)
     {
         var token = await _identityService.GenerateEmailConfirmationTokenAsync(userId);
-        var confirmationLink = $"{_appConfig.Value.SiteUrl}/Account/ConfirmEmail?token={token}&email={request.Email}";
+        var confirmationLink = $"{_appConfig.Value.SiteUrl}/api/Account/ConfirmEmail?token={token}&email={request.Email}";
 
         // 信件內容
         var letterModel = new ConfirmationEmailLetterModel()
