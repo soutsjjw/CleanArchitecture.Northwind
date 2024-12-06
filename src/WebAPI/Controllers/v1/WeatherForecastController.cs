@@ -1,4 +1,4 @@
-﻿using CleanArchitecture.Northwind.Application.WeatherForecasts.Queries.GetWeatherForecasts;
+﻿using CleanArchitecture.Northwind.Application.Features.WeatherForecasts.Queries.GetWeatherForecasts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;

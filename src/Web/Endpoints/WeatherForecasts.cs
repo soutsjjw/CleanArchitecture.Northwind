@@ -1,4 +1,4 @@
-﻿using CleanArchitecture.Northwind.Application.WeatherForecasts.Queries.GetWeatherForecasts;
+﻿using CleanArchitecture.Northwind.Application.Features.WeatherForecasts.Queries.GetWeatherForecasts;
 
 namespace CleanArchitecture.Northwind.Web.Endpoints;
 public class WeatherForecasts : EndpointGroupBase

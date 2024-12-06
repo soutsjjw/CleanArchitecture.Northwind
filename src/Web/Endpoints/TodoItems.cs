@@ -1,9 +1,9 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Models;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.DeleteTodoItem;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItem;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItemDetail;
-using CleanArchitecture.Northwind.Application.TodoItems.Queries.GetTodoItemsWithPagination;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.DeleteTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItemDetail;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
 
 namespace CleanArchitecture.Northwind.Web.Endpoints;
 public class TodoItems : EndpointGroupBase

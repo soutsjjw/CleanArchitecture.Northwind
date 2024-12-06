@@ -3,8 +3,8 @@ using System.Runtime.CompilerServices;
 using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
-using CleanArchitecture.Northwind.Application.TodoItems.Queries.GetTodoItemsWithPagination;
-using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
 using CleanArchitecture.Northwind.Domain.Entities;
 using NUnit.Framework;
 

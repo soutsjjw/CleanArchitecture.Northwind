@@ -1,10 +1,10 @@
-﻿using CleanArchitecture.Northwind.Application.Account.Commands.ConfirmEmail;
-using CleanArchitecture.Northwind.Application.Account.Commands.ForgotPassword;
-using CleanArchitecture.Northwind.Application.Account.Commands.Refresh;
-using CleanArchitecture.Northwind.Application.Account.Commands.ResendConfirmationEmail;
-using CleanArchitecture.Northwind.Application.Account.Commands.ResetPassword;
-using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
-using CleanArchitecture.Northwind.Application.Account.Commands.UserRegister;
+﻿using CleanArchitecture.Northwind.Application.Features.Account.Commands.ConfirmEmail;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.ForgotPassword;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.Refresh;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResendConfirmationEmail;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResetPassword;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;

@@ -1,8 +1,7 @@
-﻿using Asp.Versioning;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.DeleteTodoList;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.UpdateTodoList;
-using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
+﻿using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.DeleteTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.UpdateTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

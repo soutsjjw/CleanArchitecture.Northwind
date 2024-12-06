@@ -1,6 +1,6 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Behaviours;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
