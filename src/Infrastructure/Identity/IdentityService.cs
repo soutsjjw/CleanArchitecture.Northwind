@@ -5,11 +5,14 @@ using CleanArchitecture.Northwind.Application.Common.Exceptions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Application.Common.Models.Letter;
+using CleanArchitecture.Northwind.Application.Common.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
@@ -24,10 +27,12 @@ public class IdentityService : IIdentityService
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUserClaimsPrincipalFactory<ApplicationUser> _userClaimsPrincipalFactory;
     private readonly IAuthorizationService _authorizationService;
+    private readonly IMailService _mailService;
 
     private static readonly EmailAddressAttribute _emailAddressAttribute = new();
 
     private readonly ILogger<IdentityService> _logger;
+    private readonly IOptions<AppConfigurationSettings> _appConfig;
 
     public IdentityService(
         IConfiguration configuration,
@@ -38,7 +43,9 @@ public class IdentityService : IIdentityService
         IJwtTokenService jwtTokenService,
         IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactory,
         IAuthorizationService authorizationService,
-        ILogger<IdentityService> logger)
+        IMailService mailService,
+        ILogger<IdentityService> logger,
+        IOptions<AppConfigurationSettings> appConfig)
     {
         _configuration = configuration;
         _userManager = userManager;
@@ -50,8 +57,10 @@ public class IdentityService : IIdentityService
 
         _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
         _authorizationService = authorizationService;
+        _mailService = mailService;
 
         _logger = logger;
+        _appConfig = appConfig;
     }
 
     public async Task<string> UserRegisterAsync(string userName, string password)
@@ -116,8 +125,10 @@ public class IdentityService : IIdentityService
         {
             // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
             await Task.Delay(100);
-            _logger.LogError(LoggingEvents.Account.Login.UserNotFoundFormat, userName);
-            throw new UnauthorizedException(LoggingEvents.Account.Login.UserNotFound);
+
+            _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, userName);
+
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
         }
 
         // 密碼正確但帳號被鎖定或Email未認證的情況
@@ -133,14 +144,14 @@ public class IdentityService : IIdentityService
             {
                 if (isLockedOutAsync)
                 {
-                    _logger.LogWarning(LoggingEvents.Account.Login.AccountLockedFormat, userName);
-                    throw new UnauthorizedException(LoggingEvents.Account.Login.AccountLocked);
+                    _logger.LogWarning(LoggingEvents.Account.AccountLockedFormat, userName);
+                    throw new UnauthorizedException(LoggingEvents.Account.AccountLocked);
                 }
 
                 if (isEmailNotConfirmed)
                 {
-                    _logger.LogWarning(LoggingEvents.Account.Login.EmailNotConfirmedFormat, userName);
-                    throw new UnauthorizedException(LoggingEvents.Account.Login.EmailNotConfirmed);
+                    _logger.LogWarning(LoggingEvents.Account.EmailNotConfirmedFormat, userName);
+                    throw new UnauthorizedException(LoggingEvents.Account.EmailNotConfirmed);
                 }
             }
         }
@@ -150,8 +161,8 @@ public class IdentityService : IIdentityService
         // 密碼錯誤或其他登入失敗的情況
         if (!result.Succeeded)
         {
-            _logger.LogWarning(LoggingEvents.Account.Login.InvalidLoginAttemptFormat, userName);
-            throw new UnauthorizedException(LoggingEvents.Account.Login.InvalidLoginAttempt);
+            _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
         }
 
         // 生成 Token
@@ -171,16 +182,16 @@ public class IdentityService : IIdentityService
         }
         catch (SecurityTokenSignatureKeyNotFoundException ex)
         {
-            throw new UnauthorizedException("無效的客戶端令牌");
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
         }
         catch (SecurityTokenMalformedException ex)
         {
-            throw new UnauthorizedException("無效的客戶端令牌");
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
         }
 
         if (string.IsNullOrEmpty(userId))
         {
-            throw new UnauthorizedException("無效的客戶端令牌");
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
         }
 
         var user = await _userManager.FindByIdAsync(userId);
@@ -188,15 +199,60 @@ public class IdentityService : IIdentityService
             throw new UnauthorizedException("未找到使用者");
 
         if (user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
-            throw new UnauthorizedException("無效的客戶端令牌");
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
 
         var tokenResponse = await GenerateTokenResponseAsync(user);
 
         return tokenResponse;
     }
 
+    public async Task<bool> ConfirmEmail(string email, string token)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
 
+        // 這段邏輯用於防止駭客根據錯誤訊息獲知帳號是否存在
+        if (user == null)
+        {
+            // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
+            await Task.Delay(100);
 
+            _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, email);
+
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
+        }
+
+        try
+        {
+            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+        }
+        catch (FormatException)
+        {
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
+        }
+
+        IdentityResult result = await _userManager.ConfirmEmailAsync(user, token);
+
+        return result.Succeeded;
+    }
+
+    public async Task<bool> ResendConfirmationEmail(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        var username = email;
+
+        // 這段邏輯用於防止駭客根據錯誤訊息獲知帳號是否存在
+        if (user == null)
+        {
+            // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
+            await Task.Delay(100);
+
+            _logger.LogWarning(LoggingEvents.Account.SendConfirmLetterUseNonExistentEmailFormat, username);
+
+            return false;
+        }
+
+        return await SendConfirmationEmailAsync(user.Id, email);
+    }
 
     public async Task<string?> GetUserNameAsync(string userId)
     {
@@ -253,6 +309,31 @@ public class IdentityService : IIdentityService
         var result = await _userManager.DeleteAsync(user);
 
         return result.ToApplicationResult();
+    }
+
+    public async Task<bool> SendConfirmationEmailAsync(string userId, string email)
+    {
+        var token = await GenerateEmailConfirmationTokenAsync(userId);
+        var confirmationLink = $"{_appConfig.Value.SiteUrl}/api/Account/ConfirmEmail?token={token}&email={email}";
+
+        // 信件內容
+        var letterModel = new ConfirmationEmailLetterModel()
+        {
+            SystemName = _appConfig.Value.SystemName,
+            SiteUrl = _appConfig.Value.SiteUrl,
+            UserName = email,
+            ConfirmationLink = confirmationLink
+        };
+
+        // 取得範本
+        var html = await _mailService.GetMailContentAsync(letterModel, "ConfirmationEmailLetter");
+
+        return await _mailService.SendAsync(new MailRequest
+        {
+            To = email,
+            Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
+            Body = html,
+        });
     }
 
     #region Private

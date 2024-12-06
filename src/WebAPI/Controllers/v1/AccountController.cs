@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using System.Text;
+using CleanArchitecture.Northwind.Application.Account.Commands.ConfirmEmail;
 using CleanArchitecture.Northwind.Application.Account.Commands.Refresh;
+using CleanArchitecture.Northwind.Application.Account.Commands.ResendConfirmationEmail;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserRegister;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
@@ -90,61 +91,18 @@ public class AccountController : ApiController
     [HttpGet("confirm-email")]
     public async Task<IActionResult> ConfirmEmail([FromQuery] string email, [FromQuery] string token, [FromQuery] string? changedEmail)
     {
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user == null)
-        {
-            // We could respond with a 404 instead of a 401 like Identity UI, but that feels like unnecessary information.
-            return Unauthorized();
-        }
+        var result = await Mediator.Send(new ConfirmEmailCommand { Email = email, Token = token });
 
-        try
-        {
-            token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
-        }
-        catch (FormatException)
-        {
-            return Unauthorized();
-        }
-
-        IdentityResult result;
-
-        if (string.IsNullOrEmpty(changedEmail))
-        {
-            result = await _userManager.ConfirmEmailAsync(user, token);
-        }
-        else
-        {
-            // As with Identity UI, email and user name are one and the same. So when we update the email,
-            // we need to update the user name.
-            result = await _userManager.ChangeEmailAsync(user, changedEmail, token);
-
-            if (result.Succeeded)
-            {
-                result = await _userManager.SetUserNameAsync(user, changedEmail);
-            }
-        }
-
-        if (!result.Succeeded)
-        {
-            return Unauthorized();
-        }
-
-        return Content("Thank you for confirming your email.");
+        return Ok(result);
     }
 
     [AllowAnonymous]
     [HttpGet("resend-confirmation-email")]
     public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string email)
     {
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user == null)
-        {
-            return Unauthorized();
-        }
+        var result = await Mediator.Send(new ResendConfirmationEmailCommand { Email = email });
 
-        await SendConfirmationEmailAsync(user, true);
-
-        return Ok();
+        return Ok(result);
     }
 
     [AllowAnonymous]
@@ -209,85 +167,4 @@ public class AccountController : ApiController
 
         return Ok();
     }
-
-    #region Private
-
-    private async Task<Microsoft.AspNetCore.Authentication.BearerToken.AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
-    {
-        var token = _jwtTokenService.GenerateAccessToken(await GetClaimsAsync(user));
-        var refreshToken = _jwtTokenService.GenerateRefreshToken(user.Id);
-
-        if (!int.TryParse(_configuration["JwtOptions:ExpiresInMinutes"], out int expiresInMinutes))
-        {
-            expiresInMinutes = 60;
-        }
-
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.Now.AddMinutes(expiresInMinutes);
-
-        await _userManager.UpdateAsync(user);
-
-        var tokenResponse = new Microsoft.AspNetCore.Authentication.BearerToken.AccessTokenResponse
-        {
-            AccessToken = token,
-            ExpiresIn = expiresInMinutes * 60,
-            RefreshToken = refreshToken
-        };
-
-        return tokenResponse;
-    }
-
-    private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)
-    {
-        var userClaims = await _userManager.GetClaimsAsync(user);
-        var roles = await _userManager.GetRolesAsync(user);
-        var roleClaims = new List<Claim>();
-        var permissionClaims = new List<Claim>();
-        foreach (var role in roles)
-        {
-            roleClaims.Add(new Claim(ClaimTypes.Role, role));
-            var thisRole = await _roleManager.FindByNameAsync(role);
-            var allPermissionsForThisRoles = await _roleManager.GetClaimsAsync(thisRole);
-            permissionClaims.AddRange(allPermissionsForThisRoles);
-        }
-
-        var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id),
-                new(ClaimTypes.Email, user.Email),
-            }
-        .Union(userClaims)
-        .Union(roleClaims)
-        .Union(permissionClaims);
-
-        return claims;
-    }
-
-    private async Task SendConfirmationEmailAsync(ApplicationUser user, bool resend = false)
-    {
-        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-        // 信件內容
-        var letterModel = new ConfirmationEmailLetterModel()
-        {
-            SystemName = _appConfig.Value.SystemName,
-            SiteUrl = _appConfig.Value.SiteUrl,
-
-            UserName = user.UserName ?? "",
-            ConfirmationLink = Url.Action("ConfirmEmail", "Account", new { token, email = user.Email }, Request.Scheme) ?? ""
-        };
-
-        // 取得範本
-        var html = await _mailService.GetMailContentAsync(letterModel, "ConfirmationEmailLetter");
-
-        await _mailService.SendAsync(new MailRequest
-        {
-            To = user.Email ?? "",
-            Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
-            Body = html,
-        });
-    }
-
-    #endregion
 }

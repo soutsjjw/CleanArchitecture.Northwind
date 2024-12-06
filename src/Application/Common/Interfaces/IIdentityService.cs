@@ -12,6 +12,10 @@ public interface IIdentityService
 
     Task<AccessTokenResponse> RefreshByAPI(string refreshToken);
 
+    Task<bool> ConfirmEmail(string email, string token);
+
+    Task<bool> ResendConfirmationEmail(string email);
+
     Task<string?> GetUserNameAsync(string userId);
 
     Task<bool> IsInRoleAsync(string userId, string role);
@@ -21,4 +25,6 @@ public interface IIdentityService
     Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password);
 
     Task<Result> DeleteUserAsync(string userId);
+
+    Task<bool> SendConfirmationEmailAsync(string userId, string email);
 }

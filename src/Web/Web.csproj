@@ -31,7 +31,7 @@
 
 
   <!-- Auto-generated Open API specification and Angular TypeScript clients -->
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -49,6 +49,6 @@
 
     <Message Text="$(NSwagOutput)" Condition="'$(NSwagExitCode)' == '0'" Importance="low" />
     <Error Text="$(NSwagOutput)" Condition="'$(NSwagExitCode)' != '0'" />
-  </Target>
+  </Target>-->
 
 </Project>

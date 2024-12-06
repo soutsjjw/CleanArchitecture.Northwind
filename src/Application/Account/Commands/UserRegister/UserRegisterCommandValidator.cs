@@ -5,15 +5,15 @@ public class UserRegisterCommandValidator : AbstractValidator<UserRegisterComman
     public UserRegisterCommandValidator()
     {
         RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("Email 不可為空")
-            .EmailAddress().WithMessage("必須是有效的 Email 格式");
+            .NotEmpty().WithMessage("電子郵件不可為空")
+            .EmailAddress().WithMessage("必須是有效的電子郵件格式");
 
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password 不可為空")
-            .MinimumLength(12).WithMessage("Password 長度最少為12碼")
-            .Matches(@"\d").WithMessage("Password 必須包含數字")
-            .Matches(@"[^\w\d]").WithMessage("Password 必須包含非字母數字符")
-            .Matches(@"[A-Z]").WithMessage("Password 必須包含大寫字母")
-            .Matches(@"[a-z]").WithMessage("Password 必須包含小寫字母");
+            .NotEmpty().WithMessage("密碼不可為空")
+            .MinimumLength(12).WithMessage("密碼長度最少為12碼")
+            .Matches(@"\d").WithMessage("密碼必須包含數字")
+            .Matches(@"[^\w\d]").WithMessage("密碼必須包含非字母數字符")
+            .Matches(@"[A-Z]").WithMessage("密碼必須包含大寫字母")
+            .Matches(@"[a-z]").WithMessage("密碼必須包含小寫字母");
     }
 }
