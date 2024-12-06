@@ -24,10 +24,12 @@ public class IdentityService : IIdentityService
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IUserStore<ApplicationUser> _userStore;
+
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUserClaimsPrincipalFactory<ApplicationUser> _userClaimsPrincipalFactory;
     private readonly IAuthorizationService _authorizationService;
     private readonly IMailService _mailService;
+    private readonly IDataProtectionService _dataProtectionService;
 
     private static readonly EmailAddressAttribute _emailAddressAttribute = new();
 
@@ -44,6 +46,7 @@ public class IdentityService : IIdentityService
         IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactory,
         IAuthorizationService authorizationService,
         IMailService mailService,
+        IDataProtectionService dataProtectionService,
         ILogger<IdentityService> logger,
         IOptions<AppConfigurationSettings> appConfig)
     {
@@ -58,6 +61,7 @@ public class IdentityService : IIdentityService
         _userClaimsPrincipalFactory = userClaimsPrincipalFactory;
         _authorizationService = authorizationService;
         _mailService = mailService;
+        _dataProtectionService = dataProtectionService;
 
         _logger = logger;
         _appConfig = appConfig;
@@ -145,14 +149,14 @@ public class IdentityService : IIdentityService
                 if (isLockedOutAsync)
                 {
                     _logger.LogWarning(LoggingEvents.Account.AccountLockedFormat, userName);
-                    throw new UnauthorizedException(LoggingEvents.Account.AccountLocked);
                 }
 
                 if (isEmailNotConfirmed)
                 {
                     _logger.LogWarning(LoggingEvents.Account.EmailNotConfirmedFormat, userName);
-                    throw new UnauthorizedException(LoggingEvents.Account.EmailNotConfirmed);
                 }
+
+                throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
             }
         }
 
@@ -206,7 +210,7 @@ public class IdentityService : IIdentityService
         return tokenResponse;
     }
 
-    public async Task<bool> ConfirmEmail(string email, string token)
+    public async Task<bool> ConfirmEmailAsync(string email, string token)
     {
         var user = await _userManager.FindByEmailAsync(email);
 
@@ -235,23 +239,38 @@ public class IdentityService : IIdentityService
         return result.Succeeded;
     }
 
-    public async Task<bool> ResendConfirmationEmail(string email)
+    public async Task<bool> ResetPasswordAsync(string email, string resetCode, string newPassword)
     {
         var user = await _userManager.FindByEmailAsync(email);
-        var username = email;
 
-        // 這段邏輯用於防止駭客根據錯誤訊息獲知帳號是否存在
-        if (user == null)
+        if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
         {
             // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
             await Task.Delay(100);
 
-            _logger.LogWarning(LoggingEvents.Account.SendConfirmLetterUseNonExistentEmailFormat, username);
+            _logger.LogWarning(LoggingEvents.Account.ResetPasswordUseNonExistentEmailFormat, user);
 
             return false;
         }
 
-        return await SendConfirmationEmailAsync(user.Id, email);
+        IdentityResult result;
+        try
+        {
+            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetCode));
+            code = _dataProtectionService.Unprotect(code);
+            result = await _userManager.ResetPasswordAsync(user, code, newPassword);
+        }
+        catch (FormatException)
+        {
+            result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
+        }
+
+        if (!result.Succeeded)
+        {
+            _logger.LogError(result.ToString());
+        }
+
+        return result.Succeeded;
     }
 
     public async Task<string?> GetUserNameAsync(string userId)
@@ -259,6 +278,13 @@ public class IdentityService : IIdentityService
         var user = await _userManager.FindByIdAsync(userId);
 
         return user?.UserName;
+    }
+
+    public async Task<string?> GetUserIdAsync(string userName)
+    {
+        var user = await _userManager.FindByEmailAsync(userName);
+
+        return user?.Id;
     }
 
     public async Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password)
@@ -311,10 +337,10 @@ public class IdentityService : IIdentityService
         return result.ToApplicationResult();
     }
 
-    public async Task<bool> SendConfirmationEmailAsync(string userId, string email)
+    public async Task<bool> SendConfirmationEmailAsync(string userId, string email, string confirmationLink)
     {
         var token = await GenerateEmailConfirmationTokenAsync(userId);
-        var confirmationLink = $"{_appConfig.Value.SiteUrl}/api/Account/ConfirmEmail?token={token}&email={email}";
+        confirmationLink = $"{confirmationLink}?token={token}&email={email}";
 
         // 信件內容
         var letterModel = new ConfirmationEmailLetterModel()
@@ -332,6 +358,43 @@ public class IdentityService : IIdentityService
         {
             To = email,
             Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
+            Body = html,
+        });
+    }
+
+    public async Task<bool> SendForgotPasswordEmailAsync(string userId, string email, string resetCodeLink)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.SendForgotPasswordLetterUseNonExistentUserFormat, user);
+
+            return false;
+        }
+
+        var resetCode = await _userManager.GeneratePasswordResetTokenAsync(user);
+        resetCode = _dataProtectionService.Protect(resetCode);
+        resetCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
+        resetCodeLink = $"{resetCodeLink}?resetCode={resetCode}&email={email}";
+
+        // 信件內容
+        var letterModel = new ForgotPasswordLetterModel()
+        {
+            SystemName = _appConfig.Value.SystemName,
+            SiteUrl = _appConfig.Value.SiteUrl,
+
+            UserName = user.UserName ?? "",
+            ResetCodeLink = resetCodeLink
+        };
+
+        // 取得範本
+        var html = await _mailService.GetMailContentAsync(letterModel, "ForgotPasswordLetter");
+
+        return await _mailService.SendAsync(new MailRequest
+        {
+            To = user.Email ?? "",
+            Subject = $"重設你的 {_appConfig.Value.SystemName} 密碼",
             Body = html,
         });
     }

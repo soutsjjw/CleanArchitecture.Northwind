@@ -1,21 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text;
-using CleanArchitecture.Northwind.Application.Account.Commands.ConfirmEmail;
+﻿using CleanArchitecture.Northwind.Application.Account.Commands.ConfirmEmail;
+using CleanArchitecture.Northwind.Application.Account.Commands.ForgotPassword;
 using CleanArchitecture.Northwind.Application.Account.Commands.Refresh;
 using CleanArchitecture.Northwind.Application.Account.Commands.ResendConfirmationEmail;
+using CleanArchitecture.Northwind.Application.Account.Commands.ResetPassword;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserLogin;
 using CleanArchitecture.Northwind.Application.Account.Commands.UserRegister;
-using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using CleanArchitecture.Northwind.Application.Common.Models;
-using CleanArchitecture.Northwind.Application.Common.Models.Letter;
-using CleanArchitecture.Northwind.Application.Common.Settings;
-using CleanArchitecture.Northwind.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 
 namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 
@@ -23,50 +15,23 @@ namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
 public class AccountController : ApiController
 {
     private readonly IConfiguration _configuration;
-    private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly IUserStore<ApplicationUser> _userStore;
-    private readonly IJwtTokenService _jwtTokenService;
-    private readonly IMailService _mailService;
-    private readonly IFileService _fileService;
-    private readonly IOptions<AppConfigurationSettings> _appConfig;
-    private readonly IIdentityService _identityService;
-
-    private static readonly EmailAddressAttribute _emailAddressAttribute = new();
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IConfiguration configuration,
-        SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
-        IUserStore<ApplicationUser> userStore,
-        IJwtTokenService jwtTokenService,
-        IMailService mailService,
-        IFileService fileService,
-        IIdentityService identityService,
-        IOptions<AppConfigurationSettings> appConfig)
+        ILogger<AccountController> logger)
     {
         _configuration = configuration;
-        _signInManager = signInManager;
-        _userManager = userManager;
-        _roleManager = roleManager;
-        _userStore = userStore;
-        _jwtTokenService = jwtTokenService;
-        _mailService = mailService;
-        _fileService = fileService;
-        _identityService = identityService;
-
-        _appConfig = appConfig;
+        _logger = logger;
     }
 
     [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegisterCommand request)
     {
-        var result = await Mediator.Send(request);
+        request.ConfirmationLink = Url.Action("ConfirmEmail", "Account", null, Request.Scheme) ?? "";
 
-        return Ok(result);
+        return Ok(await Mediator.Send(request));
     }
 
     [AllowAnonymous]
@@ -100,7 +65,8 @@ public class AccountController : ApiController
     [HttpGet("resend-confirmation-email")]
     public async Task<IActionResult> ResendConfirmationEmail([FromQuery] string email)
     {
-        var result = await Mediator.Send(new ResendConfirmationEmailCommand { Email = email });
+        var confirmationLink = Url.Action("ConfirmEmail", "Account", null, Request.Scheme) ?? "";
+        var result = await Mediator.Send(new ResendConfirmationEmailCommand { Email = email, ConfirmationLink = confirmationLink });
 
         return Ok(result);
     }
@@ -109,62 +75,18 @@ public class AccountController : ApiController
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
-        var user = await _userManager.FindByEmailAsync(resetRequest.Email);
+        var resetCodeLink = Url.Action("ResetPassword", "Account", null, Request.Scheme) ?? "";
+        var result = await Mediator.Send(new ForgotPasswordCommand { Email = resetRequest.Email, ResetCodeLink = resetCodeLink });
 
-        if (user != null && await _userManager.IsEmailConfirmedAsync(user))
-        {
-            var resetCode = await _userManager.GeneratePasswordResetTokenAsync(user);
-            resetCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
-
-            var letterModel = new ForgotPasswordLetterModel()
-            {
-                SystemName = _appConfig.Value.SystemName,
-                SiteUrl = _appConfig.Value.SiteUrl,
-
-                UserName = user.UserName ?? "",
-                ResetCodeLink = Url.Action("ResetPassword", "Account", new { resetCode, email = user.Email }, Request.Scheme) ?? ""
-            };
-
-            await _mailService.SendAsync(new MailRequest
-            {
-                To = user.Email ?? "",
-                Subject = $"重設你的 {_appConfig.Value.SystemName} 密碼",
-                Body = await _mailService.GetMailContentAsync(letterModel, "ForgotPasswordLetter"),
-            });
-        }
-
-        // Don't reveal that the user does not exist or is not confirmed
-        return Ok();
+        return Ok(result);
     }
 
     [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
     {
-        var user = await _userManager.FindByEmailAsync(resetRequest.Email);
+        var result = await Mediator.Send(new ResetPasswordCommand { Email = resetRequest.Email, ResetCode = resetRequest.ResetCode, NewPassword = resetRequest.NewPassword });
 
-        if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
-        {
-            // Don't reveal that the user does not exist or is not confirmed
-            return ValidationProblem(IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken()).ToString());
-        }
-
-        IdentityResult result;
-        try
-        {
-            var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
-            result = await _userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
-        }
-        catch (FormatException)
-        {
-            result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
-        }
-
-        if (!result.Succeeded)
-        {
-            return ValidationProblem(result.ToString());
-        }
-
-        return Ok();
+        return Ok(result);
     }
 }

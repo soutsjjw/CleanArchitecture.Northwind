@@ -12,11 +12,13 @@ public interface IIdentityService
 
     Task<AccessTokenResponse> RefreshByAPI(string refreshToken);
 
-    Task<bool> ConfirmEmail(string email, string token);
+    Task<bool> ConfirmEmailAsync(string email, string token);
 
-    Task<bool> ResendConfirmationEmail(string email);
+    Task<bool> ResetPasswordAsync(string email, string resetCode, string newPassword);
 
     Task<string?> GetUserNameAsync(string userId);
+
+    Task<string?> GetUserIdAsync(string userName);
 
     Task<bool> IsInRoleAsync(string userId, string role);
 
@@ -26,5 +28,7 @@ public interface IIdentityService
 
     Task<Result> DeleteUserAsync(string userId);
 
-    Task<bool> SendConfirmationEmailAsync(string userId, string email);
+    Task<bool> SendConfirmationEmailAsync(string userId, string email, string confirmationLink);
+
+    Task<bool> SendForgotPasswordEmailAsync(string userId, string email, string resetCodeLink);
 }

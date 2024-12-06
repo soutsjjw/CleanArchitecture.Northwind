@@ -679,6 +679,9 @@
           },
           "password": {
             "type": "string"
+          },
+          "confirmationLink": {
+            "type": "string"
           }
         }
       },

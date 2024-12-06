@@ -22,13 +22,23 @@ public class ResendConfirmationEmailCommandHandler : IRequestHandler<ResendConfi
 
     public async Task<Result> Handle(ResendConfirmationEmailCommand request, CancellationToken cancellationToken)
     {
-        var result = await _identityService.ResendConfirmationEmail(request.Email);
+        var userId = await _identityService.GetUserIdAsync(request.Email);
 
-        if (!result)
+        if (string.IsNullOrEmpty(userId))
+        {
+            _logger.LogError(LoggingEvents.Account.SendConfirmLetterUseNonExistentEmailFormat, request.Email);
+
+            // 回傳成功是為了避免被猜出使用者帳號
+            return await Result.SuccessAsync();
+        }
+
+        var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email, request.ConfirmationLink);
+
+        if (!sendEmailResult)
         {
             _logger.LogError(LoggingEvents.Account.SendConfirmLetterFailedFormat, request.Email);
         }
 
-        return await Result.SuccessAsync();
+        return sendEmailResult ? await Result.SuccessAsync() : await Result.FailureAsync(LoggingEvents.Account.SendConfirmLetterFailed);
     }
 }

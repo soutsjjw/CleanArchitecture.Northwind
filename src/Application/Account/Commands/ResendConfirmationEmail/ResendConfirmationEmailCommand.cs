@@ -5,5 +5,7 @@ namespace CleanArchitecture.Northwind.Application.Account.Commands.ResendConfirm
 public record ResendConfirmationEmailCommand : IRequest<Result>
 {
     public string Email { get; set; }
+
+    public string ConfirmationLink { get; set; }
 }
 

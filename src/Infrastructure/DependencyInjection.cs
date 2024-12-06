@@ -7,6 +7,7 @@ using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
 using CleanArchitecture.Northwind.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -126,6 +127,22 @@ public static class DependencyInjection
         services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"));
         services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
+
+        #endregion
+
+        #region DataProtection
+
+        // 配置 DataProtection 服務並持久化密鑰到本地文件系統
+        services.AddDataProtection()
+                .SetApplicationName(configuration["AppConfigurationSettings:SystemName"] ?? "")
+                .PersistKeysToFileSystem(new DirectoryInfo(@"C:\keys"));
+
+        // 讀取配置中的 Purpose 值
+        var purpose = configuration["DataProtection:Purpose"] ?? "";
+
+        // 註冊自定義的 DataProtectionService 並傳遞 purpose
+        services.AddSingleton<IDataProtectionService>(provider =>
+            new DataProtectionService(provider.GetRequiredService<IDataProtectionProvider>(), purpose));
 
         #endregion
 

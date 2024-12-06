@@ -17,7 +17,7 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
 
     public async Task<Result> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
     {
-        var result = await _identityService.ConfirmEmail(request.Email, request.Token);
+        var result = await _identityService.ConfirmEmailAsync(request.Email, request.Token);
 
         return result ? await Result.SuccessAsync() : await Result.FailureAsync("認證電子郵件失敗");
     }
