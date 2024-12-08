@@ -1,5 +1,5 @@
-﻿using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.DeleteTodoList;
+﻿using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.DeleteTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
 using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;

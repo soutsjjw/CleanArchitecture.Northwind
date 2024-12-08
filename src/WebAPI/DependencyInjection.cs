@@ -2,7 +2,6 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.WebAPI.Services;
 using CleanArchitecture.Northwind.WebAPI.StartupExtensions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -23,11 +22,6 @@ public static class DependencyInjection
         services.AddExceptionHandler<CustomExceptionHandler>();
 
         services.AddControllers();
-
-        services.AddAuthentication(IdentityConstants.ApplicationScheme)
-            .AddCookie(IdentityConstants.ApplicationScheme);
-
-        services.AddAuthorization();
 
         // Customise default API behaviour
         services.Configure<ApiBehaviorOptions>(options =>

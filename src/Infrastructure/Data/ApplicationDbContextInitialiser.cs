@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using CleanArchitecture.Northwind.Domain.Constants;
+﻿using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
@@ -28,9 +27,9 @@ public class ApplicationDbContextInitialiser
     private readonly ILogger<ApplicationDbContextInitialiser> _logger;
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
 
-    public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
     {
         _logger = logger;
         _context = context;
@@ -67,12 +66,7 @@ public class ApplicationDbContextInitialiser
     public async Task TrySeedAsync()
     {
         // Default roles
-        var administratorRole = new IdentityRole(Roles.Administrator);
-
-        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
-        {
-            await _roleManager.CreateAsync(administratorRole);
-        }
+        await AddDefaultRolesAsync();
 
         // Default users
         var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
@@ -80,9 +74,9 @@ public class ApplicationDbContextInitialiser
         if (_userManager.Users.All(u => u.UserName != administrator.UserName))
         {
             await _userManager.CreateAsync(administrator, "Administrator1!");
-            if (!string.IsNullOrWhiteSpace(administratorRole.Name))
+            if (!string.IsNullOrWhiteSpace(Roles.Administrator))
             {
-                await _userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
+                await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
             }
         }
 
@@ -103,6 +97,52 @@ public class ApplicationDbContextInitialiser
             });
 
             await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task AddDefaultRolesAsync()
+    {
+        var administratorRole = new ApplicationRole(Roles.Administrator, 1, "系統管理員");
+
+        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
+        {
+            await _roleManager.CreateAsync(administratorRole);
+        }
+
+
+        var role = new ApplicationRole(Roles.Sales, 2, "銷售代表");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
+        }
+
+        role = new ApplicationRole(Roles.Warehouse, 3, "倉庫經理");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
+        }
+
+        role = new ApplicationRole(Roles.Purchase, 4, "採購代理");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
+        }
+
+        role = new ApplicationRole(Roles.Finance, 5, "財務人員");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
+        }
+
+        role = new ApplicationRole(Roles.CustomerService, 6, "客戶服務代表");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
         }
     }
 }

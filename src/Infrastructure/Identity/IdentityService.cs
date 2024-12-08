@@ -22,7 +22,7 @@ public class IdentityService : IIdentityService
     private readonly IConfiguration _configuration;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly IUserStore<ApplicationUser> _userStore;
 
     private readonly IJwtTokenService _jwtTokenService;
@@ -40,7 +40,7 @@ public class IdentityService : IIdentityService
         IConfiguration configuration,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        RoleManager<IdentityRole> roleManager,
+        RoleManager<ApplicationRole> roleManager,
         IUserStore<ApplicationUser> userStore,
         IJwtTokenService jwtTokenService,
         IUserClaimsPrincipalFactory<ApplicationUser> userClaimsPrincipalFactory,

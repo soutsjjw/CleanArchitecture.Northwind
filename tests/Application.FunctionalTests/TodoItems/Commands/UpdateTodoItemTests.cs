@@ -1,6 +1,6 @@
-﻿using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
-using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItem;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
+﻿using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItem;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
 using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;

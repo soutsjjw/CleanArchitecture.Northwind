@@ -1,4 +1,4 @@
-﻿using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
+﻿using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.ValueObjects;
 

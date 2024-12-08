@@ -1,6 +1,6 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Exceptions;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
-using CleanArchitecture.Northwind.Application.TodoLists.Commands.UpdateTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.UpdateTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
 using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
