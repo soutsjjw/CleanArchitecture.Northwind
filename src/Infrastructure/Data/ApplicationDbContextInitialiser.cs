@@ -1,6 +1,7 @@
 ﻿using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Domain.Entities;
-using CleanArchitecture.Northwind.Infrastructure.Identity;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Domain.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -78,6 +79,19 @@ public class ApplicationDbContextInitialiser
             {
                 await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
             }
+
+            var user = await _userManager.FindByEmailAsync(administrator.Email);
+            _context.UserProfiles.Add(new ApplicationUserProfile
+            {
+                UserId = user.Id,
+                FullName = "全名",
+                Title = "職稱",
+                Status = Status.Enabled,
+                Created = DateTime.Now,
+                CreatedBy = user.Id,
+            });
+
+            await _context.SaveChangesAsync();
         }
 
         // Default data

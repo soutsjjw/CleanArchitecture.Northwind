@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Domain.Constants;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
 using MediatR;

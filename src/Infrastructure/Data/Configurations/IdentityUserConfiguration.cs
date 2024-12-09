@@ -1,4 +1,4 @@
-using CleanArchitecture.Northwind.Infrastructure.Identity;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

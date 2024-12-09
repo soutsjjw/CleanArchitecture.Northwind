@@ -7,6 +7,7 @@ using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
 using CleanArchitecture.Northwind.Application.Common.Settings;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;

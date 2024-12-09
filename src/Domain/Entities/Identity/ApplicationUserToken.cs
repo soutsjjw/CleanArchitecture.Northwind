@@ -1,7 +1,6 @@
-using CleanArchitecture.Northwind.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
-namespace CleanArchitecture.Northwind.Infrastructure.Data.Configurations;
+namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
 public class ApplicationUserToken : IdentityUserToken<string>
 {

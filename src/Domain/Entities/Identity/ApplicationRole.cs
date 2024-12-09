@@ -1,7 +1,6 @@
-﻿using CleanArchitecture.Northwind.Domain.Common;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 
-namespace CleanArchitecture.Northwind.Infrastructure.Identity;
+namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
 public class ApplicationRole : IdentityRole, IAuditableEntity
 {

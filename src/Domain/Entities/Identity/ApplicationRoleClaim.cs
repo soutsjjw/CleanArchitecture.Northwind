@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace CleanArchitecture.Northwind.Infrastructure.Identity;
+namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
 public class ApplicationRoleClaim : IdentityRoleClaim<string>
 {

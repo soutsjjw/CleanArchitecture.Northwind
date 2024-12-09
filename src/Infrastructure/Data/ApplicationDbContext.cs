@@ -1,8 +1,7 @@
 ﻿using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Domain.Entities;
-using CleanArchitecture.Northwind.Infrastructure.Data.Configurations;
-using CleanArchitecture.Northwind.Infrastructure.Identity;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,9 +13,16 @@ public class ApplicationDbContext : IdentityDbContext<
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
+    #region Identity
+
+    public DbSet<ApplicationUserProfile> UserProfiles => Set<ApplicationUserProfile>();
+
+    #endregion
+
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

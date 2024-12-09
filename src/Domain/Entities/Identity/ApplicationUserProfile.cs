@@ -1,9 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using CleanArchitecture.Northwind.Domain.Common;
-using CleanArchitecture.Northwind.Domain.Enums;
 
-namespace CleanArchitecture.Northwind.Infrastructure.Identity;
+namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
 public class ApplicationUserProfile : IAuditableEntity
 {
