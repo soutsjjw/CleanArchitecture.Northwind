@@ -9,4 +9,14 @@ public record UserRegisterCommand : IRequest<Result>
     public required string Password { get; init; }
 
     public string ConfirmationLink { get; set; } = "";
+
+    public required string FullName { get; set; }
+
+    public string? IDNo { get; set; }
+
+    public required string Title { get; set; }
+
+    public int Department { get; set; }
+
+    public int Office { get; set; }
 }

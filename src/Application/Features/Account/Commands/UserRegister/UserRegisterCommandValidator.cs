@@ -28,5 +28,13 @@ public class UserRegisterCommandValidator : AbstractValidator<UserRegisterComman
                     }
                 }
             });
+
+        RuleFor(x => x.FullName)
+            .NotEmpty().WithMessage("{PropertyName}不可為空")
+            .WithName("姓名");
+
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("{PropertyName}不可為空")
+            .WithName("職稱");
     }
 }

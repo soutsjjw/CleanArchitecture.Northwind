@@ -1,6 +1,7 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
@@ -30,6 +31,20 @@ public class UserRegisterCommandHandler : IRequestHandler<UserRegisterCommand, R
 
             return await Result.FailureAsync(LoggingEvents.Account.AccountRegistrationFailed);
         }
+
+        var profile = new ApplicationUserProfile
+        {
+            UserId = userId,
+            FullName = request.FullName,
+            IDNo = request.IDNo,
+            Title = request.Title,
+            Department = request.Department,
+            Office = request.Office,
+        };
+
+        _context.UserProfiles.Add(profile);
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email, request.ConfirmationLink);
 

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class CreateIdentitySchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -145,6 +145,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 name: "AspNetUserProfiles",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IDNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -159,7 +161,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AspNetUserProfiles", x => x.UserId);
+                    table.PrimaryKey("PK_AspNetUserProfiles", x => x.Id);
                     table.ForeignKey(
                         name: "FK_AspNetUserProfiles_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -261,6 +263,12 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 name: "IX_AspNetUserLogins_UserId",
                 table: "AspNetUserLogins",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserProfiles_UserId",
+                table: "AspNetUserProfiles",
+                column: "UserId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserRoles_RoleId",

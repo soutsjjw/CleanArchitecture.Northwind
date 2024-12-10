@@ -161,10 +161,20 @@ public class IdentityService : IIdentityService
             }
         }
 
-        var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
+        // 使用 PasswordSignInAsync 會產生 Cookie
+        //var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
+
+        //// 密碼錯誤或其他登入失敗的情況
+        //if (!result.Succeeded)
+        //{
+        //    _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
+        //    throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+        //}
+
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
 
         // 密碼錯誤或其他登入失敗的情況
-        if (!result.Succeeded)
+        if (!isPasswordValid)
         {
             _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
             throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);

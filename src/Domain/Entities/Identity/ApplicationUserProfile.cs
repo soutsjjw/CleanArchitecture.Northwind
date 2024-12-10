@@ -1,11 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
-public class ApplicationUserProfile : IAuditableEntity
+public class ApplicationUserProfile : BaseAuditableEntity, IAuditableEntity
 {
-    [Key]
     public string UserId { get; set; }
 
     /// <summary>

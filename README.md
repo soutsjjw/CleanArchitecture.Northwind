@@ -60,3 +60,15 @@ To learn more about the template go to the [project website](https://github.com/
 ## 設置 Swagger 起啟版本
 
 至 `CleanArchitecture.Northwind\src\WebAPI\StartupExtensions\SwaggerExtension.cs` 中的 `UseCustomizedSwagger`，將要預設的起始版本放在前面
+
+## DataBase Migration
+
+To run the Src Folder
+
+```bash
+cd .\src\
+
+dotnet ef migrations add CreateIdentitySchema --project Infrastructure --startup-project WebAPI --context ApplicationDbContext --output-dir Data\Migrations
+
+dotnet ef database update --project Infrastructure --startup-project WebAPI
+```

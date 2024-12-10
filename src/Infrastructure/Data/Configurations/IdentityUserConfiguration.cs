@@ -31,6 +31,10 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
             .WithOne()
             .HasForeignKey(ur => ur.UserId)
             .IsRequired();
+
+        builder.HasOne(u => u.Profile)
+            .WithOne(p => p.User)
+            .HasForeignKey<ApplicationUserProfile>(p => p.UserId);
     }
 }
 

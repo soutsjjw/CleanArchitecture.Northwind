@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Settings;
-using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
@@ -74,10 +73,19 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorizationBuilder();
+        services.AddAuthorization();
 
+        /*
+         * servicesAddIdentity<ApplicationUser, ApplicationRole>()
+         * 如果使用此種方式，驗證方案將會有下列方案
+         * - Bearer
+         * - Identity.Application
+         * - Identity.External
+         * - Identity.TwoFactorRememberMe
+         * - Identity.TwoFactorUserId
+        */
         services
-            .AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            .AddIdentityCore<ApplicationUser>(options =>
             {
                 // SignIn 設定
                 options.SignIn.RequireConfirmedEmail = true;
@@ -99,6 +107,7 @@ public static class DependencyInjection
                 // 使用 Email 傳遞密碼重置令牌
                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
             })
+            .AddRoles<ApplicationRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddApiEndpoints();
 
@@ -107,8 +116,8 @@ public static class DependencyInjection
         services.AddSingleton(System.TimeProvider.System);
         services.AddTransient<IIdentityService, IdentityService>();
 
-        services.AddAuthorization(options =>
-            options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+        //services.AddAuthorization(options =>
+        //    options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
 
         #endregion
 

@@ -57,12 +57,25 @@ public class JwtTokenService : IJwtTokenService
         var tokenHandler = new JwtSecurityTokenHandler();
         var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
+            //ValidateIssuer = false,
+            //ValidateAudience = false,
+            //ValidateLifetime = false,
+            //ValidateIssuerSigningKey = true,
+            //IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptionSettings.RefreshKey)),
+            //ClockSkew = TimeSpan.Zero
+
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtOptionSettings.RefreshKey)),
-            ClockSkew = TimeSpan.Zero
+            ValidIssuer = _jwtOptionSettings.Issuer,
+            ValidAudience = _jwtOptionSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptionSettings.Key)),
+            // 指定從 JWT 聲明中提取哪個字段作為用戶名
+            NameClaimType = "name",
+            ValidAlgorithms = new string[] { "HS512" },
+            // 允許服務器和客戶端之間的時間不同步，避免因小的時間偏移而導致 JWT 驗證失敗
+            ClockSkew = TimeSpan.Zero,
         }, out SecurityToken securityToken);
 
         var jwtToken = securityToken as JwtSecurityToken;
