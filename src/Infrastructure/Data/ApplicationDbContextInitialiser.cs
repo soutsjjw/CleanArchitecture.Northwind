@@ -70,29 +70,12 @@ public class ApplicationDbContextInitialiser
         await AddDefaultRolesAsync();
 
         // Default users
-        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
-
-        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
-        {
-            await _userManager.CreateAsync(administrator, "Administrator1!");
-            if (!string.IsNullOrWhiteSpace(Roles.Administrator))
-            {
-                await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
-            }
-
-            var user = await _userManager.FindByEmailAsync(administrator.Email);
-            _context.UserProfiles.Add(new ApplicationUserProfile
-            {
-                UserId = user.Id,
-                FullName = "全名",
-                Title = "職稱",
-                Status = Status.Enabled,
-                Created = DateTime.Now,
-                CreatedBy = user.Id,
-            });
-
-            await _context.SaveChangesAsync();
-        }
+        var adminUserId = await AddAdministratorUserAsync();
+        await AddDefaultUserAsync(Roles.Sales, adminUserId);
+        await AddDefaultUserAsync(Roles.Warehouse, adminUserId);
+        await AddDefaultUserAsync(Roles.Purchase, adminUserId);
+        await AddDefaultUserAsync(Roles.Finance, adminUserId);
+        await AddDefaultUserAsync(Roles.CustomerService, adminUserId);
 
         // Default data
         // Seed, if necessary
@@ -157,6 +140,66 @@ public class ApplicationDbContextInitialiser
         if (_roleManager.Roles.All(r => r.Name != role.Name))
         {
             await _roleManager.CreateAsync(role);
+        }
+    }
+
+    public async Task<string> AddAdministratorUserAsync()
+    {
+        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
+        ApplicationUser? user;
+
+        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
+        {
+            await _userManager.CreateAsync(administrator, "Administrator1!");
+            if (!string.IsNullOrWhiteSpace(Roles.Administrator))
+            {
+                await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
+            }
+
+            user = await _userManager.FindByEmailAsync(administrator.Email);
+            user.EmailConfirmed = true;
+            _context.UserProfiles.Add(new ApplicationUserProfile
+            {
+                UserId = user.Id,
+                FullName = "全名",
+                Title = "職稱",
+                Status = Status.Enabled,
+                Created = DateTime.Now,
+                CreatedBy = user.Id,
+            });
+
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            user = await _userManager.FindByEmailAsync(administrator.Email);
+        }
+
+        return user.Id;
+    }
+
+    public async Task AddDefaultUserAsync(string roleName, string adminUserId)
+    {
+        var defaultUser = new ApplicationUser { UserName = $"{roleName.ToLower()}@localhost", Email = $"{roleName.ToLower()}@localhost" };
+
+        if (_userManager.Users.All(u => u.UserName != defaultUser.UserName))
+        {
+            await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
+            await _userManager.AddToRolesAsync(defaultUser, new[] { roleName });
+
+            var user = await _userManager.FindByEmailAsync(defaultUser.Email);
+            user.EmailConfirmed = true;
+            _context.UserProfiles.Add(new ApplicationUserProfile
+            {
+                UserId = user.Id,
+                FullName = roleName.ToUpper(),
+                Title = roleName,
+                Status = Status.Enabled,
+                Created = DateTime.Now,
+                CreatedBy = adminUserId,
+            });
+
+            await _context.SaveChangesAsync();
         }
     }
 }

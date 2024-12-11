@@ -15,7 +15,7 @@ public class WeatherForecastController : ApiController
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    [Authorize]
+    [Authorize(Roles = "Administrator")]
     public async Task<IEnumerable<WeatherForecast>> Get(ISender sender)
     {
         _logger.LogInformation("使用 v2");

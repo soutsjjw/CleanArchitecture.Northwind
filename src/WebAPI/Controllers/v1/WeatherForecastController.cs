@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Application.Features.WeatherForecasts.Queries.GetWeatherForecasts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Northwind.WebAPI.Controllers.v1;
@@ -14,6 +15,7 @@ public class WeatherForecastController : ApiController
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
+    [Authorize]
     public async Task<IEnumerable<WeatherForecast>> Get(ISender sender)
     {
         _logger.LogInformation("使用 v1");
