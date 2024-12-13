@@ -18,9 +18,18 @@ public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<
 
     public async Task<Result<UserLoginVm>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
     {
-        var result = await _identityService.UserLoginByAPI(request.UserName, request.Password);
+        var (result, user) = await _identityService.UserLogin(request.UserName, request.Password, true);
 
-        var model = _mapper.Map<UserLoginVm>(result);
+        UserLoginVm model = new UserLoginVm
+        {
+            UserName = user.UserName ?? "",
+            FullName = user.Profile?.FullName ?? "",
+            IDNo = user.Profile?.IDNo ?? "",
+            Gender = user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow),
+            Title = user.Profile?.Title ?? "",
+            Status = user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable),
+            SignInResult = result,
+        };
 
         return await Result<UserLoginVm>.SuccessAsync(model);
     }

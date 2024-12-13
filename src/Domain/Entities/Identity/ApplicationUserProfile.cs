@@ -17,6 +17,11 @@ public class ApplicationUserProfile : BaseAuditableEntity, IAuditableEntity
     public string? IDNo { get; set; }
 
     /// <summary>
+    /// 性別
+    /// </summary>
+    public Gender Gender { get; set; } = Gender.Unknow;
+
+    /// <summary>
     // 職稱
     /// </summary>
     public string? Title { get; set; }

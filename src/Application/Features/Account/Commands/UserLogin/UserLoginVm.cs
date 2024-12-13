@@ -1,22 +1,20 @@
-﻿using CleanArchitecture.Northwind.Application.Common.Models;
+﻿using Microsoft.AspNetCore.Identity;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 
 public class UserLoginVm
 {
-    public string TokenType { get; } = "Bearer";
+    public string UserName { get; set; }
 
-    public required string AccessToken { get; init; }
+    public string FullName { get; set; }
 
-    public required long ExpiresIn { get; init; }
+    public string IDNo { get; set; }
 
-    public required string RefreshToken { get; init; }
+    public string Gender { get; set; }
 
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<AccessTokenResponse, UserLoginVm>();
-        }
-    }
+    public string Title { get; set; }
+
+    public string Status { get; set; }
+
+    public SignInResult SignInResult { get; set; }
 }

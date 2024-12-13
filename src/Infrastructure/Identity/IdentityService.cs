@@ -8,9 +8,11 @@ using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
 using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,6 +22,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Identity;
 
 public class IdentityService : IIdentityService
 {
+    private readonly IApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
@@ -38,6 +41,7 @@ public class IdentityService : IIdentityService
     private readonly IOptions<AppConfigurationSettings> _appConfig;
 
     public IdentityService(
+        IApplicationDbContext context,
         IConfiguration configuration,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
@@ -51,6 +55,7 @@ public class IdentityService : IIdentityService
         ILogger<IdentityService> logger,
         IOptions<AppConfigurationSettings> appConfig)
     {
+        _context = context;
         _configuration = configuration;
         _userManager = userManager;
         _signInManager = signInManager;
@@ -121,69 +126,66 @@ public class IdentityService : IIdentityService
         return token;
     }
 
-    public async Task<AccessTokenResponse> UserLoginByAPI(string userName, string password)
+    public async Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies)
     {
-        var user = await _userManager.FindByNameAsync(userName);
+        var user = await ValidateUserAsync(userName, password);
+        user.Profile = await _context.UserProfiles.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
+        bool isPasswordValid = false;
+        SignInResult? result = null;
 
-        // 這段邏輯用於防止駭客根據錯誤訊息獲知帳號是否存在
-        if (user == null)
+        if (useCookies)
         {
-            // 模擬一個錯誤的檢查，讓駭客無法輕易分辨
-            await Task.Delay(100);
+            result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
 
-            _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, userName);
-
-            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
-        }
-
-        // 密碼正確但帳號被鎖定或Email未認證的情況
-        var isLockedOutAsync = await _userManager.IsLockedOutAsync(user);
-        var isEmailNotConfirmed = !await _userManager.IsEmailConfirmedAsync(user);
-
-        if (isLockedOutAsync || isEmailNotConfirmed)
-        {
-            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
-
-            // 僅當密碼正確時才拋出具體的錯誤
-            if (isPasswordCorrect)
+            if (result.Succeeded)
             {
-                if (isLockedOutAsync)
+                var claims = new List<Claim>
                 {
-                    _logger.LogWarning(LoggingEvents.Account.AccountLockedFormat, userName);
-                }
+                    new Claim("FullName", user.Profile?.FullName ?? ""),
+                    new Claim("IDNo", user.Profile?.IDNo ?? ""),
+                    new Claim("Gender", user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow)),
+                    new Claim("Title", user.Profile?.Title ?? ""),
+                    new Claim("Status", user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable)),
+                };
 
-                if (isEmailNotConfirmed)
-                {
-                    _logger.LogWarning(LoggingEvents.Account.EmailNotConfirmedFormat, userName);
-                }
+                // 添加聲明到 ClaimsIdentity
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-                throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+                // 登入使用者並附加聲明
+                await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, additionalClaims: claims);
             }
+
+            isPasswordValid = result.Succeeded;
+        }
+        else
+        {
+            isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
         }
 
-        // 使用 PasswordSignInAsync 會產生 Cookie
-        //var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
-
-        //// 密碼錯誤或其他登入失敗的情況
-        //if (!result.Succeeded)
-        //{
-        //    _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
-        //    throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
-        //}
-
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
-
-        // 密碼錯誤或其他登入失敗的情況
         if (!isPasswordValid)
         {
             _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
             throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
         }
 
-        // 生成 Token
-        var tokenResponse = await GenerateTokenResponseAsync(user);
-        return tokenResponse;
+        return (result, user);
     }
+
+    public async Task<AccessTokenResponse> UserLoginByAPI(string userName, string password)
+    {
+        var user = await ValidateUserAsync(userName, password);
+
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
+
+        if (!isPasswordValid)
+        {
+            _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+        }
+
+        return await GenerateTokenResponseAsync(user);
+    }
+
 
     public async Task<AccessTokenResponse> RefreshByAPI(string refreshToken)
     {
@@ -410,9 +412,7 @@ public class IdentityService : IIdentityService
         });
     }
 
-    #region Private
-
-    private async Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
+    public async Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user)
     {
         var token = _jwtTokenService.GenerateAccessToken(await GetClaimsAsync(user));
         var refreshToken = _jwtTokenService.GenerateRefreshToken(user.Id);
@@ -435,6 +435,50 @@ public class IdentityService : IIdentityService
         };
 
         return tokenResponse;
+    }
+
+    #region Private
+
+    private async Task<ApplicationUser> ValidateUserAsync(string userName, string password)
+    {
+        var user = await _userManager.FindByNameAsync(userName);
+
+        if (user == null)
+        {
+            await SimulateInvalidLoginDelay(userName);
+            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+        }
+
+        if (await _userManager.IsLockedOutAsync(user) || !await _userManager.IsEmailConfirmedAsync(user))
+        {
+            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
+            if (isPasswordCorrect)
+            {
+                LogLockoutOrEmailIssue(userName, await _userManager.IsLockedOutAsync(user), !await _userManager.IsEmailConfirmedAsync(user));
+                throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+            }
+        }
+
+        return user;
+    }
+
+    private async Task SimulateInvalidLoginDelay(string userName)
+    {
+        await Task.Delay(100);
+        _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, userName);
+    }
+
+    private void LogLockoutOrEmailIssue(string userName, bool isLockedOut, bool isEmailNotConfirmed)
+    {
+        if (isLockedOut)
+        {
+            _logger.LogWarning(LoggingEvents.Account.AccountLockedFormat, userName);
+        }
+
+        if (isEmailNotConfirmed)
+        {
+            _logger.LogWarning(LoggingEvents.Account.EmailNotConfirmedFormat, userName);
+        }
     }
 
     private async Task<IEnumerable<Claim>> GetClaimsAsync(ApplicationUser user)

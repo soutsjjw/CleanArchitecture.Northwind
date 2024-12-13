@@ -241,6 +241,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
                     b.Property<string>("IDNo")
                         .HasColumnType("nvarchar(max)");
 

@@ -3,7 +3,7 @@ using CleanArchitecture.Northwind.Application.Features.Account.Commands.ForgotPa
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.Refresh;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResendConfirmationEmail;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResetPassword;
-using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserAPILogin;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
@@ -38,7 +38,7 @@ public class AccountController : ApiController
     [HttpPost("login")]
     public async Task<ActionResult> Login([FromBody] LoginRequest login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
     {
-        var result = await Mediator.Send(new UserLoginCommand { UserName = login.Email, Password = login.Password });
+        var result = await Mediator.Send(new UserAPILoginCommand { UserName = login.Email, Password = login.Password });
 
         return Ok(result);
     }

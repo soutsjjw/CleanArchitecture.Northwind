@@ -70,5 +70,5 @@ cd .\src\
 
 dotnet ef migrations add CreateIdentitySchema --project Infrastructure --startup-project WebAPI --context ApplicationDbContext --output-dir Data\Migrations
 
-dotnet ef database update --project Infrastructure --startup-project WebAPI
+dotnet ef database update --project Infrastructure --startup-project WebAPI --context ApplicationDbContext
 ```

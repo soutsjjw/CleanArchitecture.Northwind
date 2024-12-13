@@ -1,10 +1,14 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace CleanArchitecture.Northwind.Application.Common.Interfaces;
 
 public interface IIdentityService
 {
     Task<string> UserRegisterAsync(string userName, string password);
+
+    Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies);
 
     Task<AccessTokenResponse> UserLoginByAPI(string userName, string password);
 
@@ -31,4 +35,6 @@ public interface IIdentityService
     Task<bool> SendConfirmationEmailAsync(string userId, string email, string confirmationLink);
 
     Task<bool> SendForgotPasswordEmailAsync(string userId, string email, string resetCodeLink);
+
+    Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user);
 }

@@ -1,0 +1,41 @@
+﻿@using CleanArchitecture.Northwind.Domain.Entities.Identity
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<div class="nav-item dropdown">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+            <span class="avatar avatar-sm" style="background-image: url(./images/@(User.FindFirst(nameof(ApplicationUserProfile.Gender))?.Value).png)"></span>
+            <div class="d-none d-xl-block ps-2">
+                <div>@User.FindFirst(nameof(ApplicationUserProfile.FullName))?.Value</div>
+                <div class="mt-1 small text-secondary">@User.FindFirst(nameof(ApplicationUserProfile.Title))?.Value</div>
+            </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+            <a href="#" class="dropdown-item">Status</a>
+            <a href="./profile.html" class="dropdown-item">Profile</a>
+            <a href="#" class="dropdown-item">Feedback</a>
+            <div class="dropdown-divider"></div>
+            <a href="./settings.html" class="dropdown-item">Settings</a>
+            <a href="./sign-in.html" class="dropdown-item">Logout</a>
+            <a asp-controller="Account" asp-action="Logout" class="dropdown-item">登出</a>
+        </div>
+    }
+    else
+    {
+        <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+            <span class="avatar avatar-sm" style="background-image: url(./images/Unknow.png)"></span>
+            <div class="d-none d-xl-block ps-2">
+                <div>未登入</div>
+            </div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+            <a class="dropdown-item" asp-controller="Account" asp-action="Register">註冊帳號</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" asp-controller="Account" asp-action="Login">登入</a>
+        </div>
+    }
+</div>

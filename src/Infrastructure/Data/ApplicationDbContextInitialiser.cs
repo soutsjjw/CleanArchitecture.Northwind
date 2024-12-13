@@ -1,4 +1,5 @@
-﻿using CleanArchitecture.Northwind.Domain.Constants;
+﻿using System.Security.Cryptography;
+using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using CleanArchitecture.Northwind.Domain.Enums;
@@ -162,6 +163,7 @@ public class ApplicationDbContextInitialiser
             {
                 UserId = user.Id,
                 FullName = "全名",
+                Gender = Gender.Male,
                 Title = "職稱",
                 Status = Status.Enabled,
                 Created = DateTime.Now,
@@ -189,15 +191,22 @@ public class ApplicationDbContextInitialiser
 
             var user = await _userManager.FindByEmailAsync(defaultUser.Email);
             user.EmailConfirmed = true;
-            _context.UserProfiles.Add(new ApplicationUserProfile
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
-                UserId = user.Id,
-                FullName = roleName.ToUpper(),
-                Title = roleName,
-                Status = Status.Enabled,
-                Created = DateTime.Now,
-                CreatedBy = adminUserId,
-            });
+                byte[] randomNumber = new byte[1];
+                rng.GetBytes(randomNumber);
+
+                _context.UserProfiles.Add(new ApplicationUserProfile
+                {
+                    UserId = user.Id,
+                    FullName = roleName.ToUpper(),
+                    Gender = (Gender)(randomNumber[0] % 3),
+                    Title = roleName,
+                    Status = Status.Enabled,
+                    Created = DateTime.Now,
+                    CreatedBy = adminUserId,
+                });
+            }
 
             await _context.SaveChangesAsync();
         }
