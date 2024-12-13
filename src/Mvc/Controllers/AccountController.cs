@@ -31,14 +31,7 @@ public class AccountController : BaseController
     {
         returnUrl ??= Url.Content("~/");
 
-        // Clear the existing external cookie to ensure a clean login process
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-        //var viewModel = new LoginViewModel
-        //{
-        //    ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList(),
-        //    ReturnUrl = returnUrl
-        //};
 
         ViewData["ReturnUrl"] = returnUrl;
 
@@ -52,8 +45,6 @@ public class AccountController : BaseController
 
         if (ModelState.IsValid)
         {
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
             var result = await Mediator.Send(new UserLoginCommand { UserName = viewModel.Email, Password = viewModel.Password });
             if (result.Succeeded)
             {
@@ -74,11 +65,6 @@ public class AccountController : BaseController
             //    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             //    return Page();
             //}
-        }
-
-        if (viewModel.Email == "admin" && viewModel.Password == "password") // 替換為真實驗證邏輯
-        {
-            return RedirectToAction("Index", "Home");
         }
 
         ViewBag.Error = "帳號或密碼錯誤";
@@ -104,5 +90,11 @@ public class AccountController : BaseController
         {
             return RedirectToAction("Login");
         }
+    }
+
+    [HttpGet]
+    public IActionResult Register()
+    {
+        return View();
     }
 }
