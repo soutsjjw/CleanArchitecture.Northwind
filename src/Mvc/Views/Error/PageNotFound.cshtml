@@ -1,0 +1,38 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutEmpty.cshtml";
+    ViewData["Title"] = "網頁未找到 (404 錯誤)";
+}
+
+<div class="container-tight py-4">
+    <div class="empty">
+        <div class="empty-header">
+            <img src="~/images/internet_404_page_not_found.png" alt="">
+        </div>
+        <p class="empty-title">未找到頁面</p>
+        <p class="empty-subtitle text-secondary">
+            很抱歉，我們無法找到您所尋找的網頁。這可能是因為以下原因：
+            <ul style="text-align: left;">
+                <li>您輸入的 URL 錯誤。</li>
+                <li>該網頁已被移除或不存在。</li>
+            </ul>
+        </p>
+        <p class="empty-subtitle text-secondary">
+            您可以嘗試以下方法：
+            <ul style="text-align: left;">
+                <li>檢查 URL 中是否有拼寫錯誤。</li>
+                <li>回到首頁，並從那裡再次導航到您需要的內容。</li>
+                <li>使用我們的搜尋功能來尋找相關資訊。</li>
+            </ul>
+        </p>
+        <p class="empty-subtitle text-secondary">
+            如果您仍有疑問，請聯絡我們的客服團隊以獲得進一步協助。
+        </p>
+        <div class="empty-action">
+            <a href="./." class="btn btn-primary">
+                <!-- Download SVG icon from http://tabler-icons.io/i/arrow-left -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+                返回首頁
+            </a>
+        </div>
+    </div>
+</div>

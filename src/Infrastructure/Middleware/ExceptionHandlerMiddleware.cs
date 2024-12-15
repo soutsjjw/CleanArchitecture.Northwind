@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using CleanArchitecture.Northwind.Application.Common.Exceptions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
@@ -30,52 +31,79 @@ public class ExceptionHandlerMiddleware : IMiddleware
         }
         catch (Exception exception)
         {
+            var errorId = await HandleExceptionAsync(context, exception);
 
-            var userId = _currentUserService.UserId;
-            if (!string.IsNullOrEmpty(userId)) LogContext.PushProperty("UserId", userId);
-            string errorId = Guid.NewGuid().ToString();
-            LogContext.PushProperty("ErrorId", errorId);
-            LogContext.PushProperty("StackTrace", exception.StackTrace);
-            var responseModel = await Result.FailureAsync(new string[] { exception.Message });
-            var response = context.Response;
-            response.ContentType = "application/json";
-            if (exception.InnerException != null)
+            // 根據請求類型（API 或 MVC）返回不同的錯誤處理邏輯
+            if (IsApiRequest(context.Request))
             {
-                while (exception.InnerException != null)
-                {
-                    exception = exception.InnerException;
-                }
+                var responseModel = await HandleApiExceptionAsync(context, exception);
+                await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(responseModel));
             }
-
-            response.StatusCode = 200;
-
-            switch (exception)
+            else
             {
-                case ValidationException e:
-                    responseModel = await Result.FailureAsync(e.Errors.Select(x => $"{x.Key}:{string.Join(',', x.Value)}"),
-                        (int)HttpStatusCode.BadRequest);
-                    break;
-                case NotFoundException e:
-                    responseModel = await Result.FailureAsync(new string[] { e.Message },
-                        (int)HttpStatusCode.NotFound);
-                    break;
-                case KeyNotFoundException e:
-                    responseModel = await Result.FailureAsync(new string[] { e.Message },
-                        (int)HttpStatusCode.NotFound);
-                    break;
-                case UnauthorizedException e:
-                    responseModel = await Result.FailureAsync(new string[] { e.Message },
-                        (int)HttpStatusCode.Unauthorized);
-                    break;
-                default:
-                    responseModel = await Result.FailureAsync(new string[] { exception.Message },
-                        (int)HttpStatusCode.InternalServerError);
-                    break;
+                // 儲存錯誤訊息到 HttpContext.Items
+                context.Items["ErrorId"] = errorId;
+                context.Items["ErrorMessage"] = exception.Message;
+                context.Items["StackTrace"] = exception.StackTrace;
+
+                throw;
             }
-
-            _logger.LogError(exception, $"Request failed with Status Code {response.StatusCode} and Error Id {errorId}.");
-
-            await response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(responseModel));
         }
+    }
+
+    private async Task<string> HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        var userId = _currentUserService.UserId;
+        if (!string.IsNullOrEmpty(userId))
+            LogContext.PushProperty("UserId", userId);
+
+        var errorId = Activity.Current?.Id ?? context.TraceIdentifier;
+        LogContext.PushProperty("ErrorId", errorId);
+        LogContext.PushProperty("StackTrace", exception.StackTrace);
+
+        var response = context.Response;
+        var request = context.Request;
+        response.ContentType = "application/json";
+
+        // 預設狀態碼為 500
+        response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+        if (exception.InnerException != null)
+        {
+            while (exception.InnerException != null)
+            {
+                exception = exception.InnerException;
+            }
+        }
+
+        _logger.LogError(exception, $"Request failed with Status Code {response.StatusCode} and Error Id {errorId}.");
+
+        return errorId;
+    }
+
+    private bool IsApiRequest(HttpRequest request)
+    {
+        return request.Path.StartsWithSegments("/api") ||
+               request.Headers["Accept"].Any(h => h.Contains("application/json", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task<object> HandleApiExceptionAsync(HttpContext context, Exception exception)
+    {
+        // API 的 HttpCode 統一紀錄在 Result 中的 StatusCode
+        context.Response.StatusCode = 200;
+
+        return exception switch
+        {
+            ValidationException e => await Result.FailureAsync(e.Errors.Select(x => $"{x.Key}:{string.Join(',', x.Value)}"),
+                (int)HttpStatusCode.BadRequest),
+            NotFoundException e => await Result.FailureAsync(new[] { e.Message },
+                (int)HttpStatusCode.NotFound),
+            KeyNotFoundException e => await Result.FailureAsync(new[] { e.Message },
+                (int)HttpStatusCode.NotFound),
+            UnauthorizedException e => await Result.FailureAsync(new[] { e.Message },
+                (int)HttpStatusCode.Unauthorized),
+            _ => await Result.FailureAsync(new[] { exception.Message },
+                (int)HttpStatusCode.InternalServerError)
+        };
     }
 }
