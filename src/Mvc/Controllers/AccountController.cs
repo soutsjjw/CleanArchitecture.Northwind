@@ -23,7 +23,10 @@ public class AccountController : BaseController<AccountController>
     [HttpGet]
     public IActionResult Index()
     {
-        return View();
+        if (_signInManager.IsSignedIn(User))
+            return RedirectToAction("Index", "Home");
+
+        return RedirectToAction("Login");
     }
 
     [HttpGet]
@@ -39,6 +42,7 @@ public class AccountController : BaseController<AccountController>
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login([FromForm] LoginViewModel viewModel, [FromQuery] string returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
@@ -81,6 +85,7 @@ public class AccountController : BaseController<AccountController>
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> LogoutAsync(string returnUrl)
     {
         await _signInManager.SignOutAsync();
