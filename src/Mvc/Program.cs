@@ -38,4 +38,6 @@ app.MapControllerRoute(
 
 app.MapFallbackToController("PageNotFound", "Error");
 
+app.UseNToastNotify();
+
 app.Run();

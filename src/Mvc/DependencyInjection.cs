@@ -2,6 +2,7 @@
 using CleanArchitecture.Northwind.Mvc.Infrastructure;
 using CleanArchitecture.Northwind.Mvc.Services;
 using CleanArchitecture.Northwind.Mvc.StartupExtensions;
+using NToastNotify;
 
 namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
@@ -25,6 +26,12 @@ public static class DependencyInjection
         {
             mvcBuilder.AddRazorRuntimeCompilation();
         }
+
+        mvcBuilder.AddNToastNotifyToastr(new ToastrOptions()
+        {
+            ProgressBar = false,
+            PositionClass = ToastPositions.BottomRight
+        });
 
         services.AddEndpointsApiExplorer();
 

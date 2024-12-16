@@ -126,12 +126,22 @@ public class IdentityService : IIdentityService
         return token;
     }
 
-    public async Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies)
+    public async Task<(SignInResult? Result, ApplicationUser? User)> UserLogin(string userName, string password, bool useCookies)
     {
-        var user = await ValidateUserAsync(userName, password);
+        var (result, user) = await ValidateUserAsync(userName, password);
+
+        if (user == null)
+        {
+            return (SignInResult.Failed, null);
+        }
+
+        if (!result.Succeeded)
+        {
+            return (result, user);
+        }
+
         user.Profile = await _context.UserProfiles.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
         bool isPasswordValid = false;
-        SignInResult? result = null;
 
         if (useCookies)
         {
@@ -165,25 +175,37 @@ public class IdentityService : IIdentityService
         if (!isPasswordValid)
         {
             _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
-            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+
+            return (SignInResult.Failed, user);
         }
 
-        return (result, user);
+        return (SignInResult.Success, user);
     }
 
-    public async Task<AccessTokenResponse> UserLoginByAPI(string userName, string password)
+    public async Task<(SignInResult, AccessTokenResponse? token)> UserLoginByAPI(string userName, string password)
     {
-        var user = await ValidateUserAsync(userName, password);
+        var (result, user) = await ValidateUserAsync(userName, password);
+
+        if (user == null)
+        {
+            return (SignInResult.Failed, null);
+        }
+
+        if (!result.Succeeded)
+        {
+            return (result, null);
+        }
 
         var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
 
         if (!isPasswordValid)
         {
             _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
-            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+
+            return (SignInResult.Failed, null);
         }
 
-        return await GenerateTokenResponseAsync(user);
+        return (SignInResult.Success, await GenerateTokenResponseAsync(user));
     }
 
 
@@ -439,27 +461,40 @@ public class IdentityService : IIdentityService
 
     #region Private
 
-    private async Task<ApplicationUser> ValidateUserAsync(string userName, string password)
+    private async Task<(SignInResult Result, ApplicationUser? User)> ValidateUserAsync(string userName, string password)
     {
         var user = await _userManager.FindByNameAsync(userName);
 
         if (user == null)
         {
             await SimulateInvalidLoginDelay(userName);
-            throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
+
+            return (SignInResult.Failed, null);
         }
 
-        if (await _userManager.IsLockedOutAsync(user) || !await _userManager.IsEmailConfirmedAsync(user))
+        if (await _userManager.IsLockedOutAsync(user))
         {
-            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
-            if (isPasswordCorrect)
-            {
-                LogLockoutOrEmailIssue(userName, await _userManager.IsLockedOutAsync(user), !await _userManager.IsEmailConfirmedAsync(user));
-                throw new UnauthorizedException(LoggingEvents.Account.InvalidLoginAttempt);
-            }
+            _logger.LogWarning(LoggingEvents.Account.AccountLockedFormat, userName);
+
+            return (SignInResult.LockedOut, user);
         }
 
-        return user;
+        if (!await _userManager.IsEmailConfirmedAsync(user))
+        {
+            _logger.LogWarning(LoggingEvents.Account.EmailNotConfirmedFormat, userName);
+
+            return (SignInResult.NotAllowed, user);
+        }
+
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
+        if (!isPasswordValid)
+        {
+            LogLockoutOrEmailIssue(userName, await _userManager.IsLockedOutAsync(user), !await _userManager.IsEmailConfirmedAsync(user));
+
+            return (SignInResult.Failed, user);
+        }
+
+        return (SignInResult.Success, user);
     }
 
     private async Task SimulateInvalidLoginDelay(string userName)

@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
@@ -19,6 +20,11 @@ public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<
     public async Task<Result<UserLoginVm>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
     {
         var (result, user) = await _identityService.UserLogin(request.UserName, request.Password, true);
+
+        if (user == null || result == null || !result.Succeeded)
+        {
+            return await Result<UserLoginVm>.FailureAsync(LoggingEvents.Account.InvalidLoginAttempt);
+        }
 
         UserLoginVm model = new UserLoginVm
         {

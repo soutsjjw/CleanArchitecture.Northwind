@@ -5,19 +5,19 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.ViewModels;
+using NToastNotify;
 
 namespace Mvc.Controllers;
 
 [AllowAnonymous]
-public class AccountController : BaseController
+public class AccountController : BaseController<AccountController>
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly ILogger<AccountController> _logger;
 
-    public AccountController(SignInManager<ApplicationUser> signInManager, ILogger<AccountController> logger)
+    public AccountController(SignInManager<ApplicationUser> signInManager, IToastNotification toastNotification, ILogger<AccountController> logger)
+        : base(toastNotification, logger)
     {
         _signInManager = signInManager;
-        _logger = logger;
     }
 
     [HttpGet]
@@ -43,31 +43,34 @@ public class AccountController : BaseController
     {
         returnUrl ??= Url.Content("~/");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var result = await Mediator.Send(new UserLoginCommand { UserName = viewModel.Email, Password = viewModel.Password });
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User logged in.");
-                return LocalRedirect(returnUrl);
-            }
-            //if (result.RequiresTwoFactor)
-            //{
-            //    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-            //}
-            //if (result.IsLockedOut)
-            //{
-            //    _logger.LogWarning("User account locked out.");
-            //    return RedirectToPage("./Lockout");
-            //}
-            //else
-            //{
-            //    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-            //    return Page();
-            //}
+            return View(viewModel);
         }
 
-        ViewBag.Error = "帳號或密碼錯誤";
+        var result = await Mediator.Send(new UserLoginCommand { UserName = viewModel.Email, Password = viewModel.Password });
+        if (result.Succeeded)
+        {
+            _logger.LogInformation("User logged in.");
+            return LocalRedirect(returnUrl);
+        }
+        //if (result.RequiresTwoFactor)
+        //{
+        //    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+        //}
+        //if (result.IsLockedOut)
+        //{
+        //    _logger.LogWarning("User account locked out.");
+        //    return RedirectToPage("./Lockout");
+        //}
+        //else
+        //{
+        //    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+        //    return Page();
+        //}
+
+        base.ShowErrorToast("登入失敗", result.Errors?.ToList());
+
         return View(viewModel);
     }
 

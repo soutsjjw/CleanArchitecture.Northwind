@@ -10,7 +10,7 @@ public interface IIdentityService
 
     Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies);
 
-    Task<AccessTokenResponse> UserLoginByAPI(string userName, string password);
+    Task<(SignInResult, AccessTokenResponse? token)> UserLoginByAPI(string userName, string password);
 
     Task<string> GenerateEmailConfirmationTokenAsync(string userId);
 
