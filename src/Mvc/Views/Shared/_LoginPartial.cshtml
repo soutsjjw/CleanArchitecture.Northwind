@@ -8,7 +8,7 @@
     @if (SignInManager.IsSignedIn(User))
     {
         <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-            <span class="avatar avatar-sm" style="background-image: url(./images/@(User.FindFirst(nameof(ApplicationUserProfile.Gender))?.Value).png)"></span>
+            <span class="avatar avatar-sm" style="background-image: url(../images/@(User.FindFirst(nameof(ApplicationUserProfile.Gender))?.Value).png)"></span>
             <div class="d-none d-xl-block ps-2">
                 <div>@User.FindFirst(nameof(ApplicationUserProfile.FullName))?.Value</div>
                 <div class="mt-1 small text-secondary">@User.FindFirst(nameof(ApplicationUserProfile.Title))?.Value</div>
@@ -27,7 +27,7 @@
     else
     {
         <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-            <span class="avatar avatar-sm" style="background-image: url(./images/Unknow.png)"></span>
+            <span class="avatar avatar-sm" style="background-image: url(../images/Unknow.png)"></span>
             <div class="d-none d-xl-block ps-2">
                 <div>未登入</div>
             </div>
