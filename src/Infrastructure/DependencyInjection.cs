@@ -1,7 +1,9 @@
 ﻿using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
 using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Infrastructure.Configurations;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
@@ -14,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -79,6 +82,10 @@ public static class DependencyInjection
         services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
 
+        services.Configure<IdentitySettings>(configuration.GetSection("IdentitySettings"))
+            .AddSingleton(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value)
+            .AddSingleton<IIdentitySettings>(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value);
+
         #endregion
 
         #region DataProtection
@@ -120,22 +127,25 @@ public static class DependencyInjection
         services
             .AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
+                var identitySettings = configuration.GetRequiredSection("IdentitySettings").Get<IdentitySettings>();
+                identitySettings = identitySettings ?? new IdentitySettings();
+
                 // SignIn 設定
                 options.SignIn.RequireConfirmedEmail = true;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
 
                 // 密碼規則設定
-                options.Password.RequireDigit = true;                               // 是否需要數字
-                options.Password.RequiredLength = 12;                               // 最小長度
-                options.Password.RequireNonAlphanumeric = true;                     // 是否需要非字母數字字符
-                options.Password.RequireUppercase = true;                           // 是否需要大寫字母
-                options.Password.RequireLowercase = true;                           // 是否需要小寫字母
-                options.Password.RequiredUniqueChars = 4;                           // 需要的唯一字符數量
+                options.Password.RequireDigit = identitySettings.RequireDigit;
+                options.Password.RequiredLength = identitySettings.RequiredLength;
+                options.Password.RequireNonAlphanumeric = identitySettings.RequireNonAlphanumeric;
+                options.Password.RequireUppercase = identitySettings.RequireUpperCase;
+                options.Password.RequireLowercase = identitySettings.RequireLowerCase;
+                options.Password.RequiredUniqueChars = identitySettings.RequiredUniqueChars;
 
                 // 鎖定設定
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);  // 鎖定時間
-                options.Lockout.MaxFailedAccessAttempts = 5;                        // 登入失敗次數
-                options.Lockout.AllowedForNewUsers = true;                          // 新使用者是否可以被鎖定
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(identitySettings.DefaultLockoutTimeSpan);
+                options.Lockout.MaxFailedAccessAttempts = identitySettings.MaxFailedAccessAttempts;
+                options.Lockout.AllowedForNewUsers = identitySettings.AllowedForNewUsers;
 
                 // 使用 Email 傳遞密碼重置令牌
                 options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
