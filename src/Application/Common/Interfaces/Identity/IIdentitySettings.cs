@@ -36,7 +36,7 @@ public interface IIdentitySettings
     /// <summary>
     /// 密碼需要的唯一字符數量
     /// </summary>
-    bool RequiredUniqueChars { get; }
+    int RequiredUniqueChars { get; }
 
     // Lockout settings.
     /// <summary>
@@ -53,4 +53,9 @@ public interface IIdentitySettings
     /// 新使用者是否可以被鎖定
     /// </summary>
     bool AllowedForNewUsers { get; }
+
+    /// <summary>
+    /// 使用者註冊確認網址
+    /// </summary>
+    string ConfirmEmailTokenUrl { get; }
 }

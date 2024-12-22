@@ -3,10 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Exceptions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Models.Letter;
-using CleanArchitecture.Northwind.Application.Common.Settings;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
@@ -38,7 +37,8 @@ public class IdentityService : IIdentityService
     private static readonly EmailAddressAttribute _emailAddressAttribute = new();
 
     private readonly ILogger<IdentityService> _logger;
-    private readonly IOptions<AppConfigurationSettings> _appConfig;
+    private readonly IAppConfigurationSettings _appConfig;
+    private readonly IIdentitySettings _identitySettings;
 
     public IdentityService(
         IApplicationDbContext context,
@@ -53,7 +53,8 @@ public class IdentityService : IIdentityService
         IMailService mailService,
         IDataProtectionService dataProtectionService,
         ILogger<IdentityService> logger,
-        IOptions<AppConfigurationSettings> appConfig)
+        IAppConfigurationSettings appConfig,
+        IIdentitySettings identitySettings)
     {
         _context = context;
         _configuration = configuration;
@@ -71,6 +72,7 @@ public class IdentityService : IIdentityService
 
         _logger = logger;
         _appConfig = appConfig;
+        _identitySettings = identitySettings;
     }
 
     public async Task<string> UserRegisterAsync(string userName, string password)
@@ -372,16 +374,16 @@ public class IdentityService : IIdentityService
         return result.ToApplicationResult();
     }
 
-    public async Task<bool> SendConfirmationEmailAsync(string userId, string email, string confirmationLink)
+    public async Task<bool> SendConfirmationEmailAsync(string userId, string email)
     {
         var token = await GenerateEmailConfirmationTokenAsync(userId);
-        confirmationLink = $"{confirmationLink}?token={token}&email={email}";
+        var confirmationLink = $"{_appConfig.SiteUrl}{_identitySettings.ConfirmEmailTokenUrl}?token={token}&email={email}";
 
         // 信件內容
         var letterModel = new ConfirmationEmailLetterModel()
         {
-            SystemName = _appConfig.Value.SystemName,
-            SiteUrl = _appConfig.Value.SiteUrl,
+            SystemName = _appConfig.SystemName,
+            SiteUrl = _appConfig.SiteUrl,
             UserName = email,
             ConfirmationLink = confirmationLink
         };
@@ -392,7 +394,7 @@ public class IdentityService : IIdentityService
         return await _mailService.SendAsync(new MailRequest
         {
             To = email,
-            Subject = $"歡迎加入 {_appConfig.Value.SystemName}！請驗證你的電子郵件地址",
+            Subject = $"歡迎加入 {_appConfig.SystemName}！請驗證你的電子郵件地址",
             Body = html,
         });
     }
@@ -416,8 +418,8 @@ public class IdentityService : IIdentityService
         // 信件內容
         var letterModel = new ForgotPasswordLetterModel()
         {
-            SystemName = _appConfig.Value.SystemName,
-            SiteUrl = _appConfig.Value.SiteUrl,
+            SystemName = _appConfig.SystemName,
+            SiteUrl = _appConfig.SiteUrl,
 
             UserName = user.UserName ?? "",
             ResetCodeLink = resetCodeLink
@@ -429,7 +431,7 @@ public class IdentityService : IIdentityService
         return await _mailService.SendAsync(new MailRequest
         {
             To = user.Email ?? "",
-            Subject = $"重設你的 {_appConfig.Value.SystemName} 密碼",
+            Subject = $"重設你的 {_appConfig.SystemName} 密碼",
             Body = html,
         });
     }

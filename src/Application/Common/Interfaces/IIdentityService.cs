@@ -32,7 +32,7 @@ public interface IIdentityService
 
     Task<Result> DeleteUserAsync(string userId);
 
-    Task<bool> SendConfirmationEmailAsync(string userId, string email, string confirmationLink);
+    Task<bool> SendConfirmationEmailAsync(string userId, string email);
 
     Task<bool> SendForgotPasswordEmailAsync(string userId, string email, string resetCodeLink);
 

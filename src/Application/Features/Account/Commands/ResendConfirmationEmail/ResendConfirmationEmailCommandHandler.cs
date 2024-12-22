@@ -32,7 +32,7 @@ public class ResendConfirmationEmailCommandHandler : IRequestHandler<ResendConfi
             return await Result.SuccessAsync();
         }
 
-        var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email, request.ConfirmationLink);
+        var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email);
 
         if (!sendEmailResult)
         {

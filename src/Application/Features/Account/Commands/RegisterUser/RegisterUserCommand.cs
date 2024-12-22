@@ -2,13 +2,11 @@
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
 
-public record UserRegisterCommand : IRequest<Result>
+public record RegisterUserCommand : IRequest<Result>
 {
     public required string Email { get; init; }
 
     public required string Password { get; init; }
-
-    public string ConfirmationLink { get; set; } = "";
 
     public required string FullName { get; set; }
 

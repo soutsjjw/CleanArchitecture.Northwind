@@ -54,10 +54,15 @@ public class IdentitySettings : IIdentitySettings
     /// <summary>
     /// 登入失敗次數
     /// </summary>
-    public int MaxFailedAccessAttempts { get; } = 5;
+    public int MaxFailedAccessAttempts { get; set; } = 5;
 
     /// <summary>
     /// 新使用者是否可以被鎖定
     /// </summary>
-    public bool AllowedForNewUsers { get; } = true;
+    public bool AllowedForNewUsers { get; set; } = true;
+
+    /// <summary>
+    /// 使用者註冊確認網址
+    /// </summary>
+    public string ConfirmEmailTokenUrl { get; set; } = "";
 }

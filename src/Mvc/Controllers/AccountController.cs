@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -104,5 +105,42 @@ public class AccountController : BaseController<AccountController>
     public IActionResult Register()
     {
         return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            // 如果前端驗證失敗，返回 View 並顯示錯誤訊息
+            return View(model);
+        }
+
+        // 將 ViewModel 轉換為 Command
+        var command = new RegisterUserCommand
+        {
+            Email = model.Email,
+            Password = model.Password,
+            FullName = model.FullName,
+            IDNo = model.IDNo,
+            Title = model.Title
+        };
+
+        // 呼叫 Application 層的處理器
+        var result = await Mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            // 如果註冊失敗，將錯誤訊息加入 ModelState 並返回 View
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+            return View(model);
+        }
+
+        // 註冊成功，重定向至其他頁面或顯示成功訊息
+        return RedirectToAction("RegisterSuccess");
     }
 }

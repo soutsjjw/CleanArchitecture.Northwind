@@ -6,22 +6,22 @@ using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
 
-public class UserRegisterCommandHandler : IRequestHandler<UserRegisterCommand, Result>
+public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Result>
 {
     private readonly IApplicationDbContext _context;
     private readonly IIdentityService _identityService;
-    private readonly ILogger<UserRegisterCommandHandler> _logger;
+    private readonly ILogger<RegisterUserCommandHandler> _logger;
 
-    public UserRegisterCommandHandler(IApplicationDbContext context,
+    public RegisterUserCommandHandler(IApplicationDbContext context,
         IIdentityService identityService,
-        ILogger<UserRegisterCommandHandler> logger)
+        ILogger<RegisterUserCommandHandler> logger)
     {
         _context = context;
         _identityService = identityService;
         _logger = logger;
     }
 
-    public async Task<Result> Handle(UserRegisterCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var userId = await _identityService.UserRegisterAsync(request.Email, request.Password);
 
@@ -46,7 +46,7 @@ public class UserRegisterCommandHandler : IRequestHandler<UserRegisterCommand, R
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email, request.ConfirmationLink);
+        var sendEmailResult = await _identityService.SendConfirmationEmailAsync(userId, request.Email);
 
         if (!sendEmailResult)
         {

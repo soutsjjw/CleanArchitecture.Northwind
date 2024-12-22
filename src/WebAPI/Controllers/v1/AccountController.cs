@@ -27,9 +27,9 @@ public class AccountController : ApiController
 
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserRegisterCommand request)
+    public async Task<IActionResult> Register([FromBody] RegisterUserCommand request)
     {
-        request.ConfirmationLink = Url.Action("ConfirmEmail", "Account", null, Request.Scheme) ?? "";
+        //request.ConfirmationLink = Url.Action("ConfirmEmail", "Account", null, Request.Scheme) ?? "";
 
         return Ok(await Mediator.Send(request));
     }

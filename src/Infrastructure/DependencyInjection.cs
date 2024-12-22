@@ -78,7 +78,11 @@ public static class DependencyInjection
 
         #region 設置
 
-        services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"));
+        services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"))
+            .AddSingleton(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value)
+            .AddSingleton<IAppConfigurationSettings>(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value);
+
+
         services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
 

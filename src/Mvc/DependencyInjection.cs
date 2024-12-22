@@ -2,6 +2,9 @@
 using CleanArchitecture.Northwind.Mvc.Infrastructure;
 using CleanArchitecture.Northwind.Mvc.Services;
 using CleanArchitecture.Northwind.Mvc.StartupExtensions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using NToastNotify;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -16,6 +19,12 @@ public static class DependencyInjection
         services.AddScoped<IUser, CurrentUser>();
 
         services.AddHttpContextAccessor();
+
+        services.AddScoped<IUrlHelper>(s =>
+        {
+            var actionContext = s.GetRequiredService<IActionContextAccessor>().ActionContext;
+            return new UrlHelper(actionContext);
+        });
 
         services.AddExceptionHandler<CustomExceptionHandler>();
 

@@ -1,4 +1,5 @@
-﻿@{
+﻿@model RegisterViewModel
+@{
     Layout = "~/Views/Shared/_LayoutEmpty.cshtml";
     ViewData["Title"] = "帳號註冊";
 }
@@ -9,21 +10,17 @@
             <img src="~/images/logo.svg" width="110" height="32" alt="Tabler" class="navbar-brand-image">
         </a>
     </div>
-    <form class="card card-md" action="./" method="get" autocomplete="off" novalidate>
+    <form asp-controller="Account" asp-action="Register" method="post" autocomplete="off" novalidate>
         <div class="card-body">
             <h2 class="card-title text-center mb-4">@ViewData["Title"]</h2>
             <div class="mb-3">
-                <label class="form-label">Name</label>
-                <input type="text" class="form-control" placeholder="Enter name">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" class="form-control" placeholder="your@email.com" />
             </div>
             <div class="mb-3">
-                <label class="form-label">Email address</label>
-                <input type="email" class="form-control" placeholder="Enter email">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Password</label>
+                <label asp-for="Password" class="form-label">密碼</label>
                 <div class="input-group input-group-flat">
-                    <input type="password" class="form-control" placeholder="Password" autocomplete="off">
+                    <input asp-for="Password" class="form-control" type="password" autocomplete="off" placeholder="請輸入密碼" />
                     <span class="input-group-text">
                         <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
                             <!-- Download SVG icon from http://tabler-icons.io/i/eye -->
@@ -33,9 +30,25 @@
                 </div>
             </div>
             <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label">確認密碼</label>
+                <input asp-for="ConfirmPassword" class="form-control" placeholder="確認密碼" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label">姓名</label>
+                <input asp-for="FullName" class="form-control" placeholder="你的姓名" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="IDNo" class="form-label">身分證號</label>
+                <input asp-for="IDNo" class="form-control" placeholder="身分證號" />
+            </div>
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label">職稱</label>
+                <input asp-for="Title" class="form-control" placeholder="職稱" />
+            </div>
+            <div class="mb-3">
                 <label class="form-check">
-                    <input type="checkbox" class="form-check-input" />
-                    <span class="form-check-label">Agree the <a href="./terms-of-service.html" tabindex="-1">terms and policy</a>.</span>
+                    <input asp-for="AgreeToTerms" type="checkbox" class="form-check-input" />
+                    <span class="form-check-label">同意<a asp-controller="Home" asp-action="TermsOfService" tabindex="-1">條款</a>與<a asp-controller="Home" asp-action="Privacy" tabindex="-1">政策</a></span>
                 </label>
             </div>
             <div class="form-footer">
@@ -47,3 +60,8 @@
         Already have account? <a href="./sign-in.html" tabindex="-1">Sign in</a>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validate/jquery.validate.min.js" defer></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" defer></script>
+}
