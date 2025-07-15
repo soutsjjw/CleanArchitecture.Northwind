@@ -4,64 +4,176 @@
     ViewData["Title"] = "帳號註冊";
 }
 
-<div class="container container-tight py-4">
-    <div class="text-center mb-4">
-        <a href="." class="navbar-brand navbar-brand-autodark">
-            <img src="~/images/logo.svg" width="110" height="32" alt="Tabler" class="navbar-brand-image">
-        </a>
-    </div>
-    <form asp-controller="Account" asp-action="Register" method="post" autocomplete="off" novalidate>
-        <div class="card-body">
-            <h2 class="card-title text-center mb-4">@ViewData["Title"]</h2>
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label">Email</label>
-                <input asp-for="Email" class="form-control" placeholder="your@email.com" />
+<div class="auth-content">
+    <div class="card">
+        <div class="card-body text-center">
+            <div class="mb-4">
+                <img class="brand" src="@Url.Content("~/images/bootstraper-logo.png")" alt="bootstraper logo">
             </div>
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label">密碼</label>
-                <div class="input-group input-group-flat">
-                    <input asp-for="Password" class="form-control" type="password" autocomplete="off" placeholder="請輸入密碼" />
-                    <span class="input-group-text">
-                        <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
-                            <!-- Download SVG icon from http://tabler-icons.io/i/eye -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
-                        </a>
-                    </span>
+            <h4 class="mb-4 text-muted">帳號註冊</h4>
+            <form id="frmForm" asp-controller="Account" asp-action="Register" method="post" autocomplete="off" novalidate>
+                <div class="mb-3 text-start">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" placeholder="your@email.com" />
                 </div>
-            </div>
-            <div class="mb-3">
-                <label asp-for="ConfirmPassword" class="form-label">確認密碼</label>
-                <input asp-for="ConfirmPassword" class="form-control" placeholder="確認密碼" />
-            </div>
-            <div class="mb-3">
-                <label asp-for="FullName" class="form-label">姓名</label>
-                <input asp-for="FullName" class="form-control" placeholder="你的姓名" />
-            </div>
-            <div class="mb-3">
-                <label asp-for="IDNo" class="form-label">身分證號</label>
-                <input asp-for="IDNo" class="form-control" placeholder="身分證號" />
-            </div>
-            <div class="mb-3">
-                <label asp-for="Title" class="form-label">職稱</label>
-                <input asp-for="Title" class="form-control" placeholder="職稱" />
-            </div>
-            <div class="mb-3">
-                <label class="form-check">
-                    <input asp-for="AgreeToTerms" type="checkbox" class="form-check-input" />
-                    <span class="form-check-label">同意<a asp-controller="Home" asp-action="TermsOfService" tabindex="-1">條款</a>與<a asp-controller="Home" asp-action="Privacy" tabindex="-1">政策</a></span>
-                </label>
-            </div>
-            <div class="form-footer">
-                <button type="submit" class="btn btn-primary w-100">Create new account</button>
-            </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="Password" class="form-label">密碼</label>
+                    <div class="input-group input-group-flat">
+                        <input asp-for="Password" class="form-control" type="password" autocomplete="off" placeholder="請輸入密碼" />
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-eye-slash" id="togglePassword"
+                               style="cursor: pointer" onclick="togglePassword('Password')"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="ConfirmPassword" class="form-label">確認密碼</label>
+                    <div class="input-group input-group-flat">
+                        <input asp-for="ConfirmPassword" class="form-control" type="password" autocomplete="off" placeholder="確認密碼" />
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-eye-slash" id="toggleConfirmPassword"
+                               style="cursor: pointer" onclick="togglePassword('ConfirmPassword')"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="FullName" class="form-label">姓名</label>
+                    <input asp-for="FullName" class="form-control" placeholder="你的姓名" />
+                </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="IDNo" class="form-label">身分證號</label>
+                    <input asp-for="IDNo" class="form-control" placeholder="身分證號" />
+                </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="Title" class="form-label">職稱</label>
+                    <input asp-for="Title" class="form-control" placeholder="職稱" />
+                </div>
+                <div class="mb-3 text-start">
+                    <label class="form-check">
+                        <input asp-for="AgreeToTerms" type="checkbox" class="form-check-input" />
+                        <span class="form-check-label">
+                            同意<a href="#" tabindex="-1" data-bs-toggle="modal" data-bs-target="#termsOfServiceModal">條款</a>與
+                            <a href="#" tabindex="-1" data-bs-toggle="modal" data-bs-target="#privacyPolicyModal">政策</a>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary w-100">
+                            建立帳號
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <a class="btn btn-secondary w-100" asp-action="Login">返回登入</a>
+                    </div>
+                </div>
+            </form>
         </div>
-    </form>
-    <div class="text-center text-secondary mt-3">
-        Already have account? <a href="./sign-in.html" tabindex="-1">Sign in</a>
     </div>
+
 </div>
 
+<partial name="_TermsOfServicePartial" />
+<partial name="_PrivacyPolicyPartial" />
+
 @section Scripts {
-    <script src="~/lib/jquery-validate/jquery.validate.min.js" defer></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" defer></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $("#frmForm").validate({
+            errorClass: "input-validation-error",
+            errorPlacement: function() {},
+            rules: {
+                Email: {
+                    required: true,
+                    email: true,
+                },
+                Password: {
+                    required: true,
+                    minlength: 12,
+                    pwHasDigit: true,
+                    pwHasSpecial: true,
+                    pwHasUpper: true,
+                    pwHasLower: true
+                },
+                ConfirmPassword: {
+                    required: true,
+                    equalTo: "#Password"
+                },
+                FullName: {
+                    required: true
+                },
+                Title: {
+                    required: true
+                },
+                AgreeToTerms: {
+                    required: true
+                }
+            },
+            messages: {
+                Email: {
+                    required: $("#Email").data("val-required"),
+                    email: $("#Email").data("val-email"),
+                },
+                Password: {
+                    required: $("#Password").data("val-required"),
+                    minlength: "新密碼長度最少為12碼"
+                },
+                ConfirmPassword: {
+                    required: $("#ConfirmPassword").data("val-required"),
+                    equalTo: $("#ConfirmPassword").data("val-equalto")
+                },
+                FullName: {
+                    required: $("#FullName").data("val-required")
+                },
+                Title: {
+                    required: $("#Title").data("val-required")
+                },
+                AgreeToTerms: {
+                    required: $("#AgreeToTerms").data("val-required") || "請先同意條款與政策"
+                }
+            },
+            invalidHandler: function(event, validator) {
+                toastr.clear();
+
+                for(var i = 0; i < validator.errorList.length; i++) {
+                    toastr.error(validator.errorList[i].message);
+                }
+            },
+            submitHandler: function(form) {
+                $("#loadingOverlay").removeClass("d-none");
+                form.submit();
+            }
+        });
+
+        // 自訂驗證規則
+        $.validator.addMethod("pwHasDigit", function(value) {
+            return /\d/.test(value);
+        }, "新密碼必須包含數字");
+
+        $.validator.addMethod("pwHasSpecial", function(value) {
+            return /[^\w\d]/.test(value);
+        }, "新密碼必須包含非字母數字符");
+
+        $.validator.addMethod("pwHasUpper", function(value) {
+            return /[A-Z]/.test(value);
+        }, "新密碼必須包含大寫字母");
+
+        $.validator.addMethod("pwHasLower", function(value) {
+            return /[a-z]/.test(value);
+        }, "新密碼必須包含小寫字母");
+
+        var isConfirmTermsOfService = false;
+        var isConfirmPrivacyPolicy = false;
+        function checkAgreeToTerms() {
+            $("#AgreeToTerms").prop('checked', isConfirmTermsOfService && isConfirmPrivacyPolicy);
+        }
+
+        $('#AgreeToTerms').change(function() {
+            if (this.checked) {
+                isConfirmTermsOfService = isConfirmPrivacyPolicy = true;
+            }
+        });
+    </script>
 }

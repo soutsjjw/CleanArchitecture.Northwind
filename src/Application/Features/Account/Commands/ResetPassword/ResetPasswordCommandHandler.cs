@@ -17,9 +17,8 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
 
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        await _identityService.ResetPasswordAsync(request.Email, request.ResetCode, request.NewPassword);
-
-        // 回傳成功是為了避免被猜出使用者帳號
-        return await Result.SuccessAsync();
+        return await _identityService.ResetPasswordAsync(request.Email, request.ResetCode, request.NewPassword)
+            ? await Result.SuccessAsync()
+            : await Result.FailureAsync("重設密碼失敗，請確認您的電子郵件、驗證碼和新密碼是否正確。");
     }
 }

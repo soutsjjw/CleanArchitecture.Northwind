@@ -1,21 +1,11 @@
 ﻿@using Microsoft.Extensions.Configuration
 @inject IConfiguration Configuration
 
-@await Component.InvokeAsync("NToastNotify")
-
 @{
     Layout = null;
 }
 
 <!doctype html>
-<!--
-* Tabler - Premium and Open Source dashboard template with responsive and high quality UI.
-* @@version 1.0.0-beta20
-* @@!link https://tabler.io
-* Copyright 2018-2023 The Tabler Authors
-* Copyright 2018-2023 codecalm.net Paweł Kuna
-* Licensed under MIT (https://github.com/tabler/tabler/blob/master/LICENSE)
--->
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -23,36 +13,25 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>@ViewData["Title"] - @Configuration["AppConfigurationSettings:SystemName"]</title>
     <!-- CSS files -->
-    <link href="~/lib/tabler/css/tabler.min.css?1692870487" rel="stylesheet" />
-    <link href="~/lib/tabler/css/tabler-flags.min.css?1692870487" rel="stylesheet" />
-    <link href="~/lib/tabler/css/tabler-payments.min.css?1692870487" rel="stylesheet" />
-    <link href="~/lib/tabler/css/tabler-vendors.min.css?1692870487" rel="stylesheet" />
-    <link href="~/lib/tabler/css/demo.min.css?1692870487" rel="stylesheet" />
-    <style>
-        @@import url('https://rsms.me/inter/inter.css');
-
-        :root {
-            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
-        }
-
-        body {
-            font-feature-settings: "cv03", "cv04", "cv11";
-        }
-    </style>
-    <link href="~/lib/toastr.js/toastr.min.css" rel="stylesheet" />
+    <link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet">
+    <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/toastr.js/toastr.css" rel="stylesheet" />
+    <link href="~/css/auth.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class=" d-flex flex-column">
-    <script src="~/lib/tabler/js/demo-theme.min.js?1692870487"></script>
-    <div class="page page-center">
+<body>
+    <div class="wrapper">
         @RenderBody()
+        @Html.Partial("_LoadingPartial")
     </div>
     <!-- Libs JS -->
-    <!-- Tabler Core -->
-    <script src="~/lib/tabler/js/tabler.min.js?1692870487" defer></script>
-    <script src="~/lib/tabler/js/demo.min.js?1692870487" defer></script>
-    <script src="~/lib/jquery/jquery.min.js" defer></script>
-    <script src="~/lib/toastr.js/toastr.min.js" defer></script>
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="~/lib/toastr.js/toastr.min.js"></script>
+    <script src="~/js/script.js"></script>
+    @* @await Component.InvokeAsync("NToastNotify") *@
+    @await Component.InvokeAsync("Toast")
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

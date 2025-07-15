@@ -210,7 +210,6 @@ public class IdentityService : IIdentityService
         return (SignInResult.Success, await GenerateTokenResponseAsync(user));
     }
 
-
     public async Task<AccessTokenResponse> RefreshByAPI(string refreshToken)
     {
         ClaimsPrincipal userPrincipal = null;
@@ -459,6 +458,17 @@ public class IdentityService : IIdentityService
         };
 
         return tokenResponse;
+    }
+
+    public async Task SignOutAsync()
+    {
+        await _signInManager.SignOutAsync();
+        _logger.LogInformation("使用者已成功登出");
+    }
+
+    public bool IsSignedIn(ClaimsPrincipal user)
+    {
+        return _signInManager.IsSignedIn(user);
     }
 
     #region Private

@@ -4,43 +4,81 @@
     ViewData["Title"] = "帳號登入";
 }
 
-<div class="container container-tight py-4">
-    <div class="text-center mb-4">
-        <a href="." class="navbar-brand navbar-brand-autodark">
-            <img src="~/images/logo.svg" width="110" height="32" alt="Tabler" class="navbar-brand-image">
-        </a>
-    </div>
-    <div class="card card-md">
-        <div class="card-body">
-            <h2 class="h2 text-center mb-4">@ViewData["Title"]</h2>
-            <form asp-controller="Account" asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" autocomplete="off" novalidate>
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input asp-for="Email" class="form-control" placeholder="your@email.com" />
+<div class="auth-content">
+    <div class="card">
+        <div class="card-body text-center">
+            <div class="mb-4">
+                <img class="brand" src="@Url.Content("~/images/bootstraper-logo.png")" alt="bootstraper logo">
+            </div>
+            <h4 class="mb-4 text-muted">帳號登入</h4>
+            <form id="frmForm" asp-controller="Account"
+                  asp-action="Login" method="post" autocomplete="off" novalidate>
+                <div class="mb-3 text-start">
+                    <label asp-for="Email" class="form-label">Email</label>
+                    <input asp-for="Email" class="form-control" placeholder="輸入 Email">
                 </div>
-                <div class="mb-2">
-                    <label class="form-label">
-                        密碼
-                        <span class="form-label-description">
-                            <a href="./forgot-password.html">忘記密碼</a>
-                        </span>
-                    </label>
+                <div class="mb-3 text-start">
+                    <label asp-for="Password" class="form-label">密碼</label>
                     <div class="input-group input-group-flat">
-                        <input asp-for="Password" class="form-control" placeholder="密碼" />
+                        <input asp-for="Password" class="form-control" type="password" autocomplete="off" placeholder="請輸入密碼" />
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-eye-slash" id="togglePassword"
+                               style="cursor: pointer" onclick="togglePassword('Password')"></i>
+                        </span>
                     </div>
                 </div>
-                <div class="form-footer">
-                    <button type="submit" class="btn btn-primary w-100">登入</button>
+                <div class="mb-3 text-start">
+                    <div class="form-check">
+                        <input class="form-check-input" name="remember" type="checkbox" value="" id="check1">
+                        <label class="form-check-label" for="check1">
+                            在這裝置上記住我
+                        </label>
+                    </div>
                 </div>
+                <button type="submit" class="btn btn-primary mb-4" style="width:100%">登入</button>
             </form>
+            <p class="mb-2 text-muted">忘記密碼？ <a asp-action="ForgotPassword">重設</a></p>
+            <p class="mb-0 text-muted">還沒有帳號？ <a asp-action="Register">註冊帳號</a></p>
         </div>
-    </div>
-    <div class="text-center text-secondary mt-3">
-        還沒有帳號？ <a href="./sign-up.html" tabindex="-1">註冊帳號</a>
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/lib/jquery-validate/jquery.validate.min.js" defer></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js" defer></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $("#frmForm").validate({
+            errorClass: "input-validation-error",
+            errorPlacement: function() {},
+            rules: {
+                Email: {
+                    required: true,
+                    email: true,
+                },
+                Password: {
+                    required: true,
+                }
+            },
+            messages: {
+                Email: {
+                    required: $("#Email").data("val-required"),
+                    email: $("#Email").data("val-email"),
+                },
+                Password: {
+                    required: $("#Password").data("val-required"),
+                }
+            },
+            invalidHandler: function(event, validator) {
+                toastr.clear();
+
+                for(var i = 0; i < validator.errorList.length; i++) {
+                    toastr.error(validator.errorList[i].message);
+                }
+            },
+            submitHandler: function(form) {
+                $("#loadingOverlay").removeClass("d-none");
+                form.submit();
+            }
+        });
+    </script>
 }

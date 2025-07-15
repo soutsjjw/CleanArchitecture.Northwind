@@ -28,6 +28,8 @@ public class RegisterViewModel : IValidatableObject
     [Required(ErrorMessage = "請選擇職稱")]
     public string Title { get; set; }
 
+    //[Range(typeof(bool), "true", "true", ErrorMessage = "必須同意條款與政策")]
+    [Required(ErrorMessage = "必須同意條款與政策")]
     [Range(typeof(bool), "true", "true", ErrorMessage = "必須同意條款與政策")]
     public bool AgreeToTerms { get; set; } = true;
 

@@ -1,4 +1,5 @@
-﻿using CleanArchitecture.Northwind.Application.Common.Models;
+﻿using System.Security.Claims;
+using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -37,4 +38,8 @@ public interface IIdentityService
     Task<bool> SendForgotPasswordEmailAsync(string userId, string email, string resetCodeLink);
 
     Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user);
+
+    Task SignOutAsync();
+
+    bool IsSignedIn(ClaimsPrincipal user);
 }

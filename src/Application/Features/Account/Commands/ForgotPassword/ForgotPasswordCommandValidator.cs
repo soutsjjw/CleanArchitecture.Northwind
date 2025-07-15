@@ -5,6 +5,7 @@ public class ForgotPasswordCommandValidator : AbstractValidator<ForgotPasswordCo
     public ForgotPasswordCommandValidator()
     {
         RuleFor(x => x.Email)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("電子郵件不可為空")
             .EmailAddress().WithMessage("必須是有效的電子郵件格式");
     }

@@ -1,42 +1,8 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-}
-
-.validation-summary-errors {
-    border: 2px solid red;
-    color: red;
-    font-weight: bold;
-    margin: 6px;
-    width: 30%;
-}
-
-.field-validation-error {
-    color: red;
-    font-weight: bold;
-    background-color: yellow;
+﻿html {
+    font-size: 100%;
 }
 
 .input-validation-error {
-    color: red;
-    font-weight: bold;
-    background-color: pink;
+    border-color: #dc3545 !important; /* Bootstrap 的 danger 顏色 */
+    box-shadow: 0 0 0 .2rem rgba(220,53,69,.25);
 }

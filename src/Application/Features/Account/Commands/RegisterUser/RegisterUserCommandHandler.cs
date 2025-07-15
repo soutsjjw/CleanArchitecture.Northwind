@@ -2,6 +2,7 @@
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
@@ -23,7 +24,16 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
 
     public async Task<Result> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        var userId = await _identityService.UserRegisterAsync(request.Email, request.Password);
+        string userId;
+        try
+        {
+            userId = await _identityService.UserRegisterAsync(request.Email, request.Password);
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, LoggingEvents.Account.AccountRegistrationFailedFormat, request.Email);
+            return await Result.FailureAsync(LoggingEvents.Account.AccountRegistrationFailed);
+        }
 
         if (string.IsNullOrEmpty(userId))
         {

@@ -15,5 +15,9 @@ public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordComm
             .Matches(@"[^\w\d]").WithMessage("新密碼必須包含非字母數字符")
             .Matches(@"[A-Z]").WithMessage("新密碼必須包含大寫字母")
             .Matches(@"[a-z]").WithMessage("新密碼必須包含小寫字母");
+
+        RuleFor(x => x.ConfirmPassword)
+            .NotEmpty().WithMessage("確認密碼不可為空")
+            .Equal(x => x.NewPassword).WithMessage("確認密碼必須與新密碼相同");
     }
 }

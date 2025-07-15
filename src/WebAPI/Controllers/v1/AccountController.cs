@@ -76,7 +76,7 @@ public class AccountController : ApiController
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest resetRequest)
     {
         var resetCodeLink = Url.Action("ResetPassword", "Account", null, Request.Scheme) ?? "";
-        var result = await Mediator.Send(new ForgotPasswordCommand { Email = resetRequest.Email, ResetCodeLink = resetCodeLink });
+        var result = await Mediator.Send(new ForgotPasswordCommand { Email = resetRequest.Email, Link = resetCodeLink });
 
         return Ok(result);
     }
@@ -85,7 +85,13 @@ public class AccountController : ApiController
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest resetRequest)
     {
-        var result = await Mediator.Send(new ResetPasswordCommand { Email = resetRequest.Email, ResetCode = resetRequest.ResetCode, NewPassword = resetRequest.NewPassword });
+        var result = await Mediator.Send(new ResetPasswordCommand 
+        { 
+            Email = resetRequest.Email, 
+            ResetCode = resetRequest.ResetCode, 
+            NewPassword = resetRequest.NewPassword, 
+            ConfirmPassword = resetRequest.Email 
+        });
 
         return Ok(result);
     }

@@ -3,6 +3,7 @@ using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Settings;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -30,7 +31,7 @@ public class MailService : IMailService
         {
             using (var smtp = new SmtpClient())
             {
-                await smtp.ConnectAsync(_mailSettings.Host, _mailSettings.Port, false);
+                await smtp.ConnectAsync(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.None);
                 await smtp.AuthenticateAsync(_mailSettings.UserName, _mailSettings.Password);
                 await smtp.SendAsync(email);
                 await smtp.DisconnectAsync(true);

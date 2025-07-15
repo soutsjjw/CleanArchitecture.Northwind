@@ -5,7 +5,7 @@ using CleanArchitecture.Northwind.Mvc.StartupExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
-using NToastNotify;
+using Mvc.Filters;
 
 namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
@@ -28,7 +28,12 @@ public static class DependencyInjection
 
         services.AddExceptionHandler<CustomExceptionHandler>();
 
-        var mvcBuilder = services.AddControllersWithViews();
+        var mvcBuilder = services.AddControllersWithViews(options =>
+        {
+            // 注意：ActionFilter 要先於 ExceptionFilter 執行
+            options.Filters.Add<StoreActionArgumentsFilter>();
+            options.Filters.Add<ValidationExceptionFilter>();
+        });
 
         // 開發環境下，Razor 文件即時編譯
         if (env.IsDevelopment())
@@ -36,15 +41,11 @@ public static class DependencyInjection
             mvcBuilder.AddRazorRuntimeCompilation();
         }
 
-        mvcBuilder.AddNToastNotifyToastr(new ToastrOptions()
-        {
-            ProgressBar = false,
-            PositionClass = ToastPositions.BottomRight
-        });
-
         services.AddEndpointsApiExplorer();
 
         services.AddCustomizedMiddleware();
+
+
 
         return services;
     }

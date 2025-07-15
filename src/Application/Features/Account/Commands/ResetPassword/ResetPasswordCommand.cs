@@ -9,4 +9,6 @@ public record ResetPasswordCommand : IRequest<Result>
     public required string ResetCode { get; init; }
 
     public required string NewPassword { get; init; }
+
+    public required string ConfirmPassword { get; init; }
 }

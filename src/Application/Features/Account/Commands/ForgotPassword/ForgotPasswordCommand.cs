@@ -6,5 +6,5 @@ public record ForgotPasswordCommand : IRequest<Result>
 {
     public string Email { get; init; }
 
-    public string ResetCodeLink { get; init; }
+    public string Link { get; init; }
 }

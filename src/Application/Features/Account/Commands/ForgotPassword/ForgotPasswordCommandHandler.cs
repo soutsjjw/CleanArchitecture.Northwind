@@ -32,7 +32,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             return await Result.SuccessAsync();
         }
 
-        var sendEmailResult = await _identityService.SendForgotPasswordEmailAsync(userId, request.Email, request.ResetCodeLink);
+        var sendEmailResult = await _identityService.SendForgotPasswordEmailAsync(userId, request.Email, request.Link);
 
         if (!sendEmailResult)
         {

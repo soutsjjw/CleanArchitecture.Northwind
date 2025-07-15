@@ -1,0 +1,67 @@
+﻿@{
+    var infoMessages = ViewData["InfoMessages"] as List<string>;
+    var infoTitle = ViewData["InfoTitle"] as string;
+    var successMessages = ViewData["SuccessMessages"] as List<string>;
+    var successTitle = ViewData["SuccessTitle"] as string;
+    var warningMessages = ViewData["WarningMessages"] as List<string>;
+    var warningTitle = ViewData["WarningTitle"] as string;
+    var errorMessages = ViewData["ErrorMessages"] as List<string>;
+    var errorTitle = ViewData["ErrorTitle"] as string;
+}
+
+<script>
+    toastr.options = {
+      "closeButton": true,
+      "debug": false,
+      "newestOnTop": false,
+      "progressBar": true,
+      "positionClass": "toast-bottom-right",
+      "preventDuplicates": false,
+      "onclick": null,
+      "showDuration": "300",
+      "hideDuration": "1000",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    }
+</script>
+
+@if (infoMessages != null && infoMessages.Any())
+{
+    <script>
+        @foreach (var message in infoMessages)
+        {
+            <text>toastr.info('@message', '@infoTitle');</text>
+        }
+    </script>
+}
+@if (successMessages != null && successMessages.Any())
+{
+    <script>
+        @foreach(var message in successMessages)
+        {
+            <text>toastr.success('@message', '@successTitle');</text>
+        }
+    </script>
+}
+@if (warningMessages != null && warningMessages.Any())
+{
+    <script>
+        @foreach (var message in warningMessages)
+        {
+            <text>toastr.warning('@message', '@warningTitle');</text>
+        }
+    </script>
+}
+@if (errorMessages != null && errorMessages.Any())
+{
+    <script>
+        @foreach (var message in errorMessages)
+        {
+            <text>toastr.error('@message', '@errorTitle');</text>
+        }
+    </script>
+}
