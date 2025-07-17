@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddTransient<IDateTimeService, DateTimeService>();
         services.AddTransient<IMailService, MailService>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        services.AddSingleton<ICloudflareService, CloudflareService>();
 
         #endregion
 
@@ -82,13 +83,13 @@ public static class DependencyInjection
             .AddSingleton(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value)
             .AddSingleton<IAppConfigurationSettings>(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value);
 
-
-        services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
-        services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
-
         services.Configure<IdentitySettings>(configuration.GetSection("IdentitySettings"))
             .AddSingleton(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value)
             .AddSingleton<IIdentitySettings>(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value);
+
+        services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
+        services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
+        services.Configure<CloudflareOptions>(configuration.GetSection("Cloudflare"));
 
         #endregion
 

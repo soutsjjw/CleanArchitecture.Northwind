@@ -1,3 +1,4 @@
+using CleanArchitecture.Northwind.Infrastructure.Configurations;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Mvc.StartupExtensions;
 
@@ -14,6 +15,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
+
+    // 顯示 Cloudflare 配置
+    var cloudflare = builder.Configuration.GetSection("Cloudflare").Get<CloudflareOptions>();
+    Console.WriteLine($"SiteKey = {cloudflare.SiteKey}, SecretKey = {cloudflare.SecretKey}, SiteVerify = {cloudflare.SiteVerify}");
 }
 //else
 //{

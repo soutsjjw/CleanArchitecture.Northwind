@@ -15,13 +15,18 @@ namespace Mvc.Controllers;
 public class AccountController : BaseController<AccountController>
 {
     private readonly IIdentityService _identityService;
+    private readonly ICloudflareService _cloudflareService;
     private readonly IAppConfigurationSettings _appConfig;
 
+    private const string _AuthenticationFailedMessage = "驗證失敗，請重新嘗試";
+
     public AccountController(IIdentityService identityService,
+        ICloudflareService cloudflareService,
         IAppConfigurationSettings appConfig, ILogger<AccountController> logger)
         : base(logger)
     {
         _identityService = identityService;
+        _cloudflareService = cloudflareService;
         _appConfig = appConfig;
     }
 
@@ -55,6 +60,11 @@ public class AccountController : BaseController<AccountController>
     public async Task<IActionResult> Login([FromForm] LoginViewModel viewModel, [FromQuery] string returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
+
+        if (!await VerifyTurnstileAsync())
+        {
+            return View(viewModel).WithError(_AuthenticationFailedMessage);
+        }
 
         if (!ModelState.IsValid)
         {
@@ -156,6 +166,11 @@ public class AccountController : BaseController<AccountController>
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel viewModel)
     {
+        if (!await VerifyTurnstileAsync())
+        {
+            return View(viewModel).WithError(_AuthenticationFailedMessage);
+        }
+
         if (!ModelState.IsValid)
         {
             return View(viewModel).WithError(ModelState.CollectErrorMessages());
@@ -230,5 +245,19 @@ public class AccountController : BaseController<AccountController>
             }
             return View(viewModel).WithError(ModelState.CollectErrorMessages());
         }
+    }
+
+    private async Task<bool> VerifyTurnstileAsync()
+    {
+        var token = Request.Form["cf-turnstile-response"];
+        var isValidCaptcha = await _cloudflareService.VerifyTurnstileAsync(token);
+
+        if (!isValidCaptcha)
+        {
+            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
+            return false;
+        }
+
+        return true;
     }
 }
