@@ -162,9 +162,9 @@ public class ApplicationDbContextInitialiser
             _context.UserProfiles.Add(new ApplicationUserProfile
             {
                 UserId = user.Id,
-                FullName = "全名",
+                FullName = "ADMINISTRATOR",
                 Gender = Gender.Male,
-                Title = "職稱",
+                Title = "管理員",
                 Status = Status.Enabled,
                 Created = DateTime.Now,
                 CreatedBy = user.Id,
@@ -202,6 +202,7 @@ public class ApplicationDbContextInitialiser
                     FullName = roleName.ToUpper(),
                     Gender = (Gender)(randomNumber[0] % 3),
                     Title = roleName,
+                    IsTotpEnabled = false,
                     Status = Status.Enabled,
                     Created = DateTime.Now,
                     CreatedBy = adminUserId,

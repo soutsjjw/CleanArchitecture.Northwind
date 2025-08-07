@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 
@@ -15,6 +16,8 @@ public class UserLoginVm
     public string Title { get; set; }
 
     public string Status { get; set; }
+
+    public ApplicationUser User { get; set; }
 
     public SignInResult SignInResult { get; set; }
 }

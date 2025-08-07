@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241213074506_CreateIdentitySchema")]
+    [Migration("20250723133552_CreateIdentitySchema")]
     partial class CreateIdentitySchema
     {
         /// <inheritdoc />
@@ -250,6 +250,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("IDNo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsTotpEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("datetime2");
 
@@ -263,6 +266,12 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TotpRecoveryCodes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TotpSecretKey")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")

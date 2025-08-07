@@ -62,9 +62,10 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <code class="stacktrace-block">@Model.StackTrace</code>
+                                <code class="stacktrace-block" id="codeStackTrace">@Model.StackTrace</code>
                             </div>
                             <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" id="btnCopy">複製</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
                             </div>
                         </div>
@@ -89,6 +90,21 @@
                 var modal = document.getElementById('stackModal');
                 if (modal) modal.style.display = 'none';
             }
+        });
+
+        const input = document.getElementById('txt');
+
+        document.getElementById('btnCopy').addEventListener('click', async () => {
+          try {
+            // 從 input 取文字，或直接給字串
+            const text = document.getElementById('codeStackTrace').innerHTML;
+            // 非同步寫入剪貼簿
+            await navigator.clipboard.writeText(text);
+            alert('已複製錯誤訊息');
+          } catch (err) {
+            console.error('複製失敗：', err);
+            alert('瀏覽器不支援 Clipboard API，請手動複製');
+          }
         });
     </script>
 }

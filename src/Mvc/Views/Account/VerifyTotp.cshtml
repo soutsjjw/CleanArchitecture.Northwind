@@ -1,0 +1,33 @@
+﻿@using Mvc.ViewModels.Account
+@model TotpVerifyViewModel
+
+@{
+    Layout = "~/Views/Shared/_LayoutEmpty.cshtml";
+    ViewData["Title"] = "TOTP 驗證";
+}
+
+<div class="auth-content">
+    <div class="card">
+        <div class="card-body text-center">
+            <div class="mb-4">
+                <img class="brand" src="@Url.Content("~/images/bootstraper-logo.png")" alt="bootstraper logo">
+            </div>
+            <h4 class="mb-4 text-muted">TOTP 驗證</h4>
+            <form id="frmForm" asp-controller="Account"
+                  asp-action="VerifyTotp" method="post" autocomplete="off" novalidate>
+                <div class="mb-3 text-start">
+                    <label asp-for="Code" class="form-label">請輸入 TOTP 驗證碼：</label>
+                    <input asp-for="Code" class="form-control" placeholder="輸入驗證碼">
+                </div>
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary mb-4" style="width:100%">確認</button>
+                    </div>
+                    <div class="col-6">
+                        <a class="btn btn-secondary w-100" asp-action="Login">取消</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

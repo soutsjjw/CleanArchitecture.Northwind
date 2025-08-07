@@ -7,6 +7,8 @@ public static class LoggingEvents
         public const string UserNotFound = "使用不存在的帳號進行登入";
         public const string UserNotFoundFormat = "使用不存在的帳號 {UserName} 進行登入";
 
+        public const string UserProfileNotFoundFormat = "使用者 {UserId} 資料不存在";
+
         public const string AccountLocked = "帳號已被鎖定";
         public const string AccountLockedFormat = "{UserName} 帳號已被鎖定";
 

@@ -1,4 +1,4 @@
-﻿using ValidationException = CleanArchitecture.Northwind.Application.Common.Exceptions.ValidationException;
+﻿using CleanArchitecture.Northwind.Application.Common.Models;
 
 namespace CleanArchitecture.Northwind.Application.Common.Behaviours;
 public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -27,7 +27,28 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
                 .ToList();
 
             if (failures.Any())
+            {
+                // 若 TResponse 是 Result 或 Result<T>
+                var errorMessages = failures.Select(e => e.ErrorMessage).ToArray();
+
+                // 處理 Result<T>
+                var responseType = typeof(TResponse);
+                if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+                {
+                    var resultType = typeof(Result<>).MakeGenericType(responseType.GetGenericArguments()[0]);
+                    var failureMethod = resultType.GetMethod("Failure", new[] { typeof(IEnumerable<string>), typeof(int) });
+                    return (TResponse)failureMethod.Invoke(null, new object[] { errorMessages, 400 });
+                }
+                // 處理 Result
+                if (responseType == typeof(Result))
+                {
+                    return (TResponse)(object)Result.Failure(errorMessages, 400);
+                }
+
+                // 若不是 Result 型別，仍可選擇丟例外或回傳預設值
                 throw new ValidationException(failures);
+                //return default!;
+            }
         }
         return await next();
     }

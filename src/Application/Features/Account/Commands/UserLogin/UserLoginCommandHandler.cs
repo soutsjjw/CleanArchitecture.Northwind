@@ -34,6 +34,7 @@ public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<
             Gender = user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow),
             Title = user.Profile?.Title ?? "",
             Status = user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable),
+            User = user,
             SignInResult = result,
         };
 

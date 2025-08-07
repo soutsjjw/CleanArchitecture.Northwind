@@ -1,33 +1,45 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ForgotPassword;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResetPassword;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
+using CleanArchitecture.Northwind.Application.Features.Totp.Commands.EnableTotp;
+using CleanArchitecture.Northwind.Application.Features.Totp.Commands.GenerateTotp;
+using CleanArchitecture.Northwind.Application.Features.Totp.Commands.VerifyTotp;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;
 using Mvc.ViewModels;
+using Mvc.ViewModels.Account;
 
 namespace Mvc.Controllers;
 
 public class AccountController : BaseController<AccountController>
 {
+    private readonly IUser _user;
     private readonly IIdentityService _identityService;
     private readonly ICloudflareService _cloudflareService;
     private readonly IAppConfigurationSettings _appConfig;
+    private readonly IIdentitySettings _identitySettings;
 
     private const string _AuthenticationFailedMessage = "驗證失敗，請重新嘗試";
 
-    public AccountController(IIdentityService identityService,
+    public AccountController(IUser user,
+        IIdentityService identityService,
         ICloudflareService cloudflareService,
-        IAppConfigurationSettings appConfig, ILogger<AccountController> logger)
+        IAppConfigurationSettings appConfig,
+        IIdentitySettings identitySettings,
+        ILogger<AccountController> logger)
         : base(logger)
     {
+        _user = user;
         _identityService = identityService;
         _cloudflareService = cloudflareService;
         _appConfig = appConfig;
+        _identitySettings = identitySettings;
     }
 
     [HttpGet]
@@ -57,7 +69,7 @@ public class AccountController : BaseController<AccountController>
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login([FromForm] LoginViewModel viewModel, [FromQuery] string returnUrl = null)
+    public async Task<IActionResult> LoginAsync([FromForm] LoginViewModel viewModel, [FromQuery] string returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
 
@@ -71,32 +83,32 @@ public class AccountController : BaseController<AccountController>
             return View(viewModel);
         }
 
-        System.Threading.Thread.Sleep(5000);
-
         var result = await Mediator.Send(new UserLoginCommand { UserName = viewModel.Email, Password = viewModel.Password });
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            _logger.LogInformation("User logged in.");
-            return LocalRedirect(returnUrl);
+            return View(viewModel)
+                .WithError(result.Errors.ToList(), "登入失敗");
         }
 
-        //if (result.RequiresTwoFactor)
-        //{
-        //    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-        //}
-        //if (result.IsLockedOut)
-        //{
-        //    _logger.LogWarning("User account locked out.");
-        //    return RedirectToPage("./Lockout");
-        //}
-        //else
-        //{
-            //ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-        //    return Page();
-        //}
+        if (result.Data.User.Profile.IsTotpEnabled)
+        {
+            // 導向 TOTP 驗證頁
+            TempData["UserId"] = result.Data.User.Id;
+            TempData["ReturnUrl"] = returnUrl;
+            return RedirectToAction("VerifyTotp");
+        }
+        else
+        {
+            if (_identitySettings.ForceEnableTotp)
+            {
+                // 導向 TOTP 設定頁
+                TempData["UserId"] = result.Data.User.Id;
+                TempData["ReturnUrl"] = returnUrl;
+                return RedirectToAction("SetupTotp");
+            }
+        }
 
-        return View(viewModel)
-            .WithError(result.Errors.ToList(), "登入失敗");
+        return RedirectToAction("Index");
     }
 
     [HttpPost]
@@ -247,9 +259,20 @@ public class AccountController : BaseController<AccountController>
         }
     }
 
+    /// <summary>
+    /// 非同步驗證 Cloudflare Turnstile CAPTCHA 回應。
+    /// </summary>
+    /// <remarks>此方法檢查請求表單中的 CAPTCHA 回應令牌，並使用 Cloudflare 服務進行驗證。如果令牌缺失或無效，則會將身分驗證錯誤新增至模型狀態。 </remarks>
+    /// 如果 CAPTCHA 回應有效，則傳回 <returns><see langword="true"/>；否則，傳回 <see langword="false"/>。 </returns>
     private async Task<bool> VerifyTurnstileAsync()
     {
         var token = Request.Form["cf-turnstile-response"];
+        if (string.IsNullOrEmpty(token))
+        {
+            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
+            return false;
+        }
+
         var isValidCaptcha = await _cloudflareService.VerifyTurnstileAsync(token);
 
         if (!isValidCaptcha)
@@ -259,5 +282,90 @@ public class AccountController : BaseController<AccountController>
         }
 
         return true;
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> SetupTotp()
+    {
+        var userId = _user.Id ?? TempData["UserId"]?.ToString();
+        if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+        var result = await Mediator.Send(new GenerateTotpCommand { UserId = userId });
+
+        if (!result.Succeeded)
+        {
+            return View().WithError(result.Errors.ToList(), "產生 TOTP 失敗");
+        }
+
+        var viewModel = new SetupTotpViewModel
+        {
+            QrCodeImage = result.Data.QrCodeImage,
+            ManualEntryKey = result.Data.ManualEntryKey,
+        };
+
+        if (_user.Id == null)
+            TempData["UserId"] = userId;
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetupTotp(SetupTotpViewModel viewModel)
+    {
+        var userId = _user.Id ?? TempData["UserId"]?.ToString();
+        if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+        var result = await Mediator.Send(new EnableTotpCommand
+        {
+            UserId = userId,
+            Code = viewModel.Code,
+        });
+
+        if (result.Succeeded)
+        {
+            return RedirectToAction("VerifyTotp")
+                .WithSuccess(this, "啟用 TOTP 成功");
+        }
+
+        return View(viewModel).WithError(result.Errors.ToList(), "啟用 TOTP 失敗");
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult VerifyTotp()
+    {
+        var userId = TempData["UserId"]?.ToString();
+        if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+        TempData["UserId"] = userId;
+
+        return View();
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyTotp(TotpVerifyViewModel viewModel)
+    {
+        var userId = TempData["UserId"]?.ToString();
+        if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
+
+        var result = await Mediator.Send(new VerifyTotpCommand
+        {
+            UserId = userId,
+            Code = viewModel.Code
+        });
+
+        if (result.Succeeded)
+        {
+            return RedirectToActionPermanent("Index", "Home");
+        }
+
+        TempData["UserId"] = userId;
+
+        return View(viewModel).WithError("驗證碼錯誤，請重新輸入");
     }
 }

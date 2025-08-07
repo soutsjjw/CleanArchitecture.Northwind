@@ -65,4 +65,9 @@ public class IdentitySettings : IIdentitySettings
     /// 使用者註冊確認網址
     /// </summary>
     public string ConfirmEmailTokenUrl { get; set; } = "";
+
+    /// <summary>
+    /// 強制使用者啟用 TOTP
+    /// </summary>
+    public bool ForceEnableTotp { get; set; } = false;
 }

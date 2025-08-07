@@ -58,4 +58,9 @@ public interface IIdentitySettings
     /// 使用者註冊確認網址
     /// </summary>
     string ConfirmEmailTokenUrl { get; }
+
+    /// <summary>
+    /// 強制啟用Totp
+    /// </summary>
+    bool ForceEnableTotp { get; }
 }

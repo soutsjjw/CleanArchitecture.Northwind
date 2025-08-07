@@ -5,11 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Blank Page | Bootstrap Simple Admin Template</title>
+    <title>@(ViewData["Title"]) | Bootstrap Simple Admin Template</title>
     <link href="~/lib/font-awesome/css/fontawesome.min.css" rel="stylesheet">
     <link href="~/lib/font-awesome/css/solid.min.css" rel="stylesheet">
     <link href="~/lib/font-awesome/css/brands.min.css" rel="stylesheet">
     <link href="~/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/lib/toastr.js/toastr.css" rel="stylesheet" />
     <link href="~/css/master.css" rel="stylesheet">
     <link href="~/css/site.css" rel="stylesheet">
 </head>
@@ -30,7 +31,9 @@
     </div>
     <script src="~/lib/jquery/jquery.min.js"></script>
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/toastr.js/toastr.min.js"></script>
     <script src="~/js/script.js"></script>
+    @await Component.InvokeAsync("Toast")
 </body>
 
 </html>

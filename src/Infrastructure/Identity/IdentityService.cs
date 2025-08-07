@@ -75,6 +75,31 @@ public class IdentityService : IIdentityService
         _identitySettings = identitySettings;
     }
 
+    public async Task<ApplicationUser?> GetUserByIdAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, userId);
+            return null;
+        }
+
+        var profile = await _context.UserProfiles
+            .Where(x => x.UserId == user.Id)
+            .FirstOrDefaultAsync();
+
+        if (profile == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.UserProfileNotFoundFormat, userId);
+            return user;
+        }
+
+        user.Profile = profile;
+
+        return user;
+    }
+
     public async Task<string> UserRegisterAsync(string userName, string password)
     {
         if (!_userManager.SupportsUserEmail)
@@ -143,8 +168,14 @@ public class IdentityService : IIdentityService
         }
 
         user.Profile = await _context.UserProfiles.Where(x => x.UserId == user.Id).FirstOrDefaultAsync();
-        bool isPasswordValid = false;
 
+        if (user.Profile == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.UserProfileNotFoundFormat, user.Id);
+            return (SignInResult.Failed, user);
+        }
+
+        /*
         if (useCookies)
         {
             result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
@@ -173,8 +204,18 @@ public class IdentityService : IIdentityService
         {
             isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
         }
+        */
 
-        if (!isPasswordValid)
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
+
+        if (isPasswordValid)
+        {
+            if (!_identitySettings.ForceEnableTotp && !user.Profile.IsTotpEnabled)
+            {
+                await SignInAsync(user, useCookies);
+            }
+        }
+        else
         {
             _logger.LogWarning(LoggingEvents.Account.InvalidLoginAttemptFormat, userName);
 
@@ -208,6 +249,29 @@ public class IdentityService : IIdentityService
         }
 
         return (SignInResult.Success, await GenerateTokenResponseAsync(user));
+    }
+
+    public async Task SignInAsync(ApplicationUser user, bool useCookies)
+    {
+        await _signInManager.SignInAsync(user, false);
+
+        if (useCookies)
+        {
+            var claims = new List<Claim>
+                {
+                    new Claim("FullName", user.Profile?.FullName ?? ""),
+                    new Claim("IDNo", user.Profile?.IDNo ?? ""),
+                    new Claim("Gender", user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow)),
+                    new Claim("Title", user.Profile?.Title ?? ""),
+                    new Claim("Status", user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable)),
+                };
+
+            // 添加聲明到 ClaimsIdentity
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // 登入使用者並附加聲明
+            await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, additionalClaims: claims);
+        }
     }
 
     public async Task<AccessTokenResponse> RefreshByAPI(string refreshToken)

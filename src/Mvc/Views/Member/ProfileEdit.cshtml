@@ -1,0 +1,71 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Member.Queries.GetProfile
+@using CleanArchitecture.Northwind.Domain.Enums
+@model ProfileVm
+@{
+    ViewData["Title"] = "個人資料";
+}
+
+<div class="container">
+    <div class="page-title">
+        <h3>個人資料</h3>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">個人資料</div>
+                <div class="card-body">
+                    <form id="frmForm" asp-controller="Member" asp-action="ProfileEdit" method="post" autocomplete="off" novalidate>
+                        <div class="form-group mb-3 text-start">
+                            <label asp-for="FullName" class="form-label">姓名</label>
+                            <input asp-for="FullName" class="form-control" placeholder="你的姓名" />
+                        </div>
+                        <div class="form-group mb-3 text-start">
+                            <label asp-for="IDNo" class="form-label">身分證號</label>
+                            <input asp-for="IDNo" class="form-control" placeholder="身分證號" />
+                        </div>
+                        <div class="form-group mb-3 text-start">
+                            <label asp-for="Gender">性別</label>
+                            @Html.DropDownListFor(
+                                m => m.Gender,
+                                (IEnumerable<SelectListItem>)ViewBag.GenderOptions,
+                                "請選擇",
+                                new { @class = "form-control" }
+                            )
+                        </div>
+                        <div class="form-group mb-3 text-start">
+                            <label asp-for="Title" class="form-label">職稱</label>
+                            <input asp-for="Title" class="form-control" placeholder="職稱" />
+                        </div>
+                        <div class="mb-3 text-center">
+                            <button type="submit" class="btn btn-primary">更新</button>
+                            <a class="btn btn-outline-secondary" asp-action="Profile">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">是否登出？</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-lg-center">
+                <i class="fa-duotone fa-solid fa-power-off fa-beat-fade fa-5x"></i>
+                <br />
+                <br />
+                請問是否確定登出？
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-danger">登出</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

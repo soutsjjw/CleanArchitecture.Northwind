@@ -1,0 +1,42 @@
+﻿@using Mvc.ViewModels.Account
+
+@model SetupTotpViewModel
+@{
+    Layout = "~/Views/Shared/_LayoutEmpty.cshtml";
+    ViewData["Title"] = "設定 TOTP 驗證";
+}
+
+<div class="auth-content">
+    <div class="card">
+        <div class="card-body text-center">
+            <div class="mb-4">
+                <img class="brand" src="@Url.Content("~/images/bootstraper-logo.png")" alt="bootstraper logo">
+            </div>
+            <h4 class="mb-4 text-muted">設定 TOTP 驗證</h4>
+            <p>請使用 Google Authenticator 掃描下方 QR Code，或手動輸入金鑰：</p>
+            <div class="mb-3 text-center">
+                <img src="@Model.QrCodeImage" alt="TOTP QR Code" class="img-fluid" style="max-width: 300px;" />
+            </div>
+            <div class="mb-3 text-start">
+                <p>手動金鑰：<strong>@Model.ManualEntryKey</strong></p>
+            </div>
+            <form id="frmForm" asp-controller="Account"
+                  asp-action="SetupTotp" method="post" autocomplete="off" novalidate>
+                <div class="mb-3 text-start">
+                    <label asp-for="Code" class="form-label">請輸入 App 產生的 6 位數驗證碼：</label>
+                    <input asp-for="Code" class="form-control" placeholder="輸入驗證碼">
+                </div>
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary mb-4" style="width:100%">啟用</button>
+                    </div>
+                    <div class="col-6">
+                        <a class="btn btn-secondary w-100" asp-action="Login">返回登入</a>
+                    </div>
+                </div>
+                <input type="hidden" asp-for="QrCodeImage" />
+                <input type="hidden" asp-for="ManualEntryKey" />
+            </form>
+        </div>
+    </div>
+</div>

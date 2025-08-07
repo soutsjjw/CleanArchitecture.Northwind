@@ -7,11 +7,15 @@ namespace CleanArchitecture.Northwind.Application.Common.Interfaces;
 
 public interface IIdentityService
 {
+    Task<ApplicationUser?> GetUserByIdAsync(string userId);
+
     Task<string> UserRegisterAsync(string userName, string password);
 
     Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies);
 
     Task<(SignInResult, AccessTokenResponse? token)> UserLoginByAPI(string userName, string password);
+
+    Task SignInAsync(ApplicationUser user, bool useCookies);
 
     Task<string> GenerateEmailConfirmationTokenAsync(string userId);
 
@@ -39,7 +43,17 @@ public interface IIdentityService
 
     Task<AccessTokenResponse> GenerateTokenResponseAsync(ApplicationUser user);
 
+    /// <summary>
+    /// 非同步註銷目前使用者。
+    /// </summary>
+    /// <remarks>此方法清除使用者的驗證工作階段及所有關聯的 Cookie。此方法應在使用者選擇退出應用程式時呼叫。</remarks>
+    /// <returns>表示非同步退出操作的任務。 </returns>
     Task SignOutAsync();
 
+    /// <summary>
+    /// 確定指定使用者目前是否已登入。
+    /// </summary>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> 代表要檢查的使用者。</param>
+    /// <returns>如果使用者已登入為 <see langword="true"/>；否則 <see langword="false"/>.</returns>
     bool IsSignedIn(ClaimsPrincipal user);
 }
