@@ -35,13 +35,19 @@
                         <label asp-for="Title" class="form-label">是否啟用 Totp</label>
                         <p class="ms-3">@(Model.IsTotpEnabled ? "是" : "否")</p>
                     </div>
-                    <div class="mb-3 text-center">
+                    <div class="mb-3 d-flex justify-content-center gap-2">
                         <a class="btn btn-primary" asp-action="ProfileEdit">編輯</a>
                         @if (!Model.IsTotpEnabled)
                         {
                             <a type="button" class="btn btn-secondary" asp-action="SetupTotp">
-                                啟用TOTP
+                                啟用 TOTP
                             </a>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deactivateTotpModal">
+                                停用 TOTP
+                            </button>
                         }
                     </div>
                 </div>
@@ -49,3 +55,72 @@
         </div>
     </div>
 </div>
+
+@if (Model.IsTotpEnabled)
+{
+    <div class="modal fade" id="deactivateTotpModal" tabindex="-1" aria-labelledby="deactivateTotpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="deactivateTotpForm" method="post" asp-action="DeactivateTotp">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deactivateTotpModalLabel">驗證 TOTP 後停用</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="TotpCode" class="form-label">請輸入 TOTP 驗證碼</label>
+                            <input type="text" class="form-control" id="TotpCode" name="TotpCode" autocomplete="one-time-code" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-danger">確認停用</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @if (Model.IsTotpEnabled)
+    {
+        <script>
+            $(function () {
+                var $form = $('#deactivateTotpForm');
+                var $modal = $('#deactivateTotpModal');
+                var $totpCode = $('#deactivateTotpForm #TotpCode');
+
+                $form.on('submit', function (e) {
+                    e.preventDefault();
+
+                    if ($totpCode.val() === '')
+                    {
+                        $totpCode.addClass('input-validation-error');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: $form.attr('action'),
+                        type: 'POST',
+                        data: $form.serialize(),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        success: function (result) {
+                            if (result.success) {
+                                $modal.modal('hide');
+                                // 可選：重新整理頁面或顯示成功訊息
+                                location.reload();
+                            } else {
+                                $totpCode.addClass('input-validation-error');
+                                toastr.error(result.error || 'TOTP 驗證失敗')
+                            }
+                        },
+                        error: function () {
+                            toastr.error('伺服器錯誤，請稍後再試。')
+                        }
+                    });
+                });
+                });
+        </script>
+    }
+}

@@ -15,4 +15,9 @@ public class GenerateTotpVm
     /// 取得或設定用於手動輸入操作的鍵值。
     /// </summary>
     public string ManualEntryKey { get; set; }
+
+    /// <summary>
+    /// 備援驗證碼
+    /// </summary>
+    public string RecoveryCodes { get; set; }
 }

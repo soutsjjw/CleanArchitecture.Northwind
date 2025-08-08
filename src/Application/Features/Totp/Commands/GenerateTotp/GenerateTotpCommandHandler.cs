@@ -53,7 +53,7 @@ public class GenerateTotpCommandHandler : IRequestHandler<GenerateTotpCommand, R
         }
 
         // 產生 TOTP Secret
-        var totpSecretKey = await SetTotpSecretAsync(request.UserId, cancellationToken);
+        var (totpSecretKey, totpRecoveryCodes) = await SetTotpSecretAsync(request.UserId, cancellationToken);
 
         // 產生 QR Code
         var issuer = _appConfigurationSettings.SystemName;
@@ -73,7 +73,8 @@ public class GenerateTotpCommandHandler : IRequestHandler<GenerateTotpCommand, R
         var vm = new GenerateTotpVm
         {
             QrCodeImage = $"data:image/png;base64,{base64Qr}",
-            ManualEntryKey = totpSecretKey
+            ManualEntryKey = totpSecretKey,
+            RecoveryCodes = totpRecoveryCodes,
         };
 
         return await Result<GenerateTotpVm>.SuccessAsync(vm);
@@ -86,7 +87,7 @@ public class GenerateTotpCommandHandler : IRequestHandler<GenerateTotpCommand, R
     /// <param name="userId">要為其設定 TOTP 金鑰的使用者的唯一識別碼。</param>
     /// <param name="cancellationToken">用於監控取消請求的令牌。</param>
     /// <returns>表示非同步操作的任務。任務結果包含 base32 格式的新 TOTP 金鑰。</returns>
-    private async Task<string> SetTotpSecretAsync(string userId, CancellationToken cancellationToken)
+    private async Task<Tuple<string, string>> SetTotpSecretAsync(string userId, CancellationToken cancellationToken)
     {
         var profile = _context.UserProfiles
             .FirstOrDefault(up => up.UserId == userId);
@@ -94,21 +95,40 @@ public class GenerateTotpCommandHandler : IRequestHandler<GenerateTotpCommand, R
         // 產生 TOTP Secret
         var secretKey = KeyGeneration.GenerateRandomKey(20);
         var base32Secret = Base32Encoding.ToString(secretKey);
+        var recoveryCodes = GenerateRecoveryCodes();
 
         if (profile == null)
         {
             profile = new ApplicationUserProfile
             {
                 UserId = userId,
-                IsTotpEnabled = true,
                 TotpSecretKey = base32Secret,
+                TotpRecoveryCodes = string.Join(";", recoveryCodes),
             };
         }
 
         profile.TotpSecretKey = base32Secret;
+        profile.TotpRecoveryCodes = string.Join(";", recoveryCodes);
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return base32Secret;
+        return Tuple.Create(base32Secret, string.Join(";", recoveryCodes));
     }
+
+    private List<string> GenerateRecoveryCodes(int count = 10, int length = 8)
+    {
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var codes = new List<string>();
+
+        for (int i = 0; i < count; i++)
+        {
+            var bytes = new byte[length];
+            rng.GetBytes(bytes);
+            var code = BitConverter.ToString(bytes).Replace("-", "").Substring(0, length);
+            codes.Add(code.Insert(4, "-").ToUpper());
+        }
+
+        return codes;
+    }
+
 }

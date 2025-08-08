@@ -291,6 +291,19 @@ public class AccountController : BaseController<AccountController>
         var userId = _user.Id ?? TempData["UserId"]?.ToString();
         if (string.IsNullOrEmpty(userId)) return RedirectToAction("Login");
 
+        var applicationUser = await _identityService.GetUserByIdAsync(userId);
+        if (applicationUser == null)
+        {
+            return RedirectToAction("Login")
+                .WithError(this, "使用者不存在或已被刪除");
+        }
+
+        if (applicationUser.Profile.IsTotpEnabled)
+        {
+            return RedirectToAction("VerifyTotp")
+                .WithError(this, "TOTP 已經啟用，請先驗證 TOTP");
+        }
+
         var result = await Mediator.Send(new GenerateTotpCommand { UserId = userId });
 
         if (!result.Succeeded)
@@ -365,6 +378,8 @@ public class AccountController : BaseController<AccountController>
         }
 
         TempData["UserId"] = userId;
+
+        ModelState.AddModelError(nameof(viewModel.Code), "");
 
         return View(viewModel).WithError("驗證碼錯誤，請重新輸入");
     }

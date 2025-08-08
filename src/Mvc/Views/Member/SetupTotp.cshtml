@@ -3,6 +3,12 @@
 @model SetupTotpViewModel
 @{
     ViewData["Title"] = "設定 TOTP 驗證";
+
+    var recoveryCodes = new List<string>();
+    if (!string.IsNullOrEmpty(Model.RecoveryCodes))
+    {
+        recoveryCodes = Model.RecoveryCodes.Split(';').ToList();
+    }
 }
 
 <div class="container">
@@ -23,6 +29,24 @@
                     </div>
                     <div class="mb-3 text-start">
                         <p>手動金鑰：<strong>@Model.ManualEntryKey</strong></p>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <p>請妥善保存以下備援驗證碼：</p>
+                        <div class="row">
+                            @foreach (var pair in recoveryCodes.Select((code, index) => new { code, index }))
+                            {
+                                <div class="col-6 mb-2">
+                                    <span class="badge bg-secondary p-2 w-100 text-center">
+                                        @pair.code
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <p class="text-danger mb-0 me-3">每組驗證碼僅可使用一次，請妥善記錄！</p>
+
+                            <button type="button" class="btn btn-outline-primary" id="download">下載備援驗證碼 (.txt)</button>
+                        </div>
                     </div>
                     <form id="frmForm" asp-controller="Member"
                           asp-action="SetupTotp" method="post" autocomplete="off" novalidate>
@@ -46,3 +70,27 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $('#download').on('click', function () {
+            let content = '';
+            $('.badge').each(function () {
+                content += $(this).text().trim() + '\n';
+            });
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = $('<a>')
+                .attr('href', url)
+                .attr('download', '備援驗證碼.txt')
+                .appendTo('body');
+
+            a[0].click();
+            a.remove();
+
+            URL.revokeObjectURL(url);
+        });
+    </script>
+}

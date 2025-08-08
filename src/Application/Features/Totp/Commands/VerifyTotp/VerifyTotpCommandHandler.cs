@@ -38,12 +38,25 @@ public class VerifyTotpCommandHandler : IRequestHandler<VerifyTotpCommand, Resul
         }
 
         var totp = new OtpNet.Totp(Base32Encoding.ToBytes(user.Profile.TotpSecretKey));
-        if (totp.VerifyTotp(request.Code, out _, VerificationWindow.RfcSpecifiedNetworkDelay))
+        var isValidTotp = totp.VerifyTotp(request.Code, out _, VerificationWindow.RfcSpecifiedNetworkDelay);
+        var isValidRecovery = user.Profile.TotpRecoveryCodes?.ToUpper().Split(';').Contains(request.Code.ToUpper()) == true;
+
+        if (isValidTotp || isValidRecovery)
         {
+            if (isValidRecovery)
+            {
+                // 使用過後移除該 Recovery Code
+                var remaining = user.Profile.TotpRecoveryCodes?.ToUpper()?.Split(';').Where(x => x != request.Code.ToUpper());
+                user.Profile.TotpRecoveryCodes = string.Join(";", remaining);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
             // 正式登入（簽發 Cookie）
             await _identityService.SignInAsync(user, true);
+
+            return await Result.SuccessAsync();
         }
 
-        return await Result.SuccessAsync();
+        return await Result.FailureAsync("驗證碼錯誤");
     }
 }
