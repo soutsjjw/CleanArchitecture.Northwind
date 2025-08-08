@@ -17,12 +17,13 @@ public class ApplicationDbContext : IdentityDbContext<
 
     public DbSet<ApplicationUserProfile> UserProfiles => Set<ApplicationUserProfile>();
 
+    public DbSet<ApplicationUserPasswordHistory> UserPasswordHistories => Set<ApplicationUserPasswordHistory>();
+
     #endregion
 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
-
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

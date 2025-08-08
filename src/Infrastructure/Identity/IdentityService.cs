@@ -100,6 +100,40 @@ public class IdentityService : IIdentityService
         return user;
     }
 
+    public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, email);
+            return null;
+        }
+
+        return await GetUserAsync(user);
+    }
+
+    private async Task<ApplicationUser?> GetUserAsync(ApplicationUser user)
+    {
+        var profile = await _context.UserProfiles
+            .Where(x => x.UserId == user.Id)
+            .FirstOrDefaultAsync();
+
+        if (profile == null)
+        {
+            _logger.LogWarning(LoggingEvents.Account.UserProfileNotFoundFormat, user.Id);
+            return user;
+        }
+
+        var passwordHistories = _context.UserPasswordHistories
+            .Where(x => x.UserId == user.Id)
+            .ToList();
+
+        user.Profile = profile;
+        user.PasswordHistories = passwordHistories;
+
+        return user;
+    }
+
     public async Task<string> UserRegisterAsync(string userName, string password)
     {
         if (!_userManager.SupportsUserEmail)

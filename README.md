@@ -67,8 +67,34 @@ To run the Src Folder
 
 ```bash
 cd .\src\
+```
 
-dotnet ef migrations add CreateIdentitySchema --project Infrastructure --startup-project WebAPI --context ApplicationDbContext --output-dir Data\Migrations
+### 目前資料庫的 migration 狀態
 
-dotnet ef database update --project Infrastructure --startup-project WebAPI --context ApplicationDbContext
+```bash
+dotnet ef migrations list --project Infrastructure --startup-project Mvc --context ApplicationDbContext
+```
+
+### 執行資料庫遷移
+
+```bash
+dotnet ef migrations add CreateIdentitySchema --project Infrastructure --startup-project Mvc --context ApplicationDbContext --output-dir Data\Migrations
+
+dotnet ef database update --project Infrastructure --startup-project Mvc --context ApplicationDbContext
+```
+
+### 執行資料庫遷移回滾
+
+尚未執行 `database update`
+
+```bash
+dotnet ef database update Previous --project Infrastructure --startup-project Mvc --context ApplicationDbContext
+```
+
+如果已經執行了 `database update`
+
+```bash
+dotnet ef database update Previous --project Infrastructure --startup-project Mvc --context ApplicationDbContext
+
+dotnet ef migrations remove --project Infrastructure --startup-project Mvc --context ApplicationDbContext
 ```

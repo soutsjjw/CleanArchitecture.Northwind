@@ -7,6 +7,7 @@ public interface IApplicationDbContext
     #region Identity
 
     DbSet<ApplicationUserProfile> UserProfiles { get; }
+    DbSet<ApplicationUserPasswordHistory> UserPasswordHistories { get; }
 
     #endregion
 

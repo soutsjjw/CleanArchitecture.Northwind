@@ -9,6 +9,8 @@ public interface IIdentityService
 {
     Task<ApplicationUser?> GetUserByIdAsync(string userId);
 
+    Task<ApplicationUser?> GetUserByEmailAsync(string email);
+
     Task<string> UserRegisterAsync(string userName, string password);
 
     Task<(SignInResult? Result, ApplicationUser User)> UserLogin(string userName, string password, bool useCookies);

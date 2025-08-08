@@ -106,3 +106,11 @@ public class ApplicationUserProfileConfiguration : IEntityTypeConfiguration<Appl
     }
 }
 
+public class ApplicationUserPasswordHistoryConfiguration : IEntityTypeConfiguration<ApplicationUserPasswordHistory>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUserPasswordHistory> builder)
+    {
+        builder.ToTable("AspNetUserPasswordHistories");
+    }
+}
+
