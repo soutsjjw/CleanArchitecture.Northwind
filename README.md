@@ -88,7 +88,7 @@ dotnet ef database update --project Infrastructure --startup-project Mvc --conte
 尚未執行 `database update`
 
 ```bash
-dotnet ef database update Previous --project Infrastructure --startup-project Mvc --context ApplicationDbContext
+dotnet ef migrations remove --project Infrastructure --startup-project Mvc --context ApplicationDbContext
 ```
 
 如果已經執行了 `database update`

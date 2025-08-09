@@ -1,9 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
-public class ApplicationUserProfile : BaseAuditableEntity, IAuditableEntity
+public class ApplicationUserProfile : BaseAuditableEntity<int>, IAuditableEntity
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public override int Id { get; set; }
+
     public string UserId { get; set; }
 
     /// <summary>

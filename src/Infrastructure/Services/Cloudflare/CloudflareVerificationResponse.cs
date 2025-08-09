@@ -1,4 +1,4 @@
-﻿namespace CleanArchitecture.Northwind.Domain.Entities;
+﻿namespace CleanArchitecture.Northwind.Infrastructure.Services.Cloudflare;
 
 /// <summary>
 /// Cloudflare 驗證請求回應

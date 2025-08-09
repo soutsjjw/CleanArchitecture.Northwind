@@ -37,6 +37,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mvc", "Src\Mvc\Mvc.csproj",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentation", "{9C179276-27FA-4EA8-9539-3CD22132FA76}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sql", "sql", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		sql\instnwnd.sql = sql\instnwnd.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +103,7 @@ Global
 		{82A7B903-C1D7-4AE6-8ED9-6A30CD48CFED} = {9C179276-27FA-4EA8-9539-3CD22132FA76}
 		{4E3EC770-E363-4F0E-AC7A-B41165C05B82} = {9C179276-27FA-4EA8-9539-3CD22132FA76}
 		{9C179276-27FA-4EA8-9539-3CD22132FA76} = {47DE8194-5C2F-4976-AF14-59938F2B46AD}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {A4DE6691-C0E3-47C6-B656-4AD8CA99CBD1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FF4A7198-A6C4-449B-AF0C-4E34D5892D9F}

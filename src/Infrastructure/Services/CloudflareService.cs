@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Infrastructure.Configurations;
+using CleanArchitecture.Northwind.Infrastructure.Services.Cloudflare;
 using Microsoft.Extensions.Options;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Services;
@@ -36,7 +36,7 @@ public class CloudflareService : ICloudflareService
 
         var response = await http.PostAsync(_options.SiteVerify, new FormUrlEncodedContent(values));
         var result = await response.Content.ReadFromJsonAsync<CloudflareVerificationResponse>();
-        
+
         return result?.success ?? false;
     }
 }

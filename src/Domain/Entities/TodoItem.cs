@@ -1,7 +1,12 @@
-﻿namespace CleanArchitecture.Northwind.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
 
-public class TodoItem : BaseAuditableEntity
+namespace CleanArchitecture.Northwind.Domain.Entities;
+
+public class TodoItem : BaseAuditableEntity<int>
 {
+    [Key]
+    public override int Id { get; set; }
+
     public int ListId { get; set; }
 
     public string? Title { get; set; }
