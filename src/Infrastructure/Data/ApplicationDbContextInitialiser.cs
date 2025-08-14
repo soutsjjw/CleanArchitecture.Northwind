@@ -75,12 +75,42 @@ public class ApplicationDbContextInitialiser
         await AddDefaultRolesAsync();
 
         // Default users
+        await AddSystemAdminUserAsync();
         var adminUserId = await AddAdministratorUserAsync();
-        await AddDefaultUserAsync(Roles.Sales, adminUserId);
-        await AddDefaultUserAsync(Roles.Warehouse, adminUserId);
-        await AddDefaultUserAsync(Roles.Purchase, adminUserId);
-        await AddDefaultUserAsync(Roles.Finance, adminUserId);
-        await AddDefaultUserAsync(Roles.CustomerService, adminUserId);
+
+        await AddDefaultUserAsync("SalesNAManager", adminUserId, "北區業務管理", 1, 1);
+        await AddDefaultUserAsync("SalesNAA", adminUserId, "北區業務A", 1, 1);
+        await AddDefaultUserAsync("SalesNAB", adminUserId, "北區業務B", 1, 1);
+        await AddDefaultUserAsync("SalesNAC", adminUserId, "北區業務C", 1, 1);
+
+        await AddDefaultUserAsync("SalesCAManager", adminUserId, "中區業務管理", 1, 2);
+        await AddDefaultUserAsync("SalesCAA", adminUserId, "中區業務A", 1, 2);
+        await AddDefaultUserAsync("SalesCAB", adminUserId, "中區業務B", 1, 2);
+        await AddDefaultUserAsync("SalesCAC", adminUserId, "中區業務C", 1, 2);
+
+        await AddDefaultUserAsync("SalesSAManager", adminUserId, "南區業務管理", 1, 3);
+        await AddDefaultUserAsync("SalesSAA", adminUserId, "南區業務A", 1, 3);
+        await AddDefaultUserAsync("SalesSAB", adminUserId, "南區業務B", 1, 3);
+        await AddDefaultUserAsync("SalesSAC", adminUserId, "南區業務C", 1, 3);
+
+        await AddDefaultUserAsync("SalesEAManager", adminUserId, "東區業務管理", 1, 4);
+        await AddDefaultUserAsync("SalesEAA", adminUserId, "東區業務A", 1, 4);
+        await AddDefaultUserAsync("SalesEAB", adminUserId, "東區業務B", 1, 4);
+        await AddDefaultUserAsync("SalesEAC", adminUserId, "東區業務C", 1, 4);
+
+        await AddDefaultUserAsync("HrTaManager", adminUserId, "招募與訓練組長", 6, 1);
+        await AddDefaultUserAsync("HrTaA", adminUserId, "招募與訓練組員", 6, 1);
+        await AddDefaultUserAsync("HrTaB", adminUserId, "招募與訓練組員", 6, 1);
+        await AddDefaultUserAsync("HrTaC", adminUserId, "招募與訓練組員", 6, 1);
+
+        await AddDefaultUserAsync("HrCbManager", adminUserId, "薪資與福利組組長", 6, 2);
+        await AddDefaultUserAsync("HrCbA", adminUserId, "薪資與福利組員", 6, 2);
+        await AddDefaultUserAsync("HrCbB", adminUserId, "薪資與福利組員", 6, 2);
+        await AddDefaultUserAsync("HrCbC", adminUserId, "薪資與福利組員", 6, 2);
+
+        await AddDepartmentAsync();
+
+        await AddOfficeAsync();
 
         #endregion
 
@@ -137,48 +167,55 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddDefaultRolesAsync()
     {
-        var administratorRole = new ApplicationRole(Roles.Administrator, 1, "系統管理員");
-
-        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
-        {
-            await _roleManager.CreateAsync(administratorRole);
-        }
-
-
-        var role = new ApplicationRole(Roles.Sales, 2, "銷售代表");
+        var role = new ApplicationRole(Roles.SystemAdmin, 1, "系統管理員");
 
         if (_roleManager.Roles.All(r => r.Name != role.Name))
         {
             await _roleManager.CreateAsync(role);
         }
 
-        role = new ApplicationRole(Roles.Warehouse, 3, "倉庫經理");
+        role = new ApplicationRole(Roles.Administrator, 2, "管理員");
 
         if (_roleManager.Roles.All(r => r.Name != role.Name))
         {
             await _roleManager.CreateAsync(role);
         }
+    }
 
-        role = new ApplicationRole(Roles.Purchase, 4, "採購代理");
+    public async Task<string> AddSystemAdminUserAsync()
+    {
+        var systemAdmin = new ApplicationUser { UserName = "systemadmin@localhost", Email = "systemadmin@localhost" };
+        ApplicationUser? user;
 
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        if (_userManager.Users.All(u => u.UserName != systemAdmin.UserName))
         {
-            await _roleManager.CreateAsync(role);
+            await _userManager.CreateAsync(systemAdmin, "SystemAdmin1!");
+            if (!string.IsNullOrWhiteSpace(Roles.SystemAdmin))
+            {
+                await _userManager.AddToRolesAsync(systemAdmin, new[] { Roles.SystemAdmin });
+            }
+
+            user = await _userManager.FindByEmailAsync(systemAdmin.Email);
+            user.EmailConfirmed = true;
+            _context.UserProfiles.Add(new ApplicationUserProfile
+            {
+                UserId = user.Id,
+                FullName = "SYSTEMADMIN",
+                Gender = Gender.Male,
+                Title = "系統管理員",
+                Status = Status.Enabled,
+                Created = DateTime.Now,
+                CreatedBy = user.Id,
+            });
+
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            user = await _userManager.FindByEmailAsync(systemAdmin.Email);
         }
 
-        role = new ApplicationRole(Roles.Finance, 5, "財務人員");
-
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
-        {
-            await _roleManager.CreateAsync(role);
-        }
-
-        role = new ApplicationRole(Roles.CustomerService, 6, "客戶服務代表");
-
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
-        {
-            await _roleManager.CreateAsync(role);
-        }
+        return user.Id;
     }
 
     public async Task<string> AddAdministratorUserAsync()
@@ -250,6 +287,111 @@ public class ApplicationDbContextInitialiser
         }
     }
 
+    public async Task AddDefaultUserAsync(string userName, string adminUserId, string title, int departmentId, int officeId)
+    {
+        var defaultUser = new ApplicationUser { UserName = $"{userName.ToLower()}@localhost", Email = $"{userName.ToLower()}@localhost" };
+
+        if (_userManager.Users.All(u => u.UserName != defaultUser.UserName))
+        {
+            await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
+
+            var user = await _userManager.FindByEmailAsync(defaultUser.Email);
+            user.EmailConfirmed = true;
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                byte[] randomNumber = new byte[1];
+                rng.GetBytes(randomNumber);
+
+                _context.UserProfiles.Add(new ApplicationUserProfile
+                {
+                    UserId = user.Id,
+                    FullName = userName.ToUpper(),
+                    Gender = (Gender)(randomNumber[0] % 3),
+                    Title = title,
+                    DepartmentId = departmentId,
+                    OfficeId = officeId,
+                    IsTotpEnabled = false,
+                    Status = Status.Enabled,
+                    Created = DateTime.Now,
+                    CreatedBy = adminUserId,
+                });
+            }
+
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task AddDepartmentAsync()
+    {
+        if (_context.Departments.Any())
+            return;
+
+        _context.Departments.AddRange(new List<Department>
+        {
+            new Department { DepartmentId = 1, DeptCode = "SLS", DeptName = "業務處" },
+            new Department { DepartmentId = 2, DeptCode = "PRC", DeptName = "採購處" },
+            new Department { DepartmentId = 3, DeptCode = "LOG", DeptName = "倉儲物流處" },
+            new Department { DepartmentId = 4, DeptCode = "FIN", DeptName = "財務處" },
+            new Department { DepartmentId = 5, DeptCode = "IT",  DeptName = "資訊處" },
+            new Department { DepartmentId = 6, DeptCode = "HR",  DeptName = "人力資源處" }
+        });
+
+        using var tx = await _context.Database.BeginTransactionAsync();
+        await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Departments] ON");
+
+        await _context.SaveChangesAsync();
+
+        await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Departments] OFF");
+        await tx.CommitAsync();
+    }
+
+    public async Task AddOfficeAsync()
+    {
+        if (_context.Offices.Any())
+            return;
+
+        _context.Offices.AddRange(new List<Office>
+        {
+            // SLS
+            new Office { Id = 1, OfficeId = 1, DepartmentId = 1, OfficeCode = "SLS-NA", OfficeName = "北區" },
+            new Office { Id = 2, OfficeId = 2, DepartmentId = 1, OfficeCode = "SLS-CA", OfficeName = "中區" },
+            new Office { Id = 3, OfficeId = 3, DepartmentId = 1, OfficeCode = "SLS-SA", OfficeName = "南區" },
+            new Office { Id = 4, OfficeId = 4, DepartmentId = 1, OfficeCode = "SLS-EA", OfficeName = "東區" },
+
+            // PRC
+            new Office { Id = 5, OfficeId = 1, DepartmentId = 2, OfficeCode = "PRC-RM",  OfficeName = "原物料採購組" },
+            new Office { Id = 6, OfficeId = 2, DepartmentId = 2, OfficeCode = "PRC-IND", OfficeName = "間接/一般採購組" },
+            new Office { Id = 7, OfficeId = 3, DepartmentId = 2, OfficeCode = "PRC-SUP", OfficeName = "供應商管理組" },
+
+            // LOG
+            new Office { Id = 8, OfficeId = 1, DepartmentId = 3, OfficeCode = "LOG-OUT", OfficeName = "出貨與配送組" },
+            new Office { Id = 9, OfficeId = 2, DepartmentId = 3, OfficeCode = "LOG-INV", OfficeName = "庫存管理組" },
+            new Office { Id = 10, OfficeId = 3, DepartmentId = 3, OfficeCode = "LOG-IMP", OfficeName = "進口與關務組" },
+
+            // FIN
+            new Office { Id = 11, OfficeId = 1, DepartmentId = 4, OfficeCode = "FIN-AR",  OfficeName = "應收帳款組" },
+            new Office { Id = 12, OfficeId = 2, DepartmentId = 4, OfficeCode = "FIN-AP",  OfficeName = "應付帳款組" },
+            new Office { Id = 13, OfficeId = 3, DepartmentId = 4, OfficeCode = "FIN-CST", OfficeName = "成本與預算控管組" },
+
+            // IT
+            new Office { Id = 14, OfficeId = 1, DepartmentId = 5, OfficeCode = "IT-APP", OfficeName = "應用系統組" },
+            new Office { Id = 15, OfficeId = 2, DepartmentId = 5, OfficeCode = "IT-DBI", OfficeName = "資料庫與商業智慧組" },
+            new Office { Id = 16, OfficeId = 3, DepartmentId = 5, OfficeCode = "IT-INF", OfficeName = "基礎架構組" },
+
+            // HR
+            new Office { Id = 17, OfficeId = 1, DepartmentId = 6, OfficeCode = "HR-TA",  OfficeName = "招募與訓練組" },
+            new Office { Id = 18, OfficeId = 2, DepartmentId = 6, OfficeCode = "HR-C&B", OfficeName = "薪資與福利組" }
+        });
+
+        using var tx = await _context.Database.BeginTransactionAsync();
+        await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Offices] ON");
+
+        await _context.SaveChangesAsync();
+
+        await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Offices] OFF");
+        await tx.CommitAsync();
+    }
+
     #endregion
 
     #region Northwind Seed
@@ -298,8 +440,6 @@ public class ApplicationDbContextInitialiser
                 CategoryName = Unescape(m.Groups["name"].Value),
                 Description = Unescape(m.Groups["desc"].Value),
                 Picture = HexToBytes(m.Groups["pic"].Value), // 0x -> 空位元組
-                CreatedBy = adminUserId,
-                Created = now
             })
             .OrderBy(c => c.Id) // 保險起見，按 ID 排一下
             .ToList();
@@ -661,8 +801,6 @@ public class ApplicationDbContextInitialiser
             CompanyName = Unwrap(m.Groups["company"], m.Groups["companyv"])
                           ?? throw new InvalidOperationException("CompanyName 不可為 NULL"),
             Phone = Unwrap(m.Groups["phone"], m.Groups["phonev"]),
-            Created = now,
-            CreatedBy = createdBy
         })
         .GroupBy(s => s.Id)     // 避免腳本重複
         .Select(g => g.First())
@@ -739,29 +877,63 @@ public class ApplicationDbContextInitialiser
             return null;
         }
 
-        var orders = matches.Select(m => new Order
+        var orders = new List<Order>();
+        foreach (Match m in matches)
         {
-            Id = int.Parse(m.Groups["id"].Value, CultureInfo.InvariantCulture),
-            CustomerId = Unwrap(m.Groups["cust"], m.Groups["custv"]),
-            EmployeeId = ToIntOrNull(m.Groups["emp"].Value),
-            OrderDate = ParseDateOrNull(Unwrap(m.Groups["od"], m.Groups["odv"])),
-            RequiredDate = ParseDateOrNull(Unwrap(m.Groups["req"], m.Groups["reqv"])),
-            ShippedDate = ParseDateOrNull(Unwrap(m.Groups["shipd"], m.Groups["shipdv"])),
-            ShipVia = ToIntOrNull(m.Groups["shipvia"].Value),
-            Freight = ToDecimalOrNull(m.Groups["freight"].Value),
-            ShipName = Unwrap(m.Groups["shipname"], m.Groups["shipnamev"]),
-            ShipAddress = Unwrap(m.Groups["shipaddr"], m.Groups["shipaddrv"]),
-            ShipCity = Unwrap(m.Groups["shipcity"], m.Groups["shipcityv"]),
-            ShipRegion = Unwrap(m.Groups["shipregion"], m.Groups["shipregionv"]),
-            ShipPostalCode = Unwrap(m.Groups["shippostal"], m.Groups["shippostalv"]),
-            ShipCountry = Unwrap(m.Groups["shipcountry"], m.Groups["shipcountryv"]),
-            Created = now,
-            CreatedBy = createdBy
-        })
-        .GroupBy(o => o.Id)       // 檔案若不小心重複同一 OrderID，只取第一筆
-        .Select(g => g.First())
-        .OrderBy(o => o.Id)
-        .ToList();
+            orders.Add(new Order
+            {
+                Id = int.Parse(m.Groups["id"].Value, CultureInfo.InvariantCulture),
+                CustomerId = Unwrap(m.Groups["cust"], m.Groups["custv"]),
+                DepartmentId = 1,
+                OfficeId = RandomNumberGenerator.GetInt32(1, 5),
+                EmployeeId = ToIntOrNull(m.Groups["emp"].Value),
+                OrderDate = ParseDateOrNull(Unwrap(m.Groups["od"], m.Groups["odv"])),
+                RequiredDate = ParseDateOrNull(Unwrap(m.Groups["req"], m.Groups["reqv"])),
+                ShippedDate = ParseDateOrNull(Unwrap(m.Groups["shipd"], m.Groups["shipdv"])),
+                ShipVia = ToIntOrNull(m.Groups["shipvia"].Value),
+                Freight = ToDecimalOrNull(m.Groups["freight"].Value),
+                ShipName = Unwrap(m.Groups["shipname"], m.Groups["shipnamev"]),
+                ShipAddress = Unwrap(m.Groups["shipaddr"], m.Groups["shipaddrv"]),
+                ShipCity = Unwrap(m.Groups["shipcity"], m.Groups["shipcityv"]),
+                ShipRegion = Unwrap(m.Groups["shipregion"], m.Groups["shipregionv"]),
+                ShipPostalCode = Unwrap(m.Groups["shippostal"], m.Groups["shippostalv"]),
+                ShipCountry = Unwrap(m.Groups["shipcountry"], m.Groups["shipcountryv"]),
+                Created = now,
+                CreatedBy = createdBy
+            });
+        }
+
+        orders = orders
+            .GroupBy(o => o.Id)       // 檔案若不小心重複同一 OrderID，只取第一筆
+            .Select(g => g.First())
+            .OrderBy(o => o.Id)
+            .ToList();
+
+        //var orders = matches.Select(m => new Order
+        //{
+        //    Id = int.Parse(m.Groups["id"].Value, CultureInfo.InvariantCulture),
+        //    CustomerId = Unwrap(m.Groups["cust"], m.Groups["custv"]),
+        //    DepartmentId = 1,
+        //    OfficeId = 1,
+        //    EmployeeId = ToIntOrNull(m.Groups["emp"].Value),
+        //    OrderDate = ParseDateOrNull(Unwrap(m.Groups["od"], m.Groups["odv"])),
+        //    RequiredDate = ParseDateOrNull(Unwrap(m.Groups["req"], m.Groups["reqv"])),
+        //    ShippedDate = ParseDateOrNull(Unwrap(m.Groups["shipd"], m.Groups["shipdv"])),
+        //    ShipVia = ToIntOrNull(m.Groups["shipvia"].Value),
+        //    Freight = ToDecimalOrNull(m.Groups["freight"].Value),
+        //    ShipName = Unwrap(m.Groups["shipname"], m.Groups["shipnamev"]),
+        //    ShipAddress = Unwrap(m.Groups["shipaddr"], m.Groups["shipaddrv"]),
+        //    ShipCity = Unwrap(m.Groups["shipcity"], m.Groups["shipcityv"]),
+        //    ShipRegion = Unwrap(m.Groups["shipregion"], m.Groups["shipregionv"]),
+        //    ShipPostalCode = Unwrap(m.Groups["shippostal"], m.Groups["shippostalv"]),
+        //    ShipCountry = Unwrap(m.Groups["shipcountry"], m.Groups["shipcountryv"]),
+        //    Created = now,
+        //    CreatedBy = createdBy
+        //})
+        //.GroupBy(o => o.Id)       // 檔案若不小心重複同一 OrderID，只取第一筆
+        //.Select(g => g.First())
+        //.OrderBy(o => o.Id)
+        //.ToList();
 
         using var tx = await _context.Database.BeginTransactionAsync();
         await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Orders] ON");
@@ -848,8 +1020,6 @@ public class ApplicationDbContextInitialiser
             Id = int.Parse(m.Groups["id"].Value, CultureInfo.InvariantCulture),
             RegionDescription = Unwrap(m.Groups["desc"], m.Groups["descv"])
                                 ?? throw new InvalidOperationException("RegionDescription 不可為 NULL"),
-            Created = now,
-            CreatedBy = adminUserId
         })
         .GroupBy(r => r.Id)      // 去重
         .Select(g => g.First())
@@ -942,8 +1112,6 @@ public class ApplicationDbContextInitialiser
                 Id = idRaw ?? throw new InvalidOperationException("TerritoryID 不可為 NULL"),
                 TerritoryDescription = desc ?? throw new InvalidOperationException("TerritoryDescription 不可為 NULL"),
                 RegionId = region ?? throw new InvalidOperationException("RegionID 不可為 NULL"),
-                Created = now,
-                CreatedBy = adminUserId
             };
         })
         .GroupBy(t => t.Id)

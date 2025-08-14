@@ -1,18 +1,28 @@
-﻿using System.Text;
+﻿using System.Data;
+using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Database;
 using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Repository;
+using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Common.Settings;
+using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Infrastructure.Authorization;
 using CleanArchitecture.Northwind.Infrastructure.Configurations;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
+using CleanArchitecture.Northwind.Infrastructure.Repository;
 using CleanArchitecture.Northwind.Infrastructure.Services;
+using CleanArchitecture.Northwind.Infrastructure.Services.Database;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -61,10 +71,23 @@ public static class DependencyInjection
         services.AddSingleton(System.TimeProvider.System);
         services.AddTransient<IIdentityService, IdentityService>();
 
-        //services.AddAuthorization(options =>
-        //    options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+        services.AddAuthorization();
+
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        // 既有（精確 + 可帶資源）Handler
+        services.AddScoped<IAuthorizationHandler, PermissionResourceAuthorizationHandler>();
 
         #endregion
+
+        services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
+
+        // 註冊 DapperRepository
+        services.AddScoped(typeof(IRepository<Order>), typeof(OrdersRepository));
+        services.AddScoped(typeof(IUserProfileRepository), typeof(UserProfileRepository));
+
+        services.AddTransient<IOrdersService, OrdersService>();
 
         #region 服務
 
@@ -74,8 +97,18 @@ public static class DependencyInjection
         services.AddTransient<IMailService, MailService>();
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<ICloudflareService, CloudflareService>();
+        services.AddScoped<ICommonService, CommonService>();
 
         #endregion
+
+        services.AddMemoryCache();
+        services.Configure<PermissionResolverOptions>(o =>
+        {
+            o.CacheSeconds = 60;                        // 0 關閉快取
+            o.ClaimType = PermissionConstants.ClaimType;
+        });
+
+        services.AddScoped<IPermissionResolver, PermissionDbResolver>();
 
         #region 設置
 

@@ -78,7 +78,7 @@ dotnet ef migrations list --project Infrastructure --startup-project Mvc --conte
 ### 執行資料庫遷移
 
 ```bash
-dotnet ef migrations add CreateIdentitySchema --project Infrastructure --startup-project Mvc --context ApplicationDbContext --output-dir Data\Migrations
+dotnet ef migrations add [MigrationName] --project Infrastructure --startup-project Mvc --context ApplicationDbContext --output-dir Data\Migrations
 
 dotnet ef database update --project Infrastructure --startup-project Mvc --context ApplicationDbContext
 ```
@@ -98,3 +98,14 @@ dotnet ef database update Previous --project Infrastructure --startup-project Mv
 
 dotnet ef migrations remove --project Infrastructure --startup-project Mvc --context ApplicationDbContext
 ```
+
+## 角色 
+
+| 角色 \ 模組             | Customers     | **SalesOrders**                                           | Products                          | Categories | Suppliers | Employees | Territories / Regions | Shippers | CustDemo | EmpTerr | **Audit** |
+| ------------------- | ------------- | --------------------------------------------------------- | --------------------------------- | ---------- | --------- | --------- | --------------------- | -------- | -------- | ------- | --------- |
+| **Administrator**   | CRUD          | CRUD（刪除=軟刪）                                               | CRUD（含售價/成本/供應商連結）                | CRUD       | CRUD      | CRUD      | CRUD                  | CRUD     | CRUD     | CRUD    | **R**     |
+| **Sales**           | C(limited), R | **CRU(own), No D**                                        | R                                 | R          | R         | R         | R                     | R        | R        | R       | –         |
+| **Warehouse**       | R             | **U(僅 ShippedDate/ShipVia/Freight/ShipName/ShipAddress)** | R                                 | –          | –         | –         | R                     | R（可選 U）  | –        | –       | –         |
+| **Purchase**        | R             | R                                                         | **U(僅成本、供應商連結)**（是否允許 C：建議關閉或走審核） | R          | **CRUD**  | –         | –                     | –        | –        | –       | –         |
+| **Finance**         | R             | R                                                         | R                                 | R          | R         | –         | R                     | R        | R        | R       | （可選 R\*)  |
+| **CustomerService** | **CRUD**      | R                                                         | R                                 | R          | R         | –         | –                     | –        | **CRUD** | –       | –         |

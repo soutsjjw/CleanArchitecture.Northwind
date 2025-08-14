@@ -1,0 +1,101 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Role.Queries.EditRolePrepare
+@using CleanArchitecture.Northwind.Domain.Constants
+@using CleanArchitecture.Northwind.Domain.Enums
+@using CleanArchitecture.Northwind.Infrastructure.Extensions
+@model EditRolePrepareDto
+
+@{
+    ViewData["Title"] = $"編輯角色 - {Model.RoleName}";
+    string ScopeText(DataScope s) => s.GetDisplayName();
+    var modules = Modules.All;
+    var scopes = new[] { DataScope.Self, DataScope.Office, DataScope.Department, DataScope.All, DataScope.System };
+}
+
+<div class="container mt-4" style="max-width:550px;">
+    <h3>@ViewData["Title"]</h3>
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="RoleId" />
+        <input type="hidden" asp-for="RoleName" />
+
+        <div class="mb-3">
+            <label class="form-label">角色名稱</label>
+            <input asp-for="Name" class="form-control" placeholder="角色名稱" />
+            <span asp-validation-summary="All" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">說明</label>
+            <input asp-for="Description" class="form-control" placeholder="說明" />
+            <span asp-validation-summary="All" class="text-danger"></span>
+        </div>
+
+        <table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th style="width:160px;">模組</th>
+                    <th style="width:140px;">資料範圍</th>
+                    <th class="text-center">新增</th>
+                    <th class="text-center">讀取</th>
+                    <th class="text-center">更新</th>
+                    <th class="text-center">刪除</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int m = 0; m < modules.Length; m++)
+                {
+                    var module = modules[m];
+                    for (int s = 0; s < scopes.Length; s++)
+                    {
+                        var rowIndex = m * scopes.Length + s;
+
+                        if (scopes[s] != DataScope.System)
+                        {
+                            <tr>
+                                @if (s == 0)
+                                {
+                                    <td rowspan="5" class="align-middle fw-semibold">@module</td>
+                                }
+                                <td>
+                                    @ScopeText(scopes[s])
+                                    <input type="hidden" name="Items[@rowIndex].Module" value="@module" />
+                                    <input type="hidden" name="Items[@rowIndex].Scope" value="@((int)scopes[s])" />
+                                </td>
+                                <td class="text-center">
+
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="Items[@rowIndex].Create"
+                                           value="true"
+                                           @(Model.Items.ElementAtOrDefault(rowIndex)?.Create == true ? "checked" : "") />
+                                </td>
+                                <td class="text-center"><input class="form-check-input" name="Items[@rowIndex].Read" type="checkbox" value="true" @(Model.Items.ElementAtOrDefault(rowIndex)?.Read == true ? "checked" : "") /></td>
+                                <td class="text-center"><input class="form-check-input" name="Items[@rowIndex].Update" type="checkbox" value="true" @(Model.Items.ElementAtOrDefault(rowIndex)?.Update == true ? "checked" : "") /></td>
+                                <td class="text-center"><input class="form-check-input" name="Items[@rowIndex].Delete" type="checkbox" value="true" @(Model.Items.ElementAtOrDefault(rowIndex)?.Delete == true ? "checked" : "") /></td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>
+                                    @ScopeText(scopes[s])
+                                    <input type="hidden" name="Items[@rowIndex].Module" value="@module" />
+                                    <input type="hidden" name="Items[@rowIndex].Scope" value="@((int)scopes[s])" />
+                                </td>
+                                <td colspan="4" class="text-center">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="Items[@rowIndex].System"
+                                           value="true"
+                                           @(Model.Items.ElementAtOrDefault(rowIndex)?.System == true ? "checked" : "") />
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+
+        <button class="btn btn-primary">儲存</button>
+        <a asp-action="Index" class="btn btn-link">返回</a>
+    </form>
+</div>
+

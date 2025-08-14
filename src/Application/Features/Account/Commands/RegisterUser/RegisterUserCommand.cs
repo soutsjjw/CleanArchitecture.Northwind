@@ -14,7 +14,7 @@ public record RegisterUserCommand : IRequest<Result>
 
     public required string Title { get; set; }
 
-    public int Department { get; set; }
+    public int DepartmentId { get; set; }
 
-    public int Office { get; set; }
+    public int OfficeId { get; set; }
 }

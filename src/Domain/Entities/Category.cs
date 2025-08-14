@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CleanArchitecture.Northwind.Domain.Entities;
 
-public class Category : BaseAuditableEntity<int>
+public class Category : BaseEntity
 {
     /// <summary>
     /// PK 對應到 Categories.CategoryID
@@ -11,7 +11,7 @@ public class Category : BaseAuditableEntity<int>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("CategoryID")]
-    public override int Id { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// 類別名稱，最大長度 15，不可為 null

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace CleanArchitecture.Northwind.Domain.Entities;
 
 [Table("Shippers")]
-public class Shipper : BaseAuditableEntity<int>
+public class Shipper : BaseEntity
 {
     /// <summary>
     /// PK: Shippers.ShipperID
@@ -12,7 +12,7 @@ public class Shipper : BaseAuditableEntity<int>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     [Column("ShipperID")]
-    public override int Id { get; set; }
+    public int Id { get; set; }
 
     /// <summary>承運商名稱，長度 40，不可為 null</summary>
     [Required]

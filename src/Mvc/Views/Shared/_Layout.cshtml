@@ -1,4 +1,7 @@
-﻿<!doctype html>
+﻿@{
+    var antiMsg = TempData["AntiforgeryExpired"] as string;
+}
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -26,6 +29,7 @@
             <!-- end of navbar navigation -->
             <div class="content">
                 @RenderBody()
+                @Html.Partial("_LoadingPartial")
             </div>
         </div>
     </div>
@@ -34,6 +38,12 @@
     <script src="~/lib/toastr.js/toastr.min.js"></script>
     <script src="~/js/script.js"></script>
     @await Component.InvokeAsync("Toast")
+    @if (!string.IsNullOrEmpty(antiMsg))
+    {
+        <script>
+            toastr.warning("@(antiMsg)");
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 

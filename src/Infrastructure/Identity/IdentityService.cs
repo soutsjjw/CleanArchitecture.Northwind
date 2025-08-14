@@ -298,6 +298,8 @@ public class IdentityService : IIdentityService
                     new Claim("Gender", user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow)),
                     new Claim("Title", user.Profile?.Title ?? ""),
                     new Claim("Status", user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable)),
+                    new Claim("OfficeId", user.Profile?.OfficeId.ToString()),
+                    new Claim("DepartmentId", user.Profile?.DepartmentId.ToString())
                 };
 
             // 添加聲明到 ClaimsIdentity

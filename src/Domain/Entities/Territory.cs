@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace CleanArchitecture.Northwind.Domain.Entities;
 
 [Table("Territories")]
-public class Territory : BaseAuditableEntity<string>
+public class Territory : BaseEntity
 {
     /// <summary>
     /// PK: Territories.TerritoryID
@@ -12,7 +12,7 @@ public class Territory : BaseAuditableEntity<string>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("TerritoryID", TypeName = "nvarchar(20)")]
-    public override string Id { get; set; } = null!;
+    public string Id { get; set; } = null!;
 
     /// <summary>
     /// 區域描述，固定長度 50，不可為 null

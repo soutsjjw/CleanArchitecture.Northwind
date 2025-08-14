@@ -14,14 +14,19 @@ public class CurrentUserService : ICurrentUserService
     }
 
     public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
     public bool IsInRole(params string[] roleName)
     {
         var group = _httpContextAccessor.HttpContext?.User?.Claims?.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).ToArray();
         return group.Any(x => roleName.Contains(x));
 
     }
+
     public IEnumerable<string> GetRoles() => _httpContextAccessor.HttpContext?.User?.Claims?.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).ToArray();
 
-
     public string DisplayName => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.GivenName);
+
+    public string OfficeId => _httpContextAccessor.HttpContext?.User?.FindFirstValue("OfficeId");
+
+    public string DepartmentId => _httpContextAccessor.HttpContext?.User?.FindFirstValue("DepartmentId");
 }

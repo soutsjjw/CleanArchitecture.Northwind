@@ -36,21 +36,11 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset?>("LastModified")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<byte[]>("Picture")
                         .HasColumnType("varbinary(max)");
@@ -103,6 +93,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasMaxLength(24)
                         .HasColumnType("nvarchar(24)");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
@@ -145,6 +138,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
@@ -176,6 +172,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("ntext")
                         .HasColumnName("CustomerDesc");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
@@ -185,6 +184,29 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CustomerDemographics", (string)null);
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Department", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DepartmentId"));
+
+                    b.Property<string>("DeptCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("DeptName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("DepartmentId");
+
+                    b.ToTable("Departments", (string)null);
                 });
 
             modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Employee", b =>
@@ -233,6 +255,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("HomePhone")
                         .HasMaxLength(24)
                         .HasColumnType("nvarchar(24)");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
@@ -550,6 +575,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("IDNo")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsTotpEnabled")
                         .HasColumnType("bit");
 
@@ -620,6 +648,37 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Office", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OfficeCode")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<int>("OfficeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OfficeName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("Offices", (string)null);
+                });
+
             modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -641,6 +700,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnName("CustomerID")
                         .IsFixedLength();
 
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("int")
                         .HasColumnName("EmployeeID");
@@ -651,11 +713,17 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasDefaultValue(0m)
                         .HasColumnName("Freight");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OfficeId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("OrderDate")
                         .HasColumnType("datetime2")
@@ -767,6 +835,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("Discontinued");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
@@ -827,18 +898,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("int")
                         .HasColumnName("RegionID");
 
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("LastModified")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<string>("RegionDescription")
                         .IsRequired()
@@ -865,18 +926,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(40)")
                         .HasColumnName("CompanyName");
 
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("LastModified")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(24)
@@ -944,6 +995,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("ntext")
                         .HasColumnName("HomePage");
 
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
+
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
 
@@ -976,18 +1030,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("TerritoryID");
 
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("LastModified")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RegionId")
                         .HasColumnType("int")
@@ -1021,6 +1065,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Done")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDelete")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LastModified")
@@ -1067,6 +1114,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDelete")
+                        .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LastModified")
                         .HasColumnType("datetimeoffset");
@@ -1217,6 +1267,17 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Office", b =>
+                {
+                    b.HasOne("CleanArchitecture.Northwind.Domain.Entities.Department", "Department")
+                        .WithMany("Offices")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
             modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Order", b =>
                 {
                     b.HasOne("CleanArchitecture.Northwind.Domain.Entities.Customer", "Customer")
@@ -1332,6 +1393,11 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
             modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.CustomerDemographic", b =>
                 {
                     b.Navigation("CustomerCustomerDemos");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Department", b =>
+                {
+                    b.Navigation("Offices");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Northwind.Domain.Entities.Employee", b =>

@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -152,8 +151,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     IDNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Gender = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Department = table.Column<int>(type: "int", nullable: false),
-                    Office = table.Column<int>(type: "int", nullable: false),
+                    DepartmentId = table.Column<int>(type: "int", nullable: false),
+                    OfficeId = table.Column<int>(type: "int", nullable: false),
                     IsTotpEnabled = table.Column<bool>(type: "bit", nullable: false),
                     TotpSecretKey = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TotpRecoveryCodes = table.Column<string>(type: "nvarchar(max)", nullable: true),

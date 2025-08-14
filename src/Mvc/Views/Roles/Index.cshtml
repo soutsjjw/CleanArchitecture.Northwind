@@ -1,0 +1,238 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetAllRoles
+@using CleanArchitecture.Northwind.Domain.Constants
+@using CleanArchitecture.Northwind.Domain.Entities.Identity
+@model IEnumerable<RolesDto>
+@{
+    ViewData["Title"] = "角色清單";
+}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        <a class="btn btn-primary" asp-action="Create">新增角色</a>
+    </div>
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>角色名稱</th>
+                <th>說明</th>
+                <th style="width:160px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.OrderBy(x => x.Sort))
+            {
+                <tr>
+                    <td>@r.Name</td>
+                    <td>@r.Description</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-info me-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#membersModal"
+                                data-role-id="@r.Id"
+                                data-role-name="@r.Name"
+                                onclick="openMemberModal('@r.Id', '@r.Name');">
+                            成員
+                        </button>
+                        @if (r.Name != Roles.Administrator && r.Name != Roles.SystemAdmin)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@r.Id" onclick="$('#loadingOverlay').removeClass('d-none')">編輯權限</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- 成員管理 Modal -->
+<div class="modal fade" id="membersModal" tabindex="-1" aria-labelledby="membersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="membersModalLabel">角色成員管理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <div id="membersTableContainer">
+                    <!-- 帳號資料表格將由 JS 動態載入 -->
+                    @Html.Partial("_LoadingContainerPartial")
+                </div>
+                <hr />
+                <form id="addMemberForm" class="row g-2">
+                    <div class="col-md-3">
+                        <select class="form-select" id="departmentSelect"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="officeSelect"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="accountSelect"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-success w-100" onclick="addMemberToRole()">新增</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
+        var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
+
+        let currentRoleId = null;
+        let currentRoleName = null;
+
+        function getAntiForgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]').value;
+        }
+
+        function openMemberModal(roleId, roleName) {
+            loadRoleMembers(roleId, roleName);
+            initDepartmentSelect();
+        }
+
+        function initDepartmentSelect() {
+            let deptHtml = '<option value="">部門</option>';
+            departmentList.forEach(d => {
+                deptHtml += `<option value="${d.Value}">${d.Text}</option>`;
+            });
+            document.getElementById('departmentSelect').innerHTML = deptHtml;
+            document.getElementById('officeSelect').innerHTML = '<option value="">單位</option>';
+            document.getElementById('accountSelect').innerHTML = '<option value="">帳號</option>';
+        }
+
+        function loadRoleMembers(roleId, roleName) {
+            currentRoleId = roleId;
+            currentRoleName = roleName;
+            document.getElementById('membersModalLabel').innerText = `角色成員管理 - ${roleName}`;
+            document.getElementById('membersTableContainer').innerHTML = `@Html.Partial("_LoadingContainerPartial")`;
+
+            fetch('/Roles/GetRoleMembers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify(roleId)
+            })
+            .then(res => res.json())
+            .then(data => {
+                let html = `<table class="table table-sm table-bordered">
+                    <thead><tr><th>姓名</th><th>部門</th><th>單位</th><th>操作</th></tr></thead><tbody>`;
+                data.forEach(m => {
+                    html += `<tr>
+                        <td>${m.displayName}</td>
+                        <td>${m.departmentName}</td>
+                        <td>${m.officeName}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="removeMemberFromRole('${m.userId}')">刪除</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('membersTableContainer').innerHTML = html;
+            });
+        }
+
+        document.getElementById('departmentSelect').addEventListener('change', function () {
+            let deptId = this.value;
+            let officeHtml = '<option value="">單位</option>';
+            officeList.filter(o => o.ParentValue === deptId)
+                .forEach(o => officeHtml += `<option value="${o.Value}">${o.Text}</option>`);
+            document.getElementById('officeSelect').innerHTML = officeHtml;
+            document.getElementById('accountSelect').innerHTML = '<option value="">帳號</option>';
+        });
+
+        document.getElementById('officeSelect').addEventListener('change', function () {
+            $("#loadingOverlay").removeClass("d-none");
+
+            let departmentId = document.getElementById('departmentSelect').value;
+            let officeId = this.value;
+            fetch('/Roles/GetAccounts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({ departmentId: departmentId, officeId: officeId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                console.log(result);
+                let accHtml = '<option value="">帳號</option>';
+
+                if (result.succeeded) {
+                    result.data.forEach(a => accHtml += `<option value="${a.userId}">${a.displayName}</option>`);
+                } else {
+                    if (result.errors.length > 0) {
+                        result.errors.forEach(x => toastr.error(x));
+                    }
+                }
+
+                document.getElementById('accountSelect').innerHTML = accHtml;
+            })
+            .finally(() => {
+                $("#loadingOverlay").addClass("d-none");
+            });
+        });
+
+        function addMemberToRole() {
+            $("#loadingOverlay").removeClass("d-none");
+
+            let userId = document.getElementById('accountSelect').value;
+            if (!userId) return;
+            fetch(`/Roles/AddMemberToRole`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({ roleId: currentRoleId, userId: userId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.succeeded) {
+                    toastr.success('成員新增成功');
+                    loadRoleMembers(currentRoleId, currentRoleName);
+                } else {
+                    if (result.errors.length > 0) {
+                        result.errors.forEach(x => toastr.error(x));
+                    }
+                }
+            })
+            .finally(() => {
+                $("#loadingOverlay").addClass("d-none");
+            });
+        }
+
+        function removeMemberFromRole(userId) {
+            $("#loadingOverlay").removeClass("d-none");
+
+            fetch(`/Roles/RemoveMemberFromRole`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({ roleId: currentRoleId, userId: userId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.succeeded) {
+                    toastr.success('成員移除成功');
+                    loadRoleMembers(currentRoleId, currentRoleName);
+                } else {
+                    if (result.errors.length > 0) {
+                        result.errors.forEach(x => toastr.error(x));
+                    }
+                }
+            })
+            .finally(() => {
+                $("#loadingOverlay").addClass("d-none");
+            });
+        }
+    </script>
+}

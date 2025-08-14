@@ -15,9 +15,15 @@ public class ApplicationDbContext : IdentityDbContext<
 
     #region Identity
 
+    public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
+
     public DbSet<ApplicationUserProfile> UserProfiles => Set<ApplicationUserProfile>();
 
     public DbSet<ApplicationUserPasswordHistory> UserPasswordHistories => Set<ApplicationUserPasswordHistory>();
+
+    public DbSet<Department> Departments => Set<Department>();
+
+    public DbSet<Office> Offices => Set<Office>();
 
     #endregion
 

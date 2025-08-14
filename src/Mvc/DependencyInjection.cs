@@ -29,11 +29,13 @@ public static class DependencyInjection
 
         services.AddExceptionHandler<CustomExceptionHandler>();
 
+        services.AddScoped<AntiforgeryRedirectFilter>();
         var mvcBuilder = services.AddControllersWithViews(options =>
         {
             // 注意：ActionFilter 要先於 ExceptionFilter 執行
             options.Filters.Add<StoreActionArgumentsFilter>();
             options.Filters.Add<ValidationExceptionFilter>();
+            options.Filters.AddService<AntiforgeryRedirectFilter>();
         });
 
         // 開發環境下，Razor 文件即時編譯

@@ -34,12 +34,12 @@ public class ApplicationUserProfile : BaseAuditableEntity<int>, IAuditableEntity
     /// <summary>
     /// 一級機關
     /// </summary>
-    public int Department { get; set; }
+    public int DepartmentId { get; set; }
 
     /// <summary>
     /// 二級機關
     /// </summary>
-    public int Office { get; set; }
+    public int OfficeId { get; set; }
 
     /// <summary>
     /// 取得或設定一個值，該值指示是否啟用基於時間的一次性密碼 (TOTP) 驗證。

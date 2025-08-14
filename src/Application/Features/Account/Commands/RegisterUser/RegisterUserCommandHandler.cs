@@ -2,7 +2,6 @@
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserRegister;
@@ -29,7 +28,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
         {
             userId = await _identityService.UserRegisterAsync(request.Email, request.Password);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, LoggingEvents.Account.AccountRegistrationFailedFormat, request.Email);
             return await Result.FailureAsync(LoggingEvents.Account.AccountRegistrationFailed);
@@ -48,8 +47,8 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
             FullName = request.FullName,
             IDNo = request.IDNo,
             Title = request.Title,
-            Department = request.Department,
-            Office = request.Office,
+            DepartmentId = request.DepartmentId,
+            OfficeId = request.OfficeId,
         };
 
         _context.UserProfiles.Add(profile);

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace CleanArchitecture.Northwind.Domain.Entities;
 
 [Table("Region")]
-public class Region : BaseAuditableEntity<int>
+public class Region : BaseEntity
 {
     /// <summary>
     /// PK: Region.RegionID
@@ -12,7 +12,7 @@ public class Region : BaseAuditableEntity<int>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("RegionID")]
-    public override int Id { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
     /// 區域描述，固定長度 50，不可為 null

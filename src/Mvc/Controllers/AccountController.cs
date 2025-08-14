@@ -168,6 +168,7 @@ public class AccountController : BaseController<AccountController>
 
     [HttpGet]
     [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult ForgotPassword()
     {
         return View();
@@ -214,6 +215,7 @@ public class AccountController : BaseController<AccountController>
 
     [HttpGet]
     [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult ForgotPasswordConfirmation()
     {
         return View();
@@ -221,6 +223,7 @@ public class AccountController : BaseController<AccountController>
 
     [HttpGet]
     [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult ResetPassword(string email, string resetCode)
     {
         return View();

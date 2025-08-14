@@ -15,6 +15,8 @@ public abstract class BaseEntity
     public void RemoveDomainEvent(BaseEvent domainEvent) => _domainEvents.Remove(domainEvent);
 
     public void ClearDomainEvents() => _domainEvents.Clear();
+
+    public bool IsDelete { get; set; } = false; // 用於標記實體是否被刪除
 }
 
 public abstract class BaseEntity<T>
@@ -35,4 +37,6 @@ public abstract class BaseEntity<T>
     public void RemoveDomainEvent(BaseEvent domainEvent) => _domainEvents.Remove(domainEvent);
 
     public void ClearDomainEvents() => _domainEvents.Clear();
+
+    public bool IsDelete { get; set; } = false; // 用於標記實體是否被刪除
 }

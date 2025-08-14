@@ -29,6 +29,13 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 oldType: "nvarchar(max)",
                 oldNullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDelete",
+                table: "TodoLists",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.AlterColumn<DateTimeOffset>(
                 name: "LastModified",
                 table: "TodoItems",
@@ -47,6 +54,20 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 oldType: "nvarchar(max)",
                 oldNullable: true);
 
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDelete",
+                table: "TodoItems",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "IsDelete",
+                table: "AspNetUserProfiles",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -56,10 +77,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     CategoryName = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Picture = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -72,6 +90,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 {
                     CustomerTypeID = table.Column<string>(type: "nchar(10)", fixedLength: true, nullable: false),
                     CustomerDesc = table.Column<string>(type: "ntext", nullable: true),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -97,6 +116,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     Country = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
                     Phone = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
                     Fax = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -105,6 +125,20 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Customers", x => x.CustomerID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Departments",
+                columns: table => new
+                {
+                    DepartmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DeptCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    DeptName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Departments", x => x.DepartmentId);
                 });
 
             migrationBuilder.CreateTable(
@@ -130,6 +164,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     Notes = table.Column<string>(type: "ntext", nullable: false),
                     ReportsTo = table.Column<int>(type: "int", nullable: true),
                     PhotoPath = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -152,10 +187,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 {
                     RegionID = table.Column<int>(type: "int", nullable: false),
                     RegionDescription = table.Column<string>(type: "nchar(50)", nullable: false),
-                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -170,10 +202,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CompanyName = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
-                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -197,6 +226,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     Phone = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
                     Fax = table.Column<string>(type: "nvarchar(24)", maxLength: 24, nullable: true),
                     HomePage = table.Column<string>(type: "ntext", nullable: true),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -213,6 +243,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 {
                     CustomerID = table.Column<string>(type: "nchar(5)", fixedLength: true, nullable: false),
                     CustomerTypeID = table.Column<string>(type: "nchar(10)", fixedLength: true, nullable: false),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -236,16 +267,35 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Offices",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OfficeId = table.Column<int>(type: "int", nullable: false),
+                    DepartmentId = table.Column<int>(type: "int", nullable: false),
+                    OfficeCode = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
+                    OfficeName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Offices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Offices_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Territories",
                 columns: table => new
                 {
                     TerritoryID = table.Column<string>(type: "nvarchar(20)", nullable: false),
                     TerritoryDescription = table.Column<string>(type: "nchar(50)", nullable: false),
                     RegionID = table.Column<int>(type: "int", nullable: false),
-                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -265,6 +315,8 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     OrderID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CustomerID = table.Column<string>(type: "nchar(5)", fixedLength: true, nullable: true),
+                    DepartmentId = table.Column<int>(type: "int", nullable: false),
+                    OfficeId = table.Column<int>(type: "int", nullable: false),
                     EmployeeID = table.Column<int>(type: "int", nullable: true),
                     OrderDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RequiredDate = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -277,6 +329,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     ShipRegion = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
                     ShipPostalCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     ShipCountry = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -317,6 +370,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     UnitsOnOrder = table.Column<short>(type: "smallint", nullable: true, defaultValue: (short)0),
                     ReorderLevel = table.Column<short>(type: "smallint", nullable: true, defaultValue: (short)0),
                     Discontinued = table.Column<bool>(type: "bit", nullable: false),
+                    IsDelete = table.Column<bool>(type: "bit", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -404,6 +458,11 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 column: "TerritoryID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Offices_DepartmentId",
+                table: "Offices",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_ProductID",
                 table: "OrderDetails",
                 column: "ProductID");
@@ -449,6 +508,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                 name: "EmployeeTerritories");
 
             migrationBuilder.DropTable(
+                name: "Offices");
+
+            migrationBuilder.DropTable(
                 name: "OrderDetails");
 
             migrationBuilder.DropTable(
@@ -456,6 +518,9 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Territories");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
 
             migrationBuilder.DropTable(
                 name: "Orders");
@@ -480,6 +545,18 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Suppliers");
+
+            migrationBuilder.DropColumn(
+                name: "IsDelete",
+                table: "TodoLists");
+
+            migrationBuilder.DropColumn(
+                name: "IsDelete",
+                table: "TodoItems");
+
+            migrationBuilder.DropColumn(
+                name: "IsDelete",
+                table: "AspNetUserProfiles");
 
             migrationBuilder.AlterColumn<DateTimeOffset>(
                 name: "LastModified",

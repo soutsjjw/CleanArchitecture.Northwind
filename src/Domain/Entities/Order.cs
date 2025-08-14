@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace CleanArchitecture.Northwind.Domain.Entities;
 
 [Table("Orders")]
-public class Order : BaseAuditableEntity<int>
+public class Order : BaseAuditableEntity<int>, IOwnedResource
 {
     /// <summary>
     /// PK: Orders.OrderID
@@ -19,6 +19,10 @@ public class Order : BaseAuditableEntity<int>
     /// </summary>
     [Column("CustomerID", TypeName = "nchar(5)")]
     public string? CustomerId { get; set; }
+
+    public int DepartmentId { get; set; }
+
+    public int OfficeId { get; set; }
 
     [ForeignKey(nameof(CustomerId))]
     public Customer? Customer { get; set; }

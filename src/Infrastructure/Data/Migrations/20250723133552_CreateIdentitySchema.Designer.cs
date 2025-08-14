@@ -238,7 +238,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Department")
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
                     b.Property<string>("FullName")
@@ -259,7 +259,7 @@ namespace CleanArchitecture.Northwind.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Office")
+                    b.Property<int>("OfficeId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
