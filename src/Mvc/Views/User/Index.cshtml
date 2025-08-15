@@ -1,0 +1,46 @@
+﻿@using CleanArchitecture.Northwind.Application.Common.Models
+@using CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers
+@using static Mvc.Controllers.UserController
+@model PaginatedList<UsersDto>
+@{
+    ViewData["Title"] = "使用者列表";
+}
+
+<div class="container mt-4">
+    <h3>@ViewData["Title"]</h3>
+
+    @if (Model.TotalCount == 0)
+    {
+        <div class="alert alert-info">目前沒有資料。</div>
+    }
+    else
+    {
+        <div class="text-muted mb-2">
+            顯示第 @Model.FirstItemIndex–@Model.LastItemIndex 筆，總計 @Model.TotalCount 筆
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>帳號</th>
+                    <th>Email</th>
+                    <th>姓名</th>
+                    <th>職稱</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td>@user.UserName</td>
+                        <td>@user.Email</td>
+                        <td>@user.FullName</td>
+                        <td>@user.Title</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @await Html.PartialAsync("_PaginationPartial", Model)
+    }
+</div>

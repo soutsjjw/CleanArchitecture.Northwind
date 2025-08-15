@@ -11,4 +11,9 @@ public abstract class Roles
     /// 管理員
     /// </summary>
     public const string Administrator = nameof(Administrator);
+
+    /// <summary>
+    /// 一般使用者
+    /// </summary>
+    public const string GeneralUser = nameof(GeneralUser);
 }

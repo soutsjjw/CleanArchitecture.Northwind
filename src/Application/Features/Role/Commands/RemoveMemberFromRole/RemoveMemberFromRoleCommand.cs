@@ -4,8 +4,8 @@ namespace CleanArchitecture.Northwind.Application.Features.Role.Commands.RemoveM
 
 public record RemoveMemberFromRoleCommand : IRequest<Result>
 {
-    public string UserId { get; init; } = string.Empty;
-    public string RoleId { get; init; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string RoleId { get; set; } = string.Empty;
 
     private class Mapping : Profile
     {

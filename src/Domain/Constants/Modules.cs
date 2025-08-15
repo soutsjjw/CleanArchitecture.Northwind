@@ -2,11 +2,11 @@
 
 public static class Modules
 {
-    public const string Customers = "Customers";
-    public const string SalesOrders = "SalesOrders";
-    public const string Products = "Products";
-    public const string Suppliers = "Suppliers";
-    public const string Employees = "Employees";
+    public const string Customers = nameof(Customers);
+    public const string Orders = nameof(Orders);
+    public const string Products = nameof(Products);
+    public const string Suppliers = nameof(Suppliers);
+    public const string Employees = nameof(Employees);
 
-    public static readonly string[] All = { Customers, SalesOrders, Products, Suppliers, Employees };
+    public static readonly string[] All = { Customers, Orders, Products, Suppliers, Employees };
 }

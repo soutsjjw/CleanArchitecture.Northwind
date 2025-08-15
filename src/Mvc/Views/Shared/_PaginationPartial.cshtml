@@ -1,0 +1,104 @@
+﻿@using CleanArchitecture.Northwind.Application.Common.Interfaces
+@model IPaginatedList
+
+<nav>
+    <ul class="pagination align-items-center">
+        <!-- 第一頁 -->
+        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-pageSize="@Model.PageSize">&laquo;</a>
+        </li>
+        <!-- 上一頁 -->
+        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize">&lsaquo;</a>
+        </li>
+
+        @if (Model.TotalPages <= 7)
+        {
+            for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = Model.PageSize })">@i</a>
+                </li>
+            }
+        }
+        else
+        {
+            if (Model.PageNumber <= 3)
+            {
+                for (int i = 1; i <= Math.Min(4, Model.TotalPages); i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = Model.PageSize })">@i</a>
+                    </li>
+                }
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                <li class="page-item @(Model.TotalPages == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.TotalPages, pageSize = Model.PageSize })">@Model.TotalPages</a>
+                </li>
+            }
+            else if (Model.PageNumber < Model.TotalPages - 3)
+            {
+                // 1 … (current-1,current,current+1) … last
+                <li class="page-item">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = Model.PageSize })">1</a>
+                </li>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+
+                <li class="page-item">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber - 1, pageSize = Model.PageSize })">@((Model.PageNumber - 1))</a>
+                </li>
+                <li class="page-item active">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber, pageSize = Model.PageSize })">@Model.PageNumber</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.PageNumber + 1, pageSize = Model.PageSize })">@((Model.PageNumber + 1))</a>
+                </li>
+
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                <li class="page-item @(Model.TotalPages == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = Model.TotalPages, pageSize = Model.PageSize })">@Model.TotalPages</a>
+                </li>
+            }
+            else
+            {
+                // 1 … last-3..last
+                <li class="page-item">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = Model.PageSize })">1</a>
+                </li>
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+
+                @for (int i = Math.Max(1, Model.TotalPages - 3); i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = Model.PageSize })">@i</a>
+                    </li>
+                }
+            }
+        }
+
+        <!-- 下一頁 -->
+        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-Model.PageSize="@Model.PageSize">&rsaquo;</a>
+        </li>
+        <!-- 最後一頁 -->
+        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-pageSize="@Model.PageSize">&raquo;</a>
+        </li>
+
+        <!-- 每頁筆數 -->
+        <li class="ms-2">
+            <form method="get" style="display:inline;">
+                <input type="hidden" name="page" value="1" />
+                <select name="pageSize" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                    @{
+                        var sizes = new[] { 10, 20, 50, 100 };
+                        foreach (var size in sizes)
+                        {
+                            <option value="@size" selected="@(size == Model.PageSize ? "selected" : null)">@size</option>
+                        }
+                    }
+                </select>
+            </form>
+        </li>
+    </ul>
+</nav>

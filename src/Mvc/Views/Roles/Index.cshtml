@@ -33,7 +33,7 @@
                                 onclick="openMemberModal('@r.Id', '@r.Name');">
                             成員
                         </button>
-                        @if (r.Name != Roles.Administrator && r.Name != Roles.SystemAdmin)
+                        @if (!(new List<string> { Roles.SystemAdmin, Roles.Administrator, Roles.GeneralUser }).Contains(r.Name))
                         {
                             <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@r.Id" onclick="$('#loadingOverlay').removeClass('d-none')">編輯權限</a>
                         }
@@ -119,21 +119,29 @@
                 body: JSON.stringify(roleId)
             })
             .then(res => res.json())
-            .then(data => {
-                let html = `<table class="table table-sm table-bordered">
-                    <thead><tr><th>姓名</th><th>部門</th><th>單位</th><th>操作</th></tr></thead><tbody>`;
-                data.forEach(m => {
-                    html += `<tr>
-                        <td>${m.displayName}</td>
-                        <td>${m.departmentName}</td>
-                        <td>${m.officeName}</td>
-                        <td>
-                            <button class="btn btn-sm btn-danger" onclick="removeMemberFromRole('${m.userId}')">刪除</button>
-                        </td>
-                    </tr>`;
-                });
-                html += '</tbody></table>';
-                document.getElementById('membersTableContainer').innerHTML = html;
+            .then(result => {
+                if (result.succeeded) {
+                    let html = `<table class="table table-sm table-bordered">
+                        <thead><tr><th>姓名</th><th>部門</th><th>單位</th><th>操作</th></tr></thead><tbody>`;
+                    result.data.forEach(m => {
+                        html += `<tr>
+                            <td>${m.displayName}</td>
+                            <td>${m.departmentName}</td>
+                            <td>${m.officeName}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="removeMemberFromRole('${m.userId}')">刪除</button>
+                            </td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    document.getElementById('membersTableContainer').innerHTML = html;
+                } else {
+                    if (result.errors.length > 0) {
+                        result.errors.forEach(x => toastr.error(x));
+                    }
+
+                    document.getElementById('membersTableContainer').innerHTML = '';
+                }
             });
         }
 

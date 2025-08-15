@@ -180,6 +180,13 @@ public class ApplicationDbContextInitialiser
         {
             await _roleManager.CreateAsync(role);
         }
+
+        role = new ApplicationRole(Roles.GeneralUser, 3, "一般使用者");
+
+        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        {
+            await _roleManager.CreateAsync(role);
+        }
     }
 
     public async Task<string> AddSystemAdminUserAsync()
@@ -190,10 +197,7 @@ public class ApplicationDbContextInitialiser
         if (_userManager.Users.All(u => u.UserName != systemAdmin.UserName))
         {
             await _userManager.CreateAsync(systemAdmin, "SystemAdmin1!");
-            if (!string.IsNullOrWhiteSpace(Roles.SystemAdmin))
-            {
-                await _userManager.AddToRolesAsync(systemAdmin, new[] { Roles.SystemAdmin });
-            }
+            await _userManager.AddToRolesAsync(systemAdmin, new[] { Roles.SystemAdmin });
 
             user = await _userManager.FindByEmailAsync(systemAdmin.Email);
             user.EmailConfirmed = true;
@@ -203,6 +207,8 @@ public class ApplicationDbContextInitialiser
                 FullName = "SYSTEMADMIN",
                 Gender = Gender.Male,
                 Title = "系統管理員",
+                DepartmentId = 5,
+                OfficeId = 1,
                 Status = Status.Enabled,
                 Created = DateTime.Now,
                 CreatedBy = user.Id,
@@ -226,10 +232,7 @@ public class ApplicationDbContextInitialiser
         if (_userManager.Users.All(u => u.UserName != administrator.UserName))
         {
             await _userManager.CreateAsync(administrator, "Administrator1!");
-            if (!string.IsNullOrWhiteSpace(Roles.Administrator))
-            {
-                await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
-            }
+            await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
 
             user = await _userManager.FindByEmailAsync(administrator.Email);
             user.EmailConfirmed = true;
@@ -239,6 +242,8 @@ public class ApplicationDbContextInitialiser
                 FullName = "ADMINISTRATOR",
                 Gender = Gender.Male,
                 Title = "管理員",
+                DepartmentId = 5,
+                OfficeId = 1,
                 Status = Status.Enabled,
                 Created = DateTime.Now,
                 CreatedBy = user.Id,
@@ -254,39 +259,6 @@ public class ApplicationDbContextInitialiser
         return user.Id;
     }
 
-    public async Task AddDefaultUserAsync(string roleName, string adminUserId)
-    {
-        var defaultUser = new ApplicationUser { UserName = $"{roleName.ToLower()}@localhost", Email = $"{roleName.ToLower()}@localhost" };
-
-        if (_userManager.Users.All(u => u.UserName != defaultUser.UserName))
-        {
-            await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
-            await _userManager.AddToRolesAsync(defaultUser, new[] { roleName });
-
-            var user = await _userManager.FindByEmailAsync(defaultUser.Email);
-            user.EmailConfirmed = true;
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                byte[] randomNumber = new byte[1];
-                rng.GetBytes(randomNumber);
-
-                _context.UserProfiles.Add(new ApplicationUserProfile
-                {
-                    UserId = user.Id,
-                    FullName = roleName.ToUpper(),
-                    Gender = (Gender)(randomNumber[0] % 3),
-                    Title = roleName,
-                    IsTotpEnabled = false,
-                    Status = Status.Enabled,
-                    Created = DateTime.Now,
-                    CreatedBy = adminUserId,
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
-    }
-
     public async Task AddDefaultUserAsync(string userName, string adminUserId, string title, int departmentId, int officeId)
     {
         var defaultUser = new ApplicationUser { UserName = $"{userName.ToLower()}@localhost", Email = $"{userName.ToLower()}@localhost" };
@@ -294,6 +266,7 @@ public class ApplicationDbContextInitialiser
         if (_userManager.Users.All(u => u.UserName != defaultUser.UserName))
         {
             await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
+            await _userManager.AddToRolesAsync(defaultUser, new[] { Roles.GeneralUser });
 
             var user = await _userManager.FindByEmailAsync(defaultUser.Email);
             user.EmailConfirmed = true;

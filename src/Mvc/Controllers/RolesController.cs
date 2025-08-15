@@ -18,27 +18,36 @@ using Mvc.Extensions;
 
 namespace Mvc.Controllers;
 
-[Authorize(Roles = "SystemAdmin,Administrator")] // 只有管理員能調整角色矩陣
+[Authorize(Roles = "SystemAdmin,Administrator")]
 public class RolesController : BaseController<RolesController>
 {
     private readonly IMapper _mapper;
     private readonly RoleManager<ApplicationRole> _roles;
+    private readonly IDataProtectionService _dataProtectionService;
     private readonly ICommonService _commonService;
 
     public RolesController(IMapper mapper,
         RoleManager<ApplicationRole> roles,
+        IDataProtectionService dataProtectionService,
         ICommonService commonService,
         ILogger<RolesController> logger)
         : base(logger)
     {
         _mapper = mapper;
         _roles = roles;
+        _dataProtectionService = dataProtectionService;
         _commonService = commonService;
     }
 
     public async Task<IActionResult> Index()
     {
         var result = await Mediator.Send(new GetAllRolesQuery());
+
+        result.Data.ForEach(role =>
+        {
+            // 使用 Data Protection API 加密角色 ID
+            role.Id = _dataProtectionService.Protect(role.Id);
+        });
 
         ViewBag.Departments = _commonService.GetDepartmentOptions();
         ViewBag.Offices = _commonService.GetOfficeOptions();
@@ -48,10 +57,12 @@ public class RolesController : BaseController<RolesController>
 
     public async Task<IActionResult> Edit(string id)
     {
+        id = _dataProtectionService.Unprotect(id);
         var result = await Mediator.Send(new EditRolePrepareQuery { RoleId = id });
 
         if (result.Succeeded)
         {
+            result.Data.RoleId = _dataProtectionService.Protect(result.Data.RoleId);
             return View(result.Data);
         }
 
@@ -65,6 +76,7 @@ public class RolesController : BaseController<RolesController>
         try
         {
             var model = _mapper.Map<EditRoleCommand>(viewModel);
+            model.RoleId = _dataProtectionService.Unprotect(model.RoleId);
 
             var result = await Mediator.Send(model);
 
@@ -112,6 +124,11 @@ public class RolesController : BaseController<RolesController>
         {
             var accounts = await Mediator.Send(new GetAccountQuery { DepartmentId = query.DepartmentId, OfficeId = query.OfficeId });
 
+            accounts.Data.ForEach(account =>
+            {
+                account.UserId = _dataProtectionService.Protect(account.UserId);
+            });
+
             return Json(accounts);
         }
         catch (Exception ex)
@@ -130,8 +147,8 @@ public class RolesController : BaseController<RolesController>
         {
             var result = await Mediator.Send(new AddMemberToRoleCommand
             {
-                RoleId = dto.RoleId,
-                UserId = dto.UserId
+                RoleId = _dataProtectionService.Unprotect(dto.RoleId),
+                UserId = _dataProtectionService.Unprotect(dto.UserId),
             });
 
             if (result.Succeeded)
@@ -152,12 +169,15 @@ public class RolesController : BaseController<RolesController>
     {
         try
         {
+            roleId = _dataProtectionService.Unprotect(roleId);
             var result = await Mediator.Send(new GetRoleMembersQuery { RoleId = roleId });
 
-            if (result.Succeeded)
-                return Json(result.Data);
-            else
-                return Json(Result.Failure(result.Errors));
+            result.Data.ForEach(account =>
+            {
+                account.UserId = _dataProtectionService.Protect(account.UserId);
+            });
+
+            return Json(result);
         }
         catch (Exception ex)
         {
@@ -173,6 +193,8 @@ public class RolesController : BaseController<RolesController>
         try
         {
             var model = _mapper.Map<RemoveMemberFromRoleCommand>(viewModel);
+            model.UserId = _dataProtectionService.Unprotect(model.UserId);
+            model.RoleId = _dataProtectionService.Unprotect(model.RoleId);
 
             var result = await Mediator.Send(model);
 
