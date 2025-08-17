@@ -3,6 +3,7 @@ using CleanArchitecture.Northwind.Application.Common.Interfaces.Repository;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace CleanArchitecture.Northwind.Application.Features.User.Queries.UserDetail;
@@ -50,7 +51,7 @@ public class UserDetailQueryHandler : IRequestHandler<UserDetailQuery, Result<Us
             {
                 ViewerUserId = _currentUserService.UserId,
                 TargetUserId = request.UserId,
-                Action = "View",
+                Action = nameof(ActionType.View),
                 Accessed = DateTime.UtcNow,
                 Description = "瀏覽使用者個資"
             };

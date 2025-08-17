@@ -34,7 +34,7 @@
                 <a href="#settingsmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle no-caret-down"><i class="fas fa-cog"></i>設置</a>
                 <ul class="collapse list-unstyled" id="settingsmenu">
                     <li>
-                        <a href="users.html"><i class="fa fa-history" onclick="toggleLoadingOverlay();"></i>歷程紀錄</a>
+                        <a asp-action="Index" asp-controller="Audit"><i class="fa fa-history" style="margin-right:5px;" onclick="toggleLoadingOverlay();"></i>歷程紀錄</a>
                     </li>
                 </ul>
             </li>

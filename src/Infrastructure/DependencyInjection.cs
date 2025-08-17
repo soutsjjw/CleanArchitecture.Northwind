@@ -98,6 +98,8 @@ public static class DependencyInjection
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<ICloudflareService, CloudflareService>();
         services.AddScoped<ICommonService, CommonService>();
+        services.AddSingleton<IExcelExporter, ExcelExporter>();
+        services.AddSingleton<IAppLogFileService, SerilogAppLogFileService>();
 
         #endregion
 

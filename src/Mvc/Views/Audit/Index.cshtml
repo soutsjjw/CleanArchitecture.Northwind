@@ -1,0 +1,182 @@
+﻿@model CleanArchitecture.Northwind.Mvc.ViewModels.LogCalendarViewModel
+@{
+    ViewData["Title"] = "歷程瀏覽紀錄";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>@ViewData["Title"]</h3>
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width:150px">日期</th>
+                        <th>Log</th>
+                        <th>個資瀏覽紀錄</th>
+                        <th style="width:150px">日期</th>
+                        <th>Log</th>
+                        <th>個資瀏覽紀錄</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Dates.Count; i += 2)
+                    {
+                        <tr>
+                            <td>
+                                @Model.Dates[i].ToString("yyyy/MM/dd")
+                            </td>
+                            <td>
+                                @* <a asp-action="DownloadLog" asp-route-date="@Model.Dates[i].ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-primary">下載</a> *@
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-download-log"
+                                        data-date="@Model.Dates[i].ToString("yyyy-MM-dd")">
+                                    下載
+                                </button>
+                            </td>
+                            <td>
+                                @* <a asp-action="DownloadPersonalDataAccess" asp-route-date="@Model.Dates[i].ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-success">下載</a> *@
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-success btn-download-pda"
+                                        data-date="@Model.Dates[i].ToString("yyyy-MM-dd")">
+                                    下載
+                                </button>
+                            </td>
+
+                            <td>
+                                @if (i + 1 < Model.Dates.Count)
+                                {
+                                    @Model.Dates[i + 1].ToString("yyyy/MM/dd")
+                                }
+                            </td>
+                            <td>
+                                @if (i + 1 < Model.Dates.Count)
+                                {
+                                    @* <a asp-action="DownloadLog" asp-route-date="@Model.Dates[i + 1].ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-primary">下載</a> *@
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btn-download-log"
+                                            data-date="@Model.Dates[i + 1].ToString("yyyy-MM-dd")">
+                                        下載
+                                    </button>
+                                }
+                            </td>
+                            <td>
+                                @if (i + 1 < Model.Dates.Count)
+                                {
+                                    @* <a asp-action="DownloadPersonalDataAccess" asp-route-date="@Model.Dates[i + 1].ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-success">下載</a> *@
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success btn-download-pda"
+                                            data-date="@Model.Dates[i + 1].ToString("yyyy-MM-dd")">
+                                        下載
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-1"></div>
+    </div>
+</div>
+<form id="__af__">@Html.AntiForgeryToken()</form>
+@section Scripts {
+    <script>
+        $(function () {
+            // 取得 Anti-forgery Token
+            function getAfToken() {
+                return document.querySelector('#__af__ input[name="__RequestVerificationToken"]').value;
+            }
+
+                  // 從 Content-Disposition 解析檔名
+        function getFileNameFromDisposition(disposition) {
+          if (!disposition) return null;
+          const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
+          if (star?.[1]) return decodeURIComponent(star[1]);
+          const normal = /filename\s*=\s*"?([^";]+)"?/i.exec(disposition);
+          if (normal?.[1]) return normal[1];
+          return null;
+        }
+
+        async function postAndDownload(url, formData, fallbackFileName) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              body: formData,
+              credentials: 'same-origin' // 帶上同源 cookie
+            });
+
+            if (res.status === 404) {
+              toastr.error('檔案不存在');
+              return;
+            }
+            if (!res.ok) {
+              // 嘗試解析錯誤內容
+              const ct = res.headers.get('Content-Type') || '';
+              let msg = `HTTP ${res.status}`;
+              try {
+                if (ct.includes('application/json')) {
+                  const prob = await res.json();
+                  msg = prob?.detail || prob?.title || JSON.stringify(prob);
+                } else {
+                  const text = await res.text();
+                  if (text) msg = text;
+                }
+              } catch { /* ignore parse error */ }
+              toastr.error(msg || '下載失敗');
+              return;
+            }
+
+            const disp = res.headers.get('Content-Disposition');
+            const fileName = getFileNameFromDisposition(disp) || fallbackFileName || 'download.bin';
+            const blob = await res.blob();
+
+            const urlObj = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = urlObj;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(urlObj);
+          } catch (err) {
+            toastr.error((err && err.message) || '下載失敗');
+          }
+        }
+
+        // 下載 Log
+        document.addEventListener('click', function (e) {
+          const btn = e.target.closest('.btn-download-log');
+          if (!btn) return;
+
+          const date = btn.getAttribute('data-date');
+          const fd = new FormData();
+          fd.append('date', date);
+          fd.append('__RequestVerificationToken', getAfToken());
+
+          toastr.success('開始下載檔案');
+          postAndDownload('@Url.Action("DownloadLog", "Audit")', fd, `log-${date}.log`);
+        });
+
+        // 下載 個資瀏覽紀錄（Excel）
+        document.addEventListener('click', function (e) {
+          const btn = e.target.closest('.btn-download-pda');
+          if (!btn) return;
+
+          const date = btn.getAttribute('data-date');
+          const fd = new FormData();
+          fd.append('date', date);
+          fd.append('__RequestVerificationToken', getAfToken());
+
+          toastr.success('開始下載檔案');
+          postAndDownload('@Url.Action("DownloadPersonalDataAccess", "Audit")', fd, `PersonalDataAccess_${date}.xlsx`);
+        });
+        });
+    </script>
+}
