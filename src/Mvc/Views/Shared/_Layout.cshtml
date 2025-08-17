@@ -33,10 +33,18 @@
             </div>
         </div>
     </div>
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        @await Html.PartialAsync("_IdleTimeout")
+    }
     <script src="~/lib/jquery/jquery.min.js"></script>
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/toastr.js/toastr.min.js"></script>
     <script src="~/js/script.js"></script>
+    @if (User?.Identity?.IsAuthenticated ?? false)
+    {
+        <script src="~/js/idle-timeout.js"></script>
+    }
     @await Component.InvokeAsync("Toast")
     @if (!string.IsNullOrEmpty(antiMsg))
     {
