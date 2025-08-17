@@ -14,19 +14,30 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<
 
     public async Task<Result<UsersDto>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
     {
-        var query = _context.Users
-            .AsNoTracking()
-            .OrderBy(u => u.UserName)
-            .Select(u => new UserItems
-            {
-                UserId = u.Id,
-                UserName = u.UserName ?? "",
-                Email = u.Email,
-                FullName = u.Profile.FullName,
-                Title = u.Profile.Title,
-                DepartmentId = u.Profile.DepartmentId,
-                OfficeId = u.Profile.OfficeId,
-            });
+        var query = from user in _context.Users.AsNoTracking()
+                    join profile in _context.UserProfiles on user.Id equals profile.UserId
+
+                    join departments in _context.Departments on profile.DepartmentId equals departments.DepartmentId
+                    into departments_jointable
+                    from departments in departments_jointable.DefaultIfEmpty()
+
+                    join offices in _context.Offices on new { profile.DepartmentId, profile.OfficeId } equals new { offices.DepartmentId, offices.OfficeId }
+                    into offices_jointable
+                    from offices in offices_jointable.DefaultIfEmpty()
+
+                    select new UserItems
+                    {
+                        UserId = user.Id,
+                        UserName = user.UserName ?? "",
+                        Email = user.Email ?? "",
+                        FullName = profile.FullName ?? "",
+                        Title = profile.Title ?? "",
+                        DepartmentId = profile.DepartmentId,
+                        DepartmentName = departments.DeptName,
+                        OfficeId = profile.OfficeId,
+                        OfficeName = offices.OfficeName,
+                        Status = profile.Status,
+                    };
 
         if (!string.IsNullOrEmpty(request.Email))
         {
@@ -46,6 +57,11 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<
             {
                 query = query.Where(u => u.OfficeId == request.OfficeId.Value);
             }
+        }
+
+        if (request.Status.HasValue)
+        {
+            query = query.Where(u => u.Status == request.Status.Value);
         }
 
         var pagedList = await PaginatedList<UserItems>.CreateAsync(query, request.PageNumber, request.PageSize, cancellationToken);

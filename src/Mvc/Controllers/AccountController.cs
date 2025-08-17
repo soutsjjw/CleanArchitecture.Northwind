@@ -125,7 +125,9 @@ public class AccountController : BaseController<AccountController>
     [AllowAnonymous]
     public IActionResult Register()
     {
-        return View();
+        GenerateDepartmentAndOfficeOptions();
+
+        return View(new RegisterViewModel());
     }
 
     [HttpPost]
@@ -146,7 +148,9 @@ public class AccountController : BaseController<AccountController>
             Password = model.Password,
             FullName = model.FullName,
             IDNo = model.IDNo,
-            Title = model.Title
+            Title = model.Title,
+            DepartmentId = model.DepartmentId,
+            OfficeId = model.OfficeId,
         };
 
         // 呼叫 Application 層的處理器

@@ -4,9 +4,7 @@ using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.User.Commands.UpdateUser;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.UserDetail;
-using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;
 
@@ -17,19 +15,16 @@ public class UserController : BaseController<UserController>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IDataProtectionService _dataProtectionService;
 
     public UserController(IApplicationDbContext context,
         IMapper mapper,
-        UserManager<ApplicationUser> userManager,
         IDataProtectionService dataProtectionService,
         ILogger<UserController> logger)
         : base(logger)
     {
         _context = context;
         _mapper = mapper;
-        _userManager = userManager;
         _dataProtectionService = dataProtectionService;
     }
 
@@ -73,7 +68,8 @@ public class UserController : BaseController<UserController>
             Email = viewModel.Email,
             FullName = viewModel.FullName,
             DepartmentId = viewModel.DepartmentId,
-            OfficeId = viewModel.OfficeId
+            OfficeId = viewModel.OfficeId,
+            Status = viewModel.Status,
         });
 
         if (result.Succeeded)

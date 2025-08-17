@@ -10,9 +10,7 @@ using CleanArchitecture.Northwind.Application.Features.Role.Queries.EditRolePrep
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetAccount;
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetAllRoles;
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetRoleMembers;
-using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;
 
@@ -22,17 +20,14 @@ namespace Mvc.Controllers;
 public class RolesController : BaseController<RolesController>
 {
     private readonly IMapper _mapper;
-    private readonly RoleManager<ApplicationRole> _roles;
     private readonly IDataProtectionService _dataProtectionService;
 
     public RolesController(IMapper mapper,
-        RoleManager<ApplicationRole> roles,
         IDataProtectionService dataProtectionService,
         ILogger<RolesController> logger)
         : base(logger)
     {
         _mapper = mapper;
-        _roles = roles;
         _dataProtectionService = dataProtectionService;
     }
 

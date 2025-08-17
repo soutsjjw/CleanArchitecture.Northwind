@@ -7,6 +7,10 @@ public interface IUserProfileRepository : IRepository<ApplicationUserProfile>
 {
     Task<IEnumerable<ApplicationUserProfile>> GetUserProfilesAsync(AccountConditionDto condition);
 
+    Task<int> AddUserProfileAsync(ApplicationUserProfile profile, string createdBy);
+
+    Task<int> UpdateUserProfileAsync(ApplicationUserProfile profile, string lastModifiedBy);
+
     // 明確實作 IRepository<T>.AddAsync → 不會出現在類別的公開 API
     Task IRepository<ApplicationUserProfile>.AddAsync(ApplicationUserProfile entity)
         => throw new NotSupportedException("UserProfile 不支援新增。");
@@ -16,8 +20,8 @@ public interface IUserProfileRepository : IRepository<ApplicationUserProfile>
         => throw new NotSupportedException("UserProfile 不支援查詢。");
 
     // 明確實作 IRepository<T>.GetByIdAsync → 不會出現在類別的公開 API
-    Task<ApplicationUserProfile?> IRepository<ApplicationUserProfile>.GetByIdAsync(object id)
-        => throw new NotSupportedException("UserProfile 不支援查詢。");
+    //Task<ApplicationUserProfile?> IRepository<ApplicationUserProfile>.GetByIdAsync(object id)
+    //    => throw new NotSupportedException("UserProfile 不支援查詢。");
 
     // 明確實作 IRepository<T>.UpdateAsync → 不會出現在類別的公開 API
     Task IRepository<ApplicationUserProfile>.UpdateAsync(ApplicationUserProfile entity)

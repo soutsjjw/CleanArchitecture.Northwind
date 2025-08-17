@@ -49,6 +49,29 @@
                     <input asp-for="Title" class="form-control" placeholder="職稱" />
                 </div>
                 <div class="mb-3 text-start">
+                    <label asp-for="DepartmentId" class="form-label">部門</label>
+                    <select asp-for="DepartmentId" class="form-select">
+                        <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
+                        @if (ViewBag.Departments != null)
+                        {
+                            var current = Model?.DepartmentId.ToString() ?? "";
+                            foreach (var dept in ViewBag.Departments)
+                            {
+                                <option value="@dept.Value"
+                                        selected="@(dept.Value == current ? "selected" : null)">
+                                    @dept.Text
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="mb-3 text-start">
+                    <label asp-for="OfficeId" class="form-label">單位</label>
+                    <select asp-for="OfficeId" class="form-select" data-selected="@Model.OfficeId?">
+                        <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
+                    </select>
+                </div>
+                <div class="mb-3 text-start">
                     <label class="form-check">
                         <input asp-for="AgreeToTerms" type="checkbox" class="form-check-input" />
                         <span class="form-check-label">
@@ -80,7 +103,13 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
+    <script src="~/js/deptOfficeLinkage.js"></script>
     <script>
+        var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
+        var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
+
+        window.initDeptOfficeLinkage('#frmForm', officeList);
+
         $("#frmForm").validate({
             errorClass: "input-validation-error",
             errorPlacement: function() {},

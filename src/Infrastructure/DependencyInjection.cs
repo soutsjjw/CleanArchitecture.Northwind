@@ -123,6 +123,7 @@ public static class DependencyInjection
         services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
         services.Configure<CloudflareOptions>(configuration.GetSection("Cloudflare"));
+        services.Configure<DataProtectionSettings>(configuration.GetSection("DataProtection"));
 
         #endregion
 

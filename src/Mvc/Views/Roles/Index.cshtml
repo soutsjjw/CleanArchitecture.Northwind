@@ -60,7 +60,7 @@
                 <form id="addMemberForm" class="row g-2">
                     <div class="col-md-3">
                         <select class="form-select" id="departmentSelect" name="departmentSelect">
-                            <option value="">請選擇</option>
+                            <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
                             @if (ViewBag.Departments != null)
                             {
                                 foreach (var dept in ViewBag.Departments)

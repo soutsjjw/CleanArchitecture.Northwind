@@ -23,7 +23,7 @@
         <div class="col-12 col-md-6">
             <label class="form-label text-muted">部門</label>
             <select asp-for="DepartmentId" class="form-select">
-                <option value="">請選擇</option>
+                <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
                 @if (ViewBag.Departments != null)
                 {
                     var current = Model?.DepartmentId?.ToString() ?? "";
@@ -40,9 +40,20 @@
         <div class="col-12 col-md-6">
             <label class="form-label text-muted">單位</label>
             <select asp-for="OfficeId" class="form-select" data-selected="@Model.OfficeId">
-                <option value="">請選擇</option>
+                <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
             </select>
         </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">狀態</label>
+            <select asp-for="Status"
+                    asp-items="Html.GetEnumSelectList<CleanArchitecture.Northwind.Domain.Enums.Status>()"
+                    class="form-select">
+                <option value="">@(Mvc.Common.WebConstants.SelectOptionLabel)</option>
+            </select>
+        </div>
+
+        
         <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary" onclick='toggleLoadingOverlay()'>查詢</button>
             <button type="button" class="btn btn-secondary" id="btnClear">取消</button>
@@ -61,10 +72,11 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>帳號</th>
                         <th>Email</th>
                         <th>姓名</th>
                         <th>職稱</th>
+                        <th>部門/單位</th>
+                        <th>狀態</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -72,10 +84,13 @@
                     @foreach (var user in Model.Users.Items)
                     {
                         <tr>
-                            <td>@user.UserName</td>
                             <td>@user.Email</td>
                             <td>@user.FullName</td>
                             <td>@user.Title</td>
+                            <td>@user.DepartmentName / @user.OfficeName</td>
+                            <td>
+                                <partial name="_StatusPartial" model="user.Status" />
+                            </td>
                             <td class="text-center">
                                 <button type="button"
                                         class="btn btn-outline-secondary btn-sm js-user-view"
@@ -246,6 +261,9 @@
                     await loadView(currentUserId);
                     // 如需同步更新列表某列，可在此加上刷新該列邏輯
                 } else {
+                    result.errors.forEach(error => {
+                        toastr.error(error);
+                    });
                     // 保底：若不是 ok，嘗試重載編輯畫面
                     await loadEdit(currentUserId);
                 }

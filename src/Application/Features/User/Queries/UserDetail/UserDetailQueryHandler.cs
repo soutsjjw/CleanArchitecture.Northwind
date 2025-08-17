@@ -1,5 +1,7 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Repository;
 using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -9,54 +11,69 @@ public class UserDetailQueryHandler : IRequestHandler<UserDetailQuery, Result<Us
 {
     private readonly IApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IUserProfileRepository _userProfileRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public UserDetailQueryHandler(IApplicationDbContext context,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IUserProfileRepository userProfileRepository,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _userManager = userManager;
+        _userProfileRepository = userProfileRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<UserDetailDto>> Handle(UserDetailQuery request, CancellationToken cancellationToken)
     {
-        if (await _userManager.FindByIdAsync(request.UserId) == null)
-        {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+        if (user == null)
             return await Result<UserDetailDto>.FailureAsync("使用者不存在");
+
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId);
+        if (userProfile == null)
+            return await Result<UserDetailDto>.FailureAsync("使用者個人資料不存在");
+
+        var department = await _context.Departments
+            .Where(d => d.DepartmentId == userProfile.DepartmentId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        var office = await _context.Offices
+            .Where(o => o.DepartmentId == userProfile.DepartmentId && o.OfficeId == userProfile.OfficeId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (request.UserId != _currentUserService.UserId)
+        {
+            // 新增個資瀏覽紀錄
+            var log = new PersonalDataAccessLog
+            {
+                ViewerUserId = _currentUserService.UserId,
+                TargetUserId = request.UserId,
+                Action = "View",
+                Accessed = DateTime.UtcNow,
+                Description = "瀏覽使用者個資"
+            };
+            _context.PersonalDataAccessLogs.Add(log);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
-        var userData = await (
-            from user in _context.Users
-            join profile in _context.UserProfiles on user.Id equals profile.UserId
-
-            join departments in _context.Departments on profile.DepartmentId equals departments.DepartmentId
-            into departments_jointable
-            from departments in departments_jointable.DefaultIfEmpty()
-
-            join offices in _context.Offices on new { profile.DepartmentId, profile.OfficeId } equals new { offices.DepartmentId, offices.OfficeId }
-            into offices_jointable
-            from offices in offices_jointable.DefaultIfEmpty()
-
-            where user.Id.Equals(request.UserId)
-            select new UserDetailDto
-            {
-                UserId = user.Id,
-                UserName = user.UserName ?? "",
-                Email = user.Email ?? "",
-                FullName = profile.FullName ?? "",
-                IDNo = profile.IDNo ?? "",
-                Title = profile.Title ?? "",
-                DepartmentId = profile.DepartmentId,
-                DepartmentName = departments.DeptName,
-                OfficeId = profile.OfficeId,
-                OfficeName = offices.OfficeName,
-                Status = profile.Status,
-                LockoutEnd = user.LockoutEnd,
-                EmailConfirmed = user.EmailConfirmed,
-            }
-        ).SingleOrDefaultAsync(cancellationToken);
-
-        if (userData == null)
-            return await Result<UserDetailDto>.FailureAsync("使用者不存在");
+        var userData = new UserDetailDto
+        {
+            UserId = user.Id,
+            UserName = user.UserName ?? "",
+            Email = user.Email ?? "",
+            FullName = userProfile.FullName ?? "",
+            IDNo = userProfile.IDNo ?? "",
+            Title = userProfile.Title ?? "",
+            DepartmentId = userProfile.DepartmentId,
+            DepartmentName = department?.DeptName,
+            OfficeId = userProfile.OfficeId,
+            OfficeName = office?.OfficeName,
+            Status = userProfile.Status,
+            LockoutEnd = user.LockoutEnd,
+            EmailConfirmed = user.EmailConfirmed,
+        };
 
         return await Result<UserDetailDto>.SuccessAsync(userData);
     }

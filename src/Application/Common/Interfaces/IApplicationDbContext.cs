@@ -16,6 +16,8 @@ public interface IApplicationDbContext
 
     DbSet<Office> Offices { get; }
 
+    DbSet<PersonalDataAccessLog> PersonalDataAccessLogs { get; }
+
     #endregion
 
     #region Northwind

@@ -12,7 +12,7 @@
 
     function renderOfficeOptions(deptId, selectedOfficeId) {
       $office.empty();
-      $office.append('<option value="">請選擇</option>');
+      $office.append('<option value="">--請選擇--</option>');
       if (deptId) {
         var filtered = officeList.filter(function (o) {
           return o.ParentValue == deptId;

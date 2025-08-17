@@ -33,7 +33,15 @@
             <div class="form-group">
                 <label class="form-label text-muted">身分證號</label>
                 <div class="form-control-plaintext">
-                    @Model.IDNo
+                    <span id="idno-mask" style="letter-spacing:2px;">●●●●●●●●</span>
+                    <span id="idno-real" class="d-none">@Model.IDNo</span>
+                    <button type="button" class="btn btn-outline-danger ms-2" id="btnShowIdNo" onclick="
+        document.getElementById('idno-mask').classList.add('d-none');
+        document.getElementById('idno-real').classList.remove('d-none');
+        this.classList.add('d-none');
+    ">
+                        顯示
+                    </button>
                 </div>
             </div>
         </div>
@@ -67,21 +75,7 @@
             <div class="form-group">
                 <label class="form-label text-muted">狀態</label>
                 <div class="form-control-plaintext">
-                    @switch (Model.Status)
-                    {
-                        case Status.Disable:
-                            <h5><span class="badge bg-danger">停用</span></h5>
-                            break;
-                        case Status.Enabled:
-                            <h5><span class="badge bg-success">啟用</span></h5>
-                            break;
-                        case Status.Limit:
-                            <h5><span class="badge bg-danger">受限</span></h5>
-                            break;
-                        case Status.Register:
-                            <h5><span class="badge bg-secondary">註冊</span></h5>
-                            break;
-                    }
+                    <partial name="_StatusPartial" for="Status" />
                 </div>
             </div>
         </div>

@@ -1,0 +1,18 @@
+﻿@using CleanArchitecture.Northwind.Domain.Enums
+@model Status
+
+@switch (Model)
+{
+    case Status.Disable:
+        <h5><span class="badge bg-danger">停用</span></h5>
+        break;
+    case Status.Enabled:
+        <h5><span class="badge bg-success">啟用</span></h5>
+        break;
+    case Status.Limit:
+        <h5><span class="badge bg-danger">受限</span></h5>
+        break;
+    case Status.Register:
+        <h5><span class="badge bg-secondary">註冊</span></h5>
+        break;
+}

@@ -21,6 +21,9 @@ public static class LoggingEvents
         public const string AccountRegistrationFailed = "帳號註冊失敗";
         public const string AccountRegistrationFailedFormat = "{Email} 帳號註冊失敗";
 
+        public const string UserProfileCreationFailed = "使用者資料建立失敗";
+        public const string UserProfileCreationFailedFormat = "使用者 {Email} 資料建立失敗";
+
         public const string SendConfirmLetterFailed = "寄送認證信件失敗";
         public const string SendConfirmLetterFailedFormat = "{Email} 寄送認證信件失敗";
 

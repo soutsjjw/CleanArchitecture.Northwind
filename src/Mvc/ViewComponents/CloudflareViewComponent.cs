@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-namespace Mvc.Components;
+namespace Mvc.ViewComponents;
 
 public class CloudflareViewComponent : ViewComponent
 {

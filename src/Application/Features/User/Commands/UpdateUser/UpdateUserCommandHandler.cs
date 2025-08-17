@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Repository;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -9,18 +10,24 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
 {
     private readonly IApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IUserProfileRepository _userProfileRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public UpdateUserCommandHandler(IApplicationDbContext context,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IUserProfileRepository userProfileRepository,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _userManager = userManager;
+        _userProfileRepository = userProfileRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(request.UserId);
-        var userProfile = _context.UserProfiles.SingleOrDefault(x => x.UserId == request.UserId);
+        var userProfile = await _userProfileRepository.GetByIdAsync(request.UserId);
         if (user == null || userProfile == null)
         {
             return await Result.FailureAsync("找不到使用者。");
@@ -36,6 +43,8 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
         userProfile.DepartmentId = request.DepartmentId;
         userProfile.OfficeId = request.OfficeId;
         userProfile.Status = request.Status;
+
+        await _userProfileRepository.UpdateUserProfileAsync(userProfile, _currentUserService.UserId);
 
         var result = await _userManager.UpdateAsync(user);
         if (result.Succeeded)

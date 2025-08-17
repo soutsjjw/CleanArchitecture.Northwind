@@ -25,6 +25,8 @@ public class ApplicationDbContext : IdentityDbContext<
 
     public DbSet<Office> Offices => Set<Office>();
 
+    public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
+
     #endregion
 
     #region Northwind

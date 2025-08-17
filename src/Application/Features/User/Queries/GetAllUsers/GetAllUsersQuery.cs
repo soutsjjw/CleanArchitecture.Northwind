@@ -1,4 +1,5 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Domain.Enums;
 
 namespace CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers;
 
@@ -15,4 +16,6 @@ public record GetAllUsersQuery : IRequest<Result<UsersDto>>
     public int? DepartmentId { get; init; }
 
     public int? OfficeId { get; init; }
+
+    public Status? Status { get; init; }
 }
