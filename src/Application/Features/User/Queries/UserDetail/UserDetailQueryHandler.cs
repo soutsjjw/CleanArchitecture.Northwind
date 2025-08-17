@@ -29,8 +29,12 @@ public class UserDetailQueryHandler : IRequestHandler<UserDetailQuery, Result<Us
             join profile in _context.UserProfiles on user.Id equals profile.UserId
 
             join departments in _context.Departments on profile.DepartmentId equals departments.DepartmentId
+            into departments_jointable
+            from departments in departments_jointable.DefaultIfEmpty()
 
             join offices in _context.Offices on new { profile.DepartmentId, profile.OfficeId } equals new { offices.DepartmentId, offices.OfficeId }
+            into offices_jointable
+            from offices in offices_jointable.DefaultIfEmpty()
 
             where user.Id.Equals(request.UserId)
             select new UserDetailDto

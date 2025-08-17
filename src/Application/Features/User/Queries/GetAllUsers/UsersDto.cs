@@ -17,7 +17,7 @@ public class UsersDto
 
 public class UserItems
 {
-    public string UserId { get; init; } = default!;
+    public string UserId { get; set; } = default!;
     public string UserName { get; init; } = default!;
     public string? Email { get; init; }
     public string? FullName { get; init; }

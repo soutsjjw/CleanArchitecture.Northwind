@@ -12,7 +12,7 @@
     </div>
     <ul class="list-unstyled components text-secondary">
         <li>
-            <a asp-action="Index" asp-controller="Home"><i class="fa fa-home"></i>首頁</a>
+            <a asp-action="Index" asp-controller="Home" onclick="toggleLoadingOverlay();"><i class="fa fa-home"></i>首頁</a>
         </li>
         @if (auth)
         {
@@ -20,10 +20,10 @@
                 <a href="#authmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle no-caret-down"><i class="fas fa-user-shield"></i>權限管理</a>
                 <ul class="collapse list-unstyled" id="authmenu">
                     <li>
-                        <a asp-action="Index" asp-controller="User"><i class="fas fa-user-friends"></i>使用者列表</a>
+                        <a asp-action="Index" asp-controller="User" onclick="toggleLoadingOverlay();"><i class="fas fa-user-friends"></i>使用者列表</a>
                     </li>
                     <li>
-                        <a asp-action="Index" asp-controller="Roles"><i class="fa-solid fa-shield-halved" style="margin-right:5px;"></i>角色清單</a>
+                        <a asp-action="Index" asp-controller="Roles" onclick="toggleLoadingOverlay();"><i class="fa-solid fa-shield-halved" style="margin-right:5px;"></i>角色清單</a>
                     </li>
                 </ul>
             </li>
@@ -34,7 +34,7 @@
                 <a href="#settingsmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle no-caret-down"><i class="fas fa-cog"></i>設置</a>
                 <ul class="collapse list-unstyled" id="settingsmenu">
                     <li>
-                        <a href="users.html"><i class="fa fa-history"></i>歷程紀錄</a>
+                        <a href="users.html"><i class="fa fa-history" onclick="toggleLoadingOverlay();"></i>歷程紀錄</a>
                     </li>
                 </ul>
             </li>
@@ -42,7 +42,7 @@
         @if (canViewOrders.Succeeded)
         {
             <li>
-                <a asp-action="Index" asp-controller="Orders"><i class="fas fa-file-alt"></i>訂單</a>
+                <a asp-action="Index" asp-controller="Orders" onclick="toggleLoadingOverlay();"><i class="fas fa-file-alt"></i>訂單</a>
             </li>
         }
     </ul>

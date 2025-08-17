@@ -14,9 +14,11 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
             .NotNull().WithMessage("職稱不可為空");
 
         RuleFor(x => x.DepartmentId)
-            .NotNull().WithMessage("部門不可為空");
+            .NotNull().WithMessage("部門不可為空")
+            .NotEqual(0).WithMessage("部門不可為空");
 
         RuleFor(x => x.OfficeId)
-            .NotNull().WithMessage("單位不可為空");
+            .NotNull().WithMessage("單位不可為空")
+            .NotEqual(0).WithMessage("單位不可為空");
     }
 }

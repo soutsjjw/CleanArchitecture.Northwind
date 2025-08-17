@@ -5,6 +5,7 @@ public interface IResult
     string[] Errors { get; set; }
     string[] Messages { get; set; }
     bool Succeeded { get; set; }
+    bool HasFieldErrors { get; }
     int StatusCode { get; set; }
 }
 

@@ -54,16 +54,26 @@
             </div>
             <div class="modal-body">
                 <div id="membersTableContainer">
-                    <!-- 帳號資料表格將由 JS 動態載入 -->
-                    @Html.Partial("_LoadingContainerPartial")
+                    <partial name="_LoadingContainerPartial" />
                 </div>
                 <hr />
                 <form id="addMemberForm" class="row g-2">
                     <div class="col-md-3">
-                        <select class="form-select" id="departmentSelect"></select>
+                        <select class="form-select" id="departmentSelect" name="departmentSelect">
+                            <option value="">請選擇</option>
+                            @if (ViewBag.Departments != null)
+                            {
+                                foreach (var dept in ViewBag.Departments)
+                                {
+                                    <option value="@dept.Value">
+                                        @dept.Text
+                                    </option>
+                                }
+                            }
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="officeSelect"></select>
+                        <select class="form-select" id="officeSelect" name="officeSelect"></select>
                     </div>
                     <div class="col-md-3">
                         <select class="form-select" id="accountSelect"></select>
@@ -78,6 +88,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/deptOfficeLinkage.js"></script>
     <script>
         var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
         var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
@@ -91,17 +102,6 @@
 
         function openMemberModal(roleId, roleName) {
             loadRoleMembers(roleId, roleName);
-            initDepartmentSelect();
-        }
-
-        function initDepartmentSelect() {
-            let deptHtml = '<option value="">部門</option>';
-            departmentList.forEach(d => {
-                deptHtml += `<option value="${d.Value}">${d.Text}</option>`;
-            });
-            document.getElementById('departmentSelect').innerHTML = deptHtml;
-            document.getElementById('officeSelect').innerHTML = '<option value="">單位</option>';
-            document.getElementById('accountSelect').innerHTML = '<option value="">帳號</option>';
         }
 
         function loadRoleMembers(roleId, roleName) {
@@ -145,53 +145,15 @@
             });
         }
 
-        document.getElementById('departmentSelect').addEventListener('change', function () {
-            let deptId = this.value;
-            let officeHtml = '<option value="">單位</option>';
-            officeList.filter(o => o.ParentValue === deptId)
-                .forEach(o => officeHtml += `<option value="${o.Value}">${o.Text}</option>`);
-            document.getElementById('officeSelect').innerHTML = officeHtml;
-            document.getElementById('accountSelect').innerHTML = '<option value="">帳號</option>';
-        });
-
-        document.getElementById('officeSelect').addEventListener('change', function () {
-            $("#loadingOverlay").removeClass("d-none");
-
-            let departmentId = document.getElementById('departmentSelect').value;
-            let officeId = this.value;
-            fetch('/Roles/GetAccounts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': getAntiForgeryToken()
-                },
-                body: JSON.stringify({ departmentId: departmentId, officeId: officeId })
-            })
-            .then(res => res.json())
-            .then(result => {
-                console.log(result);
-                let accHtml = '<option value="">帳號</option>';
-
-                if (result.succeeded) {
-                    result.data.forEach(a => accHtml += `<option value="${a.userId}">${a.displayName}</option>`);
-                } else {
-                    if (result.errors.length > 0) {
-                        result.errors.forEach(x => toastr.error(x));
-                    }
-                }
-
-                document.getElementById('accountSelect').innerHTML = accHtml;
-            })
-            .finally(() => {
-                $("#loadingOverlay").addClass("d-none");
-            });
-        });
-
         function addMemberToRole() {
             $("#loadingOverlay").removeClass("d-none");
 
             let userId = document.getElementById('accountSelect').value;
-            if (!userId) return;
+            if (!userId) {
+                $("#loadingOverlay").addClass("d-none");
+                toastr.error('請選擇要新增的帳號');
+                return;
+            }
             fetch(`/Roles/AddMemberToRole`, {
                 method: 'POST',
                 headers: {
@@ -242,5 +204,39 @@
                 $("#loadingOverlay").addClass("d-none");
             });
         }
+
+        document.getElementById('officeSelect').addEventListener('change', function () {
+            $("#loadingOverlay").removeClass("d-none");
+
+            let departmentId = document.getElementById('departmentSelect').value;
+            let officeId = this.value;
+            fetch('/Roles/GetAccounts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                },
+                body: JSON.stringify({ departmentId: departmentId, officeId: officeId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                let accHtml = '<option value="">帳號</option>';
+
+                if (result.succeeded) {
+                    result.data.forEach(a => accHtml += `<option value="${a.userId}">${a.displayName}</option>`);
+                } else {
+                    if (result.errors.length > 0) {
+                        result.errors.forEach(x => toastr.error(x));
+                    }
+                }
+
+                document.getElementById('accountSelect').innerHTML = accHtml;
+            })
+            .finally(() => {
+                $("#loadingOverlay").addClass("d-none");
+            });
+        });
+
+        window.initDeptOfficeLinkage('#addMemberForm', officeList, 'departmentSelect', 'officeSelect');
     </script>
 }

@@ -1,14 +1,19 @@
-﻿window.initDeptOfficeLinkage = function (formSelector, officeList) {
+﻿window.initDeptOfficeLinkage = function (formSelector, officeList, departmentId = '', officeId = '') {
+    if (departmentId === '') {
+      departmentId = 'DepartmentId';
+    }
+    if (officeId === '') {
+      officeId = 'OfficeId';
+    }
+
     var $form = $(formSelector);
-    var $department = $form.find('[name="DepartmentId"]');
-    var $office = $form.find('[name="OfficeId"]');
+    var $department = $form.find(`[name="${departmentId}"]`);
+    var $office = $form.find(`[name="${officeId}"]`);
 
     function renderOfficeOptions(deptId, selectedOfficeId) {
       $office.empty();
       $office.append('<option value="">請選擇</option>');
       if (deptId) {
-        console.log('deptId:' + deptId);
-
         var filtered = officeList.filter(function (o) {
           return o.ParentValue == deptId;
         });
@@ -26,7 +31,6 @@
 
     // 部門變更時，重載單位
     $department.on('change', function () {
-      console.log('Department changed to: ' + $(this).val());
       renderOfficeOptions($(this).val(), "");
     });
 };
