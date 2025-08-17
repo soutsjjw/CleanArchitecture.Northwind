@@ -24,19 +24,16 @@ public class RolesController : BaseController<RolesController>
     private readonly IMapper _mapper;
     private readonly RoleManager<ApplicationRole> _roles;
     private readonly IDataProtectionService _dataProtectionService;
-    private readonly ICommonService _commonService;
 
     public RolesController(IMapper mapper,
         RoleManager<ApplicationRole> roles,
         IDataProtectionService dataProtectionService,
-        ICommonService commonService,
         ILogger<RolesController> logger)
         : base(logger)
     {
         _mapper = mapper;
         _roles = roles;
         _dataProtectionService = dataProtectionService;
-        _commonService = commonService;
     }
 
     public async Task<IActionResult> Index()
@@ -49,8 +46,7 @@ public class RolesController : BaseController<RolesController>
             role.Id = _dataProtectionService.Protect(role.Id);
         });
 
-        ViewBag.Departments = _commonService.GetDepartmentOptions();
-        ViewBag.Offices = _commonService.GetOfficeOptions();
+        GenerateDepartmentAndOfficeOptions();
 
         return View(result.Data);
     }

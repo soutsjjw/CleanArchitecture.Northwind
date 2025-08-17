@@ -1,0 +1,264 @@
+﻿@using CleanArchitecture.Northwind.Application.Common.Models
+@using CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers
+@model UsersDto
+@{
+    ViewData["Title"] = "使用者列表";
+}
+
+<div class="container mt-4">
+    <h3>@ViewData["Title"]</h3>
+
+    <form id="frmSearch" method="post" asp-action="Search" class="row g-2 mb-3">
+        <input type="hidden" name="pageNumber" value="@Model.Users.PageNumber" />
+        <input type="hidden" name="pageSize" value="@Model.Users.PageSize" />
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">電子郵件</label>
+            <input type="text" name="email" class="form-control" placeholder="電子郵件" value="@Model.Email" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">姓名</label>
+            <input type="text" name="fullName" class="form-control" placeholder="姓名" value="@Model.FullName" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">部門</label>
+            <select asp-for="DepartmentId" class="form-select">
+                <option value="">請選擇</option>
+                @if (ViewBag.Departments != null)
+                {
+                    var current = Model?.DepartmentId?.ToString() ?? "";
+                    foreach (var dept in ViewBag.Departments)
+                    {
+                        <option value="@dept.Value"
+                                selected="@(dept.Value == current ? "selected" : null)">
+                            @dept.Text
+                        </option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">單位</label>
+            <select asp-for="OfficeId" class="form-select" data-selected="@Model.OfficeId">
+                <option value="">請選擇</option>
+            </select>
+        </div>
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary" onclick='toggleLoadingOverlay()'>查詢</button>
+            <button type="button" class="btn btn-secondary" id="btnClear">取消</button>
+        </div>
+
+        @if (Model.Users.TotalCount == 0)
+        {
+            <partial name="_NoDataPartial" model="@(string.Empty)" />
+        }
+        else
+        {
+            <div class="text-muted mb-2">
+                顯示第 @Model.Users.FirstItemIndex–@Model.Users.LastItemIndex 筆，總計 @Model.Users.TotalCount 筆
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>帳號</th>
+                        <th>Email</th>
+                        <th>姓名</th>
+                        <th>職稱</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users.Items)
+                    {
+                        <tr>
+                            <td>@user.UserName</td>
+                            <td>@user.Email</td>
+                            <td>@user.FullName</td>
+                            <td>@user.Title</td>
+                            <td class="text-center">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm js-user-view"
+                                        data-user-id="@user.UserId">
+                                    檢視
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <partial name="_PaginationPartial" model="Model.Users" />
+        }
+    </form>
+</div>
+
+<!-- User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">使用者資料</h5>
+                <!-- 不放關閉 X，強制走下方「取消」 -->
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <!-- 這裡以 AJAX 載入：檢視/編輯內容 -->
+            </div>
+            <div class="modal-footer">
+                <!-- 檢視狀態的 footer -->
+                <div id="viewFooter" class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" id="btnEdit">編輯</button>
+                    <button type="button" class="btn btn-secondary" id="btnCancelView">取消</button>
+                </div>
+                <!-- 編輯狀態的 footer -->
+                <div id="editFooter" class="d-flex gap-2 d-none">
+                    <button type="button" class="btn btn-success" id="btnUpdate">更新</button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnCancelEdit">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+          const $modal = $('#userModal');
+          const modal = new bootstrap.Modal($modal[0], { backdrop: 'static', keyboard: false });
+          const $title = $('#userModalTitle');
+          const $body = $('#userModalBody');
+          const $viewFooter = $('#viewFooter');
+          const $editFooter = $('#editFooter');
+
+          let currentUserId = null;
+
+          // 開啟「檢視」模式
+          async function loadView(userId) {
+            currentUserId = userId;
+            $title.text('檢視使用者');
+            toggleFooter('view');
+            const url = '@Url.Action("DetailsModal", "User")' + '?id=' + encodeURIComponent(userId);
+            const html = await fetchHtml(url);
+            $body.html(html);
+          }
+
+          // 開啟「編輯」模式（內容可參考 Register.cshtml 的表單配置）
+          async function loadEdit(userId) {
+            currentUserId = userId;
+            $title.text('編輯使用者');
+            toggleFooter('edit');
+            const url = '@Url.Action("EditModal", "User")' + '?id=' + encodeURIComponent(userId);
+            const html = await fetchHtml(url);
+            $body.html(html);
+            window.initDeptOfficeLinkage('#userModal form', officeList);
+
+            // 重新啟用 unobtrusive 驗證（若你的專案有用）
+            if ($.validator && $.validator.unobtrusive) {
+              const $form = $body.find('form');
+              if ($form.length) {
+                $form.removeData('validator');
+                $form.removeData('unobtrusiveValidation');
+                $.validator.unobtrusive.parse($form);
+              }
+            }
+          }
+
+          function toggleFooter(mode) {
+            if (mode === 'view') {
+              $viewFooter.removeClass('d-none');
+              $editFooter.addClass('d-none');
+            } else {
+              $viewFooter.addClass('d-none');
+              $editFooter.removeClass('d-none');
+            }
+          }
+
+          async function fetchHtml(url) {
+            const res = await fetch(url, { credentials: 'same-origin' });
+            if (!res.ok) throw new Error('載入失敗：' + res.statusText);
+            return await res.text();
+          }
+
+          // 事件：點擊「檢視」按鈕
+          $(document).on('click', '.js-user-view', async function () {
+            const userId = this.dataset.userId;
+            await loadView(userId);
+            modal.show();
+          });
+
+          // 事件：檢視 -> 編輯
+          $('#btnEdit').on('click', async function () {
+            if (!currentUserId) return;
+            await loadEdit(currentUserId);
+          });
+
+          // 事件：檢視模式「取消」= 關閉視窗
+          $('#btnCancelView').on('click', function () {
+            modal.hide();
+          });
+
+          // 事件：編輯模式「取消」= 回到檢視
+          $('#btnCancelEdit').on('click', async function () {
+            if (!currentUserId) return;
+            await loadView(currentUserId);
+          });
+
+          // 事件：編輯模式「更新」= 送出表單（AJAX）
+          $('#btnUpdate').on('click', async function () {
+            const $form = $body.find('form');
+            if (!$form.length) return;
+
+            // 若啟用 unobtrusive 驗證，先觸發驗證
+            if ($form.valid && !$form.valid()) return;
+
+            const action = $form.attr('action') || '@Url.Action("Edit", "User")';
+            const method = ($form.attr('method') || 'post').toUpperCase();
+
+            const formData = $form.serialize(); // 會包含 AntiForgeryToken
+            const res = await fetch(action, {
+              method,
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+              body: formData,
+              credentials: 'same-origin'
+            });
+
+            const contentType = res.headers.get('content-type') || '';
+            // 後端若驗證不過，請回傳「編輯表單 Partial」讓我們覆蓋（含驗證訊息）
+            if (contentType.includes('text/html')) {
+              const html = await res.text();
+              $body.html(html);
+              if ($.validator && $.validator.unobtrusive) {
+                const $form2 = $body.find('form');
+                $form2.removeData('validator');
+                $form2.removeData('unobtrusiveValidation');
+                $.validator.unobtrusive.parse($form2);
+              }
+              return;
+            }
+
+            // 成功（建議後端回傳 JSON { ok: true }）
+            const data = await res.json().catch(() => ({}));
+            if (data && data.ok) {
+              // 回到檢視模式並重新載入
+              await loadView(currentUserId);
+              // 如需同步更新列表某列，可在此加上刷新該列邏輯
+            } else {
+              // 保底：若不是 ok，嘗試重載編輯畫面
+              await loadEdit(currentUserId);
+            }
+          });
+        });
+    </script>
+
+    <script src="~/js/deptOfficeLinkage.js"></script>
+    <script src="~/js/pagination.js"></script>
+    <script>
+        var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
+        var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
+        window.initDeptOfficeLinkage('#frmSearch', officeList);
+        window.initPagination('#frmSearch');
+
+        // Modal
+        // window.initDeptOfficeLinkage('#userModal form', officeList);
+    </script>
+}

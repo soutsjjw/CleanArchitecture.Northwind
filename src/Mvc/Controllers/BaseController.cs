@@ -1,4 +1,5 @@
-﻿using CleanArchitecture.Northwind.Domain.Enums;
+﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Domain.Enums;
 using CleanArchitecture.Northwind.Infrastructure.Extensions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -30,5 +31,18 @@ public class BaseController<T> : Controller
                 Text = g.GetDisplayName()
             });
         ViewBag.GenderOptions = items;
+    }
+
+    public void GenerateDepartmentAndOfficeOptions()
+    {
+        var commonService = HttpContext.RequestServices.GetService(typeof(ICommonService)) as ICommonService;
+        ViewBag.Departments = commonService?.GetDepartmentOptions();
+        ViewBag.Offices = commonService?.GetOfficeOptions();
+    }
+
+    public void GenerateDepartmentOptions()
+    {
+        var commonService = HttpContext.RequestServices.GetService(typeof(ICommonService)) as ICommonService;
+        ViewBag.Departments = commonService?.GetDepartmentOptions();
     }
 }

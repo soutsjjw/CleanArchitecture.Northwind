@@ -41,3 +41,12 @@ function togglePassword(inputId) {
     passwordInput.classList.remove('input-validation-error');
   }
 }
+
+function toggleLoadingOverlay() {
+  var $overlay = $("#loadingOverlay");
+  if ($overlay.hasClass("d-none")) {
+    $overlay.removeClass("d-none");
+  } else {
+    $overlay.addClass("d-none");
+  }
+}
