@@ -13,21 +13,18 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, R
     private readonly IApplicationDbContext _context;
     private readonly IIdentityService _identityService;
     private readonly IUserProfileRepository _userProfileRepository;
-    private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<RegisterUserCommandHandler> _logger;
 
     public RegisterUserCommandHandler(IApplicationDbContext context,
         IIdentityService identityService,
         IUserProfileRepository userProfileRepository,
-        RoleManager<ApplicationRole> roleManager,
         UserManager<ApplicationUser> userManager,
         ILogger<RegisterUserCommandHandler> logger)
     {
         _context = context;
         _identityService = identityService;
         _userProfileRepository = userProfileRepository;
-        _roleManager = roleManager;
         _userManager = userManager;
         _logger = logger;
     }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Application.Features.User.Commands.ResendConfirmationEmail;
 using CleanArchitecture.Northwind.Application.Features.User.Commands.UpdateUser;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.UserDetail;
@@ -59,6 +60,7 @@ public class UserController : BaseController<UserController>
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Search(UsersDto viewModel, int pageNumber = 1, int pageSize = 10)
     {
         var result = await Mediator.Send(new GetAllUsersQuery
@@ -96,6 +98,7 @@ public class UserController : BaseController<UserController>
 
         if (result.Succeeded)
         {
+            result.Data.UserId = _dataProtectionService.Protect(result.Data.UserId);
             return PartialView("_UserDetail", result.Data);
         }
 
@@ -153,5 +156,17 @@ public class UserController : BaseController<UserController>
             _logger.LogError(ex, "Edit User failed");
             return Json(Result.Failure("更新使用者資料時發生錯誤"));
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendConfirmationEmail(string userId)
+    {
+        var result = await Mediator.Send(new ResendConfirmationEmailCommand
+        {
+            UserId = _dataProtectionService.Unprotect(userId)
+        });
+
+        return Json(result);
     }
 }

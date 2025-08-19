@@ -1,5 +1,6 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
+using CleanArchitecture.Northwind.Application.Features.Account.Commands.ConfirmEmail;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ForgotPassword;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.ResetPassword;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
@@ -275,31 +276,6 @@ public class AccountController : BaseController<AccountController>
         }
     }
 
-    /// <summary>
-    /// 非同步驗證 Cloudflare Turnstile CAPTCHA 回應。
-    /// </summary>
-    /// <remarks>此方法檢查請求表單中的 CAPTCHA 回應令牌，並使用 Cloudflare 服務進行驗證。如果令牌缺失或無效，則會將身分驗證錯誤新增至模型狀態。 </remarks>
-    /// 如果 CAPTCHA 回應有效，則傳回 <returns><see langword="true"/>；否則，傳回 <see langword="false"/>。 </returns>
-    private async Task<bool> VerifyTurnstileAsync()
-    {
-        var token = Request.Form["cf-turnstile-response"];
-        if (string.IsNullOrEmpty(token))
-        {
-            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
-            return false;
-        }
-
-        var isValidCaptcha = await _cloudflareService.VerifyTurnstileAsync(token);
-
-        if (!isValidCaptcha)
-        {
-            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
-            return false;
-        }
-
-        return true;
-    }
-
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> SetupTotp()
@@ -400,6 +376,68 @@ public class AccountController : BaseController<AccountController>
         return View(viewModel).WithError("驗證碼錯誤，請重新輸入");
     }
 
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmail(string email, string token)
+    {
+        var result = await Mediator.Send(new ConfirmEmailCommand { Email = email, Token = token });
+
+        if (result.Succeeded)
+        {
+            return RedirectToAction("Login").WithSuccess(this, "信箱驗證成功，請登入");
+        }
+        else
+        {
+            return RedirectToAction("Login").WithError(this, result.Errors.ToList());
+        }
+
+        /*
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            return RedirectToAction("Login").WithError(this, "驗證連結無效，請重新申請驗證信");
+        }
+
+        var result = await _identityService.ConfirmEmailAsync(email, token);
+
+        if (result)
+        {
+            return RedirectToAction("Login").WithSuccess(this, "信箱驗證成功，請登入");
+        }
+        else
+        {
+            return RedirectToAction("Login").WithError(this, "信箱驗證失敗或連結已過期，請重新申請驗證信");
+        }
+
+        */
+    }
+
+    #region Privae
+
+    /// <summary>
+    /// 非同步驗證 Cloudflare Turnstile CAPTCHA 回應。
+    /// </summary>
+    /// <remarks>此方法檢查請求表單中的 CAPTCHA 回應令牌，並使用 Cloudflare 服務進行驗證。如果令牌缺失或無效，則會將身分驗證錯誤新增至模型狀態。 </remarks>
+    /// 如果 CAPTCHA 回應有效，則傳回 <returns><see langword="true"/>；否則，傳回 <see langword="false"/>。 </returns>
+    private async Task<bool> VerifyTurnstileAsync()
+    {
+        var token = Request.Form["cf-turnstile-response"];
+        if (string.IsNullOrEmpty(token))
+        {
+            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
+            return false;
+        }
+
+        var isValidCaptcha = await _cloudflareService.VerifyTurnstileAsync(token);
+
+        if (!isValidCaptcha)
+        {
+            ModelState.AddModelError(string.Empty, _AuthenticationFailedMessage);
+            return false;
+        }
+
+        return true;
+    }
+
     private async Task<List<string>> ForgotPasswordConfirmationAsync(string email)
     {
         var errors = new List<string>();
@@ -420,4 +458,6 @@ public class AccountController : BaseController<AccountController>
 
         return errors;
     }
+
+    #endregion
 }
