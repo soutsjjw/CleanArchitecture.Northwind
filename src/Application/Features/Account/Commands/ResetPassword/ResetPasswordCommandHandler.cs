@@ -43,12 +43,14 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
 
         if (await _identityService.ResetPasswordAsync(request.Email, request.ResetCode, request.NewPassword))
         {
+            user.LastPasswordChangedDate = DateTime.Now;
+
             // 新增密碼歷史紀錄
             _context.UserPasswordHistories.Add(new ApplicationUserPasswordHistory
             {
                 UserId = user.Id,
                 PasswordHash = user.PasswordHash!,
-                ChangedAt = DateTime.UtcNow
+                ChangedAt = DateTime.Now
             });
             await _context.SaveChangesAsync(cancellationToken);
 

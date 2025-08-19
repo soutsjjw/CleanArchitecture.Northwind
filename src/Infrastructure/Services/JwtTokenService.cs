@@ -45,7 +45,7 @@ public class JwtTokenService : IJwtTokenService
             {
                 new Claim(ClaimTypes.NameIdentifier, userId)
             }),
-            Expires = DateTime.UtcNow.AddDays(7),
+            Expires = DateTime.Now.AddDays(7),
             SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);

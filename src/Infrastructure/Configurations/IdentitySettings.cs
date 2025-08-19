@@ -70,4 +70,9 @@ public class IdentitySettings : IIdentitySettings
     /// 強制使用者啟用 TOTP
     /// </summary>
     public bool ForceEnableTotp { get; set; } = false;
+
+    /// <summary>
+    /// 密碼過期(天)
+    /// </summary>
+    public int PasswordExpirationDays { get; set; } = 90;
 }

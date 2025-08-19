@@ -201,6 +201,7 @@ public class ApplicationDbContextInitialiser
 
             user = await _userManager.FindByEmailAsync(systemAdmin.Email);
             user.EmailConfirmed = true;
+            user.LastPasswordChangedDate = DateTime.Now;
             _context.UserProfiles.Add(new ApplicationUserProfile
             {
                 UserId = user.Id,
@@ -236,6 +237,7 @@ public class ApplicationDbContextInitialiser
 
             user = await _userManager.FindByEmailAsync(administrator.Email);
             user.EmailConfirmed = true;
+            user.LastPasswordChangedDate = DateTime.Now;
             _context.UserProfiles.Add(new ApplicationUserProfile
             {
                 UserId = user.Id,
@@ -270,6 +272,7 @@ public class ApplicationDbContextInitialiser
 
             var user = await _userManager.FindByEmailAsync(defaultUser.Email);
             user.EmailConfirmed = true;
+            user.LastPasswordChangedDate = DateTime.Now;
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
                 byte[] randomNumber = new byte[1];

@@ -90,6 +90,22 @@ public class AccountController : BaseController<AccountController>
                 .WithError(result.Errors.ToList(), "登入失敗");
         }
 
+        if (result.Data.IsPasswordExpiration)
+        {
+            var errors = await ForgotPasswordConfirmationAsync(viewModel.Email);
+            var message = $"距離上次設置密碼已超過{_identitySettings.PasswordExpirationDays}天，";
+
+            if (errors.Any())
+            {
+                _logger.LogError(string.Join("、", errors.ToArray()));
+                return RedirectToAction("Login").WithError(this, $"{message}寄送重設密碼信件失敗");
+            }
+            else
+            {
+                return RedirectToAction("Login").WithSuccess(this, $"{message}已寄送重設密碼信件");
+            }
+        }
+
         if (result.Data.User.Profile.IsTotpEnabled)
         {
             // 導向 TOTP 驗證頁
@@ -193,27 +209,20 @@ public class AccountController : BaseController<AccountController>
             return View(viewModel).WithError(ModelState.CollectErrorMessages());
         }
 
-        var result = await Mediator.Send(new ForgotPasswordCommand
-        {
-            Email = viewModel.Email,
-            Link = $"{_appConfig.SiteUrl}/Account/ResetPassword"
-        });
-
-        System.Threading.Thread.Sleep(5000);
-
-        if (result.Succeeded)
-        {
-            // 寄送成功，導向提示頁面
-            return RedirectToAction("ForgotPasswordConfirmation");
-        }
-        else
+        var errors = await ForgotPasswordConfirmationAsync(viewModel.Email);
+        if (errors.Any())
         {
             // 寄送失敗，顯示錯誤訊息
-            foreach (var error in result.Errors)
+            foreach (var error in errors)
             {
                 ModelState.AddModelError(string.Empty, error);
             }
             return View(viewModel).WithError(ModelState.CollectErrorMessages());
+        }
+        else
+        {
+            // 寄送成功，導向提示頁面
+            return RedirectToAction("ForgotPasswordConfirmation");
         }
     }
 
@@ -389,5 +398,26 @@ public class AccountController : BaseController<AccountController>
         ModelState.AddModelError(nameof(viewModel.Code), "");
 
         return View(viewModel).WithError("驗證碼錯誤，請重新輸入");
+    }
+
+    private async Task<List<string>> ForgotPasswordConfirmationAsync(string email)
+    {
+        var errors = new List<string>();
+        var result = await Mediator.Send(new ForgotPasswordCommand
+        {
+            Email = email,
+            Link = $"{_appConfig.SiteUrl}/Account/ResetPassword"
+        });
+
+        if (!result.Succeeded)
+        {
+            // 寄送失敗，顯示錯誤訊息
+            foreach (var error in result.Errors)
+            {
+                errors.Add(error);
+            }
+        }
+
+        return errors;
     }
 }

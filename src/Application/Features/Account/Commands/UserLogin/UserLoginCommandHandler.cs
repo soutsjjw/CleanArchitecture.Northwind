@@ -1,32 +1,40 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Interfaces.Identity;
 using CleanArchitecture.Northwind.Application.Common.Logging;
 using CleanArchitecture.Northwind.Application.Common.Models;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 
-public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<UserLoginVm>>
+public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<UserLoginDto>>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly IMapper _mapper;
     private readonly IIdentityService _identityService;
+    private readonly IIdentitySettings _identitySettings;
 
-    public UserLoginCommandHandler(IApplicationDbContext context, IMapper mapper, IIdentityService identityService)
+    public UserLoginCommandHandler(IIdentityService identityService,
+        IIdentitySettings identitySettings)
     {
-        _context = context;
-        _mapper = mapper;
         _identityService = identityService;
+        _identitySettings = identitySettings;
     }
 
-    public async Task<Result<UserLoginVm>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserLoginDto>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
     {
         var (result, user) = await _identityService.UserLogin(request.UserName, request.Password, true);
 
         if (user == null || result == null || !result.Succeeded)
         {
-            return await Result<UserLoginVm>.FailureAsync(LoggingEvents.Account.InvalidLoginAttempt);
+            return await Result<UserLoginDto>.FailureAsync(LoggingEvents.Account.InvalidLoginAttempt);
         }
 
-        UserLoginVm model = new UserLoginVm
+        var isPasswordExpiration = user.LastPasswordChangedDate.HasValue &&
+                                   user.LastPasswordChangedDate.Value.AddDays(_identitySettings.PasswordExpirationDays) < DateTime.Now;
+
+        if (isPasswordExpiration)
+        {
+            await _identityService.SignOutAsync();
+        }
+
+        var model = new UserLoginDto
         {
             UserName = user.UserName ?? "",
             FullName = user.Profile?.FullName ?? "",
@@ -34,10 +42,11 @@ public class UserLoginCommandHandler : IRequestHandler<UserLoginCommand, Result<
             Gender = user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow),
             Title = user.Profile?.Title ?? "",
             Status = user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable),
+            IsPasswordExpiration = isPasswordExpiration,
             User = user,
             SignInResult = result,
         };
 
-        return await Result<UserLoginVm>.SuccessAsync(model);
+        return await Result<UserLoginDto>.SuccessAsync(model);
     }
 }

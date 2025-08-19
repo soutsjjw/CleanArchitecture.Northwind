@@ -2,7 +2,7 @@
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 
-public record UserLoginCommand : IRequest<Result<UserLoginVm>>
+public record UserLoginCommand : IRequest<Result<UserLoginDto>>
 {
     public string UserName { get; set; } = "";
 

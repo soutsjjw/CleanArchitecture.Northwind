@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CleanArchitecture.Northwind.Application.Features.Account.Commands.UserLogin;
 
-public class UserLoginVm
+public class UserLoginDto
 {
     public string UserName { get; set; }
 
@@ -16,6 +16,8 @@ public class UserLoginVm
     public string Title { get; set; }
 
     public string Status { get; set; }
+
+    public bool IsPasswordExpiration { get; set; } = false;
 
     public ApplicationUser User { get; set; }
 

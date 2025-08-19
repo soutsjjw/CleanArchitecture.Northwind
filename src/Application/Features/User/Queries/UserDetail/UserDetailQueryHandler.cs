@@ -52,7 +52,7 @@ public class UserDetailQueryHandler : IRequestHandler<UserDetailQuery, Result<Us
                 ViewerUserId = _currentUserService.UserId,
                 TargetUserId = request.UserId,
                 Action = nameof(ActionType.View),
-                Accessed = DateTime.UtcNow,
+                Accessed = DateTime.Now,
                 Description = "瀏覽使用者個資"
             };
             _context.PersonalDataAccessLogs.Add(log);

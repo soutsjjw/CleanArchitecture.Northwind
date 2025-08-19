@@ -63,4 +63,9 @@ public interface IIdentitySettings
     /// 強制啟用Totp
     /// </summary>
     bool ForceEnableTotp { get; }
+
+    /// <summary>
+    /// 密碼過期(天)
+    /// </summary>
+    int PasswordExpirationDays { get; }
 }
