@@ -79,7 +79,7 @@ public class MemberController : BaseController<MemberController>
             return View(viewModel).WithError(result.Errors.ToList());
         }
 
-        return View(viewModel).WithSuccess("更新成功");
+        return RedirectToAction("Profile").WithSuccess(this, "更新成功");
     }
 
     [HttpGet]

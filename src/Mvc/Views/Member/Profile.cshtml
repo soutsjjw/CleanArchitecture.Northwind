@@ -7,52 +7,58 @@
 }
 
 <div class="container">
-    <div class="page-title">
-        <h3>個人資料</h3>
-    </div>
     <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">個人資料</div>
-                <div class="card-body">
-                    <div class="form-group mb-3 text-start">
-                        <label asp-for="FullName" class="form-label">姓名</label>
-                        <p class="ms-3">@Model.FullName</p>
-                    </div>
-                    <div class="form-group mb-3 text-start">
-                        <label asp-for="IDNo" class="form-label">身分證號</label>
-                        <p class="ms-3">@(string.IsNullOrEmpty(Model.IDNo) ? "[空白]" : Model.IDNo)</p>
-                    </div>
-                    <div class="form-group mb-3 text-start">
-                        <label asp-for="Gender">性別</label>
-                        <p class="ms-3">@(((Gender)Model.Gender).GetDisplayName())</p>
-                    </div>
-                    <div class="form-group mb-3 text-start">
-                        <label asp-for="Title" class="form-label">職稱</label>
-                        <p class="ms-3">@(string.IsNullOrEmpty(Model.Title) ? "[空白]" : Model.Title)</p>
-                    </div>
-                    <div class="form-group mb-3 text-start">
-                        <label asp-for="Title" class="form-label">是否啟用 Totp</label>
-                        <p class="ms-3">@(Model.IsTotpEnabled ? "是" : "否")</p>
-                    </div>
-                    <div class="mb-3 d-flex justify-content-center gap-2">
-                        <a class="btn btn-primary" asp-action="ProfileEdit">編輯</a>
-                        @if (!Model.IsTotpEnabled)
-                        {
-                            <a type="button" class="btn btn-secondary" asp-action="SetupTotp">
-                                啟用 TOTP
-                            </a>
-                        }
-                        else
-                        {
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deactivateTotpModal">
-                                停用 TOTP
-                            </button>
-                        }
+        <div class="col-2"></div>
+        <div class="col-8">
+            <div class="page-title">
+                <h3>個人資料</h3>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">個人資料</div>
+                        <div class="card-body">
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="FullName" class="form-label">姓名</label>
+                                <p class="ms-3">@Model.FullName</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="IDNo" class="form-label">身分證號</label>
+                                <p class="ms-3">@(string.IsNullOrEmpty(Model.IDNo) ? Mvc.Common.WebConstants.BlankContent : Model.IDNo)</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Gender">性別</label>
+                                <p class="ms-3">@(((Gender)Model.Gender).GetDisplayName())</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Title" class="form-label">職稱</label>
+                                <p class="ms-3">@(string.IsNullOrEmpty(Model.Title) ? Mvc.Common.WebConstants.BlankContent : Model.Title)</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Title" class="form-label">是否啟用 Totp</label>
+                                <p class="ms-3">@(Model.IsTotpEnabled ? "是" : "否")</p>
+                            </div>
+                            <div class="mb-3 d-flex justify-content-center gap-2">
+                                <a class="btn btn-primary" asp-action="ProfileEdit" onclick="toggleLoadingOverlay()">編輯</a>
+                                @if (!Model.IsTotpEnabled)
+                                {
+                                    <a type="button" class="btn btn-secondary" asp-action="SetupTotp" onclick="toggleLoadingOverlay()">
+                                        啟用 TOTP
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deactivateTotpModal">
+                                        停用 TOTP
+                                    </button>
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-2"></div>
     </div>
 </div>
 

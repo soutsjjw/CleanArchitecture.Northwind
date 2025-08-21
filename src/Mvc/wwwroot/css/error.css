@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------
+﻿/*------------------------------------------------------------------
 * Bootstrap Simple Admin Template
 * Version: 4.0
 * Author: Alexis Luna
@@ -99,6 +99,23 @@ html {
     color: #a9afb5;
     text-align: left;
 }
+
+    /* 1) 長字串的 h3：限制寬度 + 允許斷行，避免撐寬版面 */
+    .page h3.text-danger {
+        overflow-wrap: break-word; /* 英文/長字串可斷 */
+        word-break: break-all; /* 中文可斷 */
+        white-space: normal;
+        max-width: 960px; /* 標題視覺欄寬，可調整 */
+        margin: 0 auto; /* 置中 */
+    }
+
+    /* 2) 說明段落與清單：限制寬度，容器置中，內文維持靠左易讀 */
+    .page .error-advise,
+    .page ul {
+        max-width: 720px; /* 文字欄寬，可調整 */
+        margin-left: auto; /* 置中容器 */
+        margin-right: auto;
+    }
 
 /*------------------------------------------------------------------
 [3. Miscellaneous]
