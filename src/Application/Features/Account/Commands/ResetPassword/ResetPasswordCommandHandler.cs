@@ -26,19 +26,9 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         if (user == null)
             return await Result.FailureAsync("找不到使用者");
 
-        var last3Hashes = user.PasswordHistories
-            .OrderByDescending(h => h.ChangedAt)
-            .Take(3)
-            .Select(h => h.PasswordHash)
-            .ToList();
-
-        // 檢查新密碼是否與前三次相同
-        foreach (var hash in last3Hashes)
+        if (_identityService.IsPasswordSameAsLastThree(user, request.NewPassword))
         {
-            if (_userManager.PasswordHasher.VerifyHashedPassword(user, hash, request.NewPassword) == PasswordVerificationResult.Success)
-            {
-                return await Result.FailureAsync("新密碼不可與前三次相同");
-            }
+            return await Result.FailureAsync("新密碼不可與前三次相同");
         }
 
         if (await _identityService.ResetPasswordAsync(request.Email, request.ResetCode, request.NewPassword))

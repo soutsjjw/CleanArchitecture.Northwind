@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UpdateProfile;
+using CleanArchitecture.Northwind.Application.Features.Member.Commands.ChangePassword;
 using CleanArchitecture.Northwind.Application.Features.Member.Queries.GetProfile;
 using CleanArchitecture.Northwind.Application.Features.Totp.Commands.DeactivateTotp;
 using CleanArchitecture.Northwind.Application.Features.Totp.Commands.EnableTotp;
@@ -160,5 +161,35 @@ public class MemberController : BaseController<MemberController>
             return Json(new { success = true });
         else
             return Json(new { success = false, error = "停用 TOTP 失敗" });
+    }
+
+    [HttpGet]
+    public IActionResult PasswordChange()
+    {
+        return View(new ChangePasswordDto());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PasswordChange(ChangePasswordDto viewModel)
+    {
+        var model = _mapper.Map<ChangePasswordCommand>(viewModel);
+
+        var result = await Mediator.Send(model);
+
+        if (!result.Succeeded)
+        {
+            foreach (var field in result.FieldErrors)
+            {
+                foreach (var value in field.Value)
+                {
+                    ModelState.AddModelError(field.Key, value);
+                }
+            }
+
+            return View(viewModel).WithError(result.Errors.ToList());
+        }
+
+        return RedirectToAction("Profile").WithSuccess(this, "密碼修改成功");
     }
 }

@@ -85,19 +85,7 @@ public class IdentityService : IIdentityService
             return null;
         }
 
-        var profile = await _context.UserProfiles
-            .Where(x => x.UserId == user.Id)
-            .FirstOrDefaultAsync();
-
-        if (profile == null)
-        {
-            _logger.LogWarning(LoggingEvents.Account.UserProfileNotFoundFormat, userId);
-            return user;
-        }
-
-        user.Profile = profile;
-
-        return user;
+        return await GetUserAsync(user);
     }
 
     public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
@@ -209,37 +197,6 @@ public class IdentityService : IIdentityService
             return (SignInResult.Failed, user);
         }
 
-        /*
-        if (useCookies)
-        {
-            result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
-
-            if (result.Succeeded)
-            {
-                var claims = new List<Claim>
-                {
-                    new Claim("FullName", user.Profile?.FullName ?? ""),
-                    new Claim("IDNo", user.Profile?.IDNo ?? ""),
-                    new Claim("Gender", user.Profile?.Gender.ToString() ?? nameof(Domain.Enums.Gender.Unknow)),
-                    new Claim("Title", user.Profile?.Title ?? ""),
-                    new Claim("Status", user.Profile?.Status.ToString() ?? nameof(Domain.Enums.Status.Disable)),
-                };
-
-                // 添加聲明到 ClaimsIdentity
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                // 登入使用者並附加聲明
-                await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, additionalClaims: claims);
-            }
-
-            isPasswordValid = result.Succeeded;
-        }
-        else
-        {
-            isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
-        }
-        */
-
         var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
 
         if (isPasswordValid)
@@ -287,8 +244,6 @@ public class IdentityService : IIdentityService
 
     public async Task SignInAsync(ApplicationUser user, bool useCookies)
     {
-        await _signInManager.SignInAsync(user, false);
-
         if (useCookies)
         {
             var claims = new List<Claim>
@@ -307,6 +262,10 @@ public class IdentityService : IIdentityService
 
             // 登入使用者並附加聲明
             await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, additionalClaims: claims);
+        }
+        else
+        {
+            await _signInManager.SignInAsync(user, false);
         }
     }
 
@@ -560,15 +519,65 @@ public class IdentityService : IIdentityService
         return tokenResponse;
     }
 
+    /// <summary>
+    /// 非同步註銷目前使用者。
+    /// </summary>
+    /// <remarks>此方法清除使用者的驗證工作階段及所有關聯的 Cookie。此方法應在使用者選擇退出應用程式時呼叫。</remarks>
+    /// <returns>表示非同步退出操作的任務。 </returns>
     public async Task SignOutAsync()
     {
         await _signInManager.SignOutAsync();
         _logger.LogInformation("使用者已成功登出");
     }
 
+    /// <summary>
+    /// 確定指定使用者目前是否已登入。
+    /// </summary>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> 代表要檢查的使用者。</param>
+    /// <returns>如果使用者已登入為 <see langword="true"/>；否則 <see langword="false"/>.</returns>
     public bool IsSignedIn(ClaimsPrincipal user)
     {
         return _signInManager.IsSignedIn(user);
+    }
+
+    /// <summary>
+    /// 刷新指定使用者的登入會話。
+    /// </summary>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> 代表要檢查的使用者。</param>
+    /// <returns>表示非同步退出操作的任務。 </returns>
+    public async Task RefreshSignInAsync(ApplicationUser user, bool useCookies)
+    {
+        //await _signInManager.RefreshSignInAsync(user);
+        await SignInAsync(user, useCookies);
+    }
+
+    /// <summary>
+    /// 檢查密碼是否與前三次相同
+    /// </summary>
+    /// <param name="user">使用者</param>
+    /// <param name="newPassword">新密碼</param>
+    /// <returns>如果相同則回傳 true，否則 false</returns>
+    public bool IsPasswordSameAsLastThree(ApplicationUser user, string newPassword)
+    {
+        if (user.PasswordHistories == null || user.PasswordHistories.Count < 1)
+            return false;
+
+        // 假設 PasswordHistories 儲存密碼雜湊值
+        var lastThree = user.PasswordHistories
+            .OrderByDescending(x => x.ChangedAt)
+            .Take(3)
+            .Select(x => x.PasswordHash);
+
+        // 檢查新密碼是否與前三次相同
+        foreach (var hash in lastThree)
+        {
+            if (_userManager.PasswordHasher.VerifyHashedPassword(user, hash, newPassword) == PasswordVerificationResult.Success)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     #region Private

@@ -10,12 +10,12 @@
         <div class="col-2"></div>
         <div class="col-8">
             <div class="page-title">
-                <h3>個人資料</h3>
+                <h3>@ViewData["Title"]</h3>
             </div>
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
-                        <div class="card-header">個人資料</div>
+                        <div class="card-header">@ViewData["Title"]</div>
                         <div class="card-body">
                             <form id="frmForm" asp-controller="Member" asp-action="ProfileEdit" method="post" autocomplete="off" novalidate>
                                 <div class="form-group mb-3 text-start">
@@ -49,28 +49,5 @@
             </div>
         </div>
         <div class="col-2"></div>
-    </div>
-</div>
-
-<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="logoutModalLabel">是否登出？</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-lg-center">
-                <i class="fa-duotone fa-solid fa-power-off fa-beat-fade fa-5x"></i>
-                <br />
-                <br />
-                請問是否確定登出？
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                <form asp-controller="Account" asp-action="Logout" method="post">
-                    <button type="submit" class="btn btn-danger">登出</button>
-                </form>
-            </div>
-        </div>
     </div>
 </div>

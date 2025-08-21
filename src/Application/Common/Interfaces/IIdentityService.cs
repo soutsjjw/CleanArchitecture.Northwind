@@ -58,4 +58,19 @@ public interface IIdentityService
     /// <param name="user"><see cref="ClaimsPrincipal"/> 代表要檢查的使用者。</param>
     /// <returns>如果使用者已登入為 <see langword="true"/>；否則 <see langword="false"/>.</returns>
     bool IsSignedIn(ClaimsPrincipal user);
+
+    /// <summary>
+    /// 刷新指定使用者的登入會話。
+    /// </summary>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> 代表要檢查的使用者。</param>
+    /// <returns>表示非同步退出操作的任務。 </returns>
+    Task RefreshSignInAsync(ApplicationUser user, bool useCookies);
+
+    /// <summary>
+    /// 檢查密碼是否與前三次相同
+    /// </summary>
+    /// <param name="user">使用者</param>
+    /// <param name="newPassword">新密碼</param>
+    /// <returns>如果相同則回傳 true，否則 false</returns>
+    bool IsPasswordSameAsLastThree(ApplicationUser user, string newPassword);
 }

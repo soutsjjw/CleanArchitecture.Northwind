@@ -160,7 +160,7 @@ public static class DependencyInjection
                 options.Cookie.HttpOnly = true;                             // 僅在 HTTPS 使用
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.SlidingExpiration = true;                           // 滑動過期時間
-                options.ExpireTimeSpan = TimeSpan.FromHours(1);             // Cookie 過期時間
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);             // Cookie 過期時間
             });
 
         services.AddAuthorization();
