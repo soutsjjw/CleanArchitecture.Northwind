@@ -87,6 +87,14 @@ public class AccountController : BaseController<AccountController>
         var result = await Mediator.Send(new UserLoginCommand { UserName = viewModel.Email, Password = viewModel.Password });
         if (!result.Succeeded)
         {
+            foreach (var field in result.FieldErrors)
+            {
+                foreach (var value in field.Value)
+                {
+                    ModelState.AddModelError(field.Key, value);
+                }
+            }
+
             return View(viewModel)
                 .WithError(result.Errors.ToList(), "登入失敗");
         }

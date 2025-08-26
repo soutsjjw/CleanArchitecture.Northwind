@@ -145,22 +145,22 @@ public class ApplicationDbContextInitialiser
 
         // Default data
         // Seed, if necessary
-        if (!_context.TodoLists.Any())
-        {
-            _context.TodoLists.Add(new TodoList
-            {
-                Title = "Todo List",
-                Items =
-                {
-                    new TodoItem { Title = "Make a todo list 📃" },
-                    new TodoItem { Title = "Check off the first item ✅" },
-                    new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-                    new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-                }
-            });
+        //if (!_context.TodoLists.Any())
+        //{
+        //    _context.TodoLists.Add(new TodoList
+        //    {
+        //        Title = "Todo List",
+        //        Items =
+        //        {
+        //            new TodoItem { Title = "Make a todo list 📃" },
+        //            new TodoItem { Title = "Check off the first item ✅" },
+        //            new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
+        //            new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
+        //        }
+        //    });
 
-            await _context.SaveChangesAsync();
-        }
+        //    await _context.SaveChangesAsync();
+        //}
     }
 
     #region Identity Seed
@@ -383,7 +383,7 @@ public class ApplicationDbContextInitialiser
             @"INSERT\s+(?:INTO\s+)?(?:""Categories""|\[Categories\]|(?:\[dbo\]\.)?\[Categories\])\s*"
           + @"\(\s*(?:""CategoryID""|\[CategoryID\])\s*,\s*(?:""CategoryName""|\[CategoryName\])\s*,\s*(?:""Description""|\[Description\])\s*,\s*(?:""Picture""|\[Picture\])\s*\)\s*"
           + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*'(?<name>(?:''|[^'])*)'\s*,\s*'(?<desc>(?:''|[^'])*)'\s*,\s*(?<pic>0x[0-9A-Fa-f]*)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline, TimeSpan.FromMilliseconds(100));
 
         static byte[] HexToBytes(string hex)
         {
@@ -454,7 +454,8 @@ public class ApplicationDbContextInitialiser
           + @"(?<country>(?:N)?'(?<countryv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<fax>(?:N)?'(?<faxv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100)
         );
 
         static string? Unwrap(Group token, Group inner)
@@ -522,7 +523,8 @@ public class ApplicationDbContextInitialiser
           + @"(?<notes>(?:N)?'(?<notesv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<reports>\d+|NULL)\s*,\s*"
           + @"(?<path>(?:N)?'(?<pathv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100)
         );
 
         static string? Unwrap(Group token, Group inner)
@@ -626,7 +628,8 @@ public class ApplicationDbContextInitialiser
           + @"(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<fax>(?:N)?'(?<faxv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<home>(?:N)?'(?<homev>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -692,7 +695,8 @@ public class ApplicationDbContextInitialiser
           + @"(?<onorder>-?\d+|NULL)\s*,\s*"
           + @"(?<reorder>-?\d+|NULL)\s*,\s*"
           + @"(?<disc>-?\d+|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -759,7 +763,7 @@ public class ApplicationDbContextInitialiser
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Shippers)\]|""Shippers""))\s*\(\s*"
           + @"(?:""ShipperID""|\[ShipperID\])\s*,\s*(?:""CompanyName""|\[CompanyName\])\s*,\s*(?:""Phone""|\[Phone\])\s*\)\s*"
           + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*(?<company>(?:N)?'(?<companyv>(?:''|[^'])*)'|NULL)\s*,\s*(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline, TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -819,7 +823,8 @@ public class ApplicationDbContextInitialiser
           + @"(?<shipregion>(?:N)?'(?<shipregionv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<shippostal>(?:N)?'(?<shippostalv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<shipcountry>(?:N)?'(?<shipcountryv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -931,7 +936,8 @@ public class ApplicationDbContextInitialiser
         var pattern = new Regex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Order Details)\]|""Order Details""))\s*VALUES\s*\(\s*"
           + @"(?<order>\d+)\s*,\s*(?<product>\d+)\s*,\s*(?<price>-?\d+(?:\.\d+)?)\s*,\s*(?<qty>\d+)\s*,\s*(?<disc>-?\d+(?:\.\d+)?)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -980,7 +986,8 @@ public class ApplicationDbContextInitialiser
                 @"|(?:dbo\.)?Region" +                            // 裸表名 Region（可含 dbo.）
             @")\s*VALUES\s*\(\s*" +
             @"(?<id>\d+)\s*,\s*(?<desc>(?:N)?'(?<descv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -1019,7 +1026,8 @@ public class ApplicationDbContextInitialiser
                 @"|(?:dbo\.)?EmployeeTerritories" +                                        // 裸表名（可含 dbo.）
             @")\s*VALUES\s*\(\s*" +
             @"(?<emp>\d+)\s*,\s*(?<terr>(?:N)?'(?<terrv>(?:''|[^'])*)'|\d+)\s*\)",        // TerritoryID 可能是 '06897' 或 06897（雖然型別是字串）
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         var matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -1063,7 +1071,8 @@ public class ApplicationDbContextInitialiser
             @"(?<id>(?:N)?'(?<idv>(?:''|[^'])*)'|\d+|NULL)\s*,\s*" +     // TerritoryID: 字串或數字或 NULL
             @"(?<desc>(?:N)?'(?<descv>(?:''|[^'])*)'|NULL)\s*,\s*" +     // TerritoryDescription: 字串或 NULL
             @"(?<region>\d+|NULL)\s*\)\s*;?",                            // RegionID: 整數或 NULL
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline);
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
 
         var matches = pattern.Matches(sqlText);
         if (matches.Count == 0)

@@ -1,4 +1,4 @@
-using CleanArchitecture.Northwind.Domain.Entities.Identity;
+﻿using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -46,6 +46,24 @@ public class ApplicationRoleClaimConfiguration : IEntityTypeConfiguration<Applic
               .WithMany(p => p.RoleClaims)
               .HasForeignKey(d => d.RoleId)
               .OnDelete(DeleteBehavior.Cascade);
+
+        // Identity 預設表：AspNetRoleClaims
+        builder.ToTable("AspNetRoleClaims");
+
+        // 欄位對應與限制
+        builder.Property(rc => rc.RoleClaimDescription)
+               .HasColumnName("Description")   // 需求：改名
+               .HasMaxLength(256)              // 建議：限制長度，避免無限 nvarchar
+               .IsUnicode(true);               // 依你情境可改為 IsUnicode(false)
+
+        builder.Property(rc => rc.RoleClaimGroup)
+               .HasColumnName("Group")         // 需求：改名（關鍵字交由 EF 自動加方括號）
+               .HasMaxLength(64)               // 建議：群組名稱通常較短
+               .IsUnicode(true);
+
+        // 常用索引（查角色＋群組）
+        builder.HasIndex(rc => new { rc.RoleId, rc.RoleClaimGroup })
+               .HasDatabaseName("IX_RoleClaims_Role_Group");
     }
 }
 
@@ -68,7 +86,7 @@ public class ApplicationUserClaimConfiguration : IEntityTypeConfiguration<Applic
 {
     public void Configure(EntityTypeBuilder<ApplicationUserClaim> builder)
     {
-        //TODO: ���]�m�S���@�ΡA�����b ApplicationDbContext -> OnModelCreating �A�i��]�m
+        //TODO: 此設置沒有作用，必須在 ApplicationDbContext -> OnModelCreating 再進行設置
         builder.HasOne(uc => uc.User)
             .WithMany(u => u.Claims)
             .HasForeignKey(uc => uc.UserId)

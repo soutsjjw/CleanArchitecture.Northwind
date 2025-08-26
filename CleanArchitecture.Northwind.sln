@@ -29,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 		global.json = global.json
 		README.md = README.md
+		sonar-scan.ps1 = sonar-scan.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPI", "src\WebAPI\WebAPI.csproj", "{82A7B903-C1D7-4AE6-8ED9-6A30CD48CFED}"

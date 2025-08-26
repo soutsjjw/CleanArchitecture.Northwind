@@ -36,7 +36,8 @@ public static class DependencyInjection
     {
         #region 資料庫
 
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var envConnectionStringKey = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = Environment.GetEnvironmentVariable(envConnectionStringKey ?? "");
 
         Guard.Against.Null(connectionString, message: "Connection string 'DefaultConnection' not found.");
 

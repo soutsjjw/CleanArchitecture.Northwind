@@ -109,3 +109,65 @@ dotnet ef migrations remove --project Infrastructure --startup-project Mvc --con
 | **Purchase**        | R             | R                                                         | **U(僅成本、供應商連結)**（是否允許 C：建議關閉或走審核） | R          | **CRUD**  | –         | –                     | –        | –        | –       | –         |
 | **Finance**         | R             | R                                                         | R                                 | R          | R         | –         | R                     | R        | R        | R       | （可選 R\*)  |
 | **CustomerService** | **CRUD**      | R                                                         | R                                 | R          | R         | –         | –                     | –        | **CRUD** | –       | –         |
+
+
+## Sonarqube
+
+### 1 在 SonarQube 建立專案並產生 Token
+
+1. 在 SonarQube 的 UI 建立一個 Project（取得 **Project Key**）。
+2. 到 **My Account → Security** 產生一組 **User Token**（建議無到期或定期輪替）。 ([docs.sonarsource.com][1])
+
+> 之後所有掃描都用這個 Token 作為認證。
+
+---
+
+### 2 安裝 SonarScanner for .NET
+
+在開發機或 CI runner 上安裝 dotnet 全球工具版掃描器：
+
+```bash
+dotnet tool install --global dotnet-sonarscanner
+```
+
+SonarScanner for .NET 是針對使用 `dotnet/MSBuild` 的專案所推薦的掃描方式；掃描時會用到 **begin → build/test → end** 這段式命令。 ([docs.sonarsource.com][2])
+
+---
+
+### 3 本機最小可行範例（含測試覆蓋率）
+
+假設你在方案根目錄（含 `YourSolution.sln`）執行，且你的 SonarQube 在 `http://sonarqube:9000/`：
+
+**Windows PowerShell / Linux Bash 通用（核心步驟）**
+
+```bash
+# 3-1 掃描開始：設定必要屬性
+dotnet sonarscanner begin \
+  /k:"your-project-key" \
+  /n:"Your Display Name" \
+  /v:"1.0.0" \
+  /d:sonar.host.url="http://sonarqube:9000" \
+  /d:sonar.token="YOUR_TOKEN" \
+  /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+  /d:sonar.cs.vstest.reportsPaths="**/*.trx"
+
+# 3-2 編譯
+dotnet build --no-incremental
+
+# 3-3 單元測試 + 產生 OpenCover 覆蓋率 & VSTest TRX
+# 若測試專案使用 coverlet.msbuild，以下參數即可產生 OpenCover 與 TRX
+dotnet test tests/Your.Tests/Your.Tests.csproj \
+  --logger "trx;LogFileName=test.trx" \
+  /p:CollectCoverage=true \
+  /p:CoverletOutput=./TestResults/coverage \
+  /p:CoverletOutputFormat=opencover
+
+# 3-4 結束並上傳分析資料
+dotnet sonarscanner end /d:sonar.token="YOUR_TOKEN"
+```
+
+說明：
+
+* `begin` 期會註冊 MSBuild hook；`end` 期會收集 build、test、coverage 成果並上傳。 ([docs.sonarsource.com][3])
+* SonarQube **不會自行產生覆蓋率報告**，你必須用第三方工具（如 coverlet）產生，再用 `sonar.cs.opencover.reportsPaths` 等屬性告訴掃描器路徑。 ([docs.sonarsource.com][4])
+* 使用 coverlet 時，請輸出 **OpenCover** 格式，配合 `sonar.cs.opencover.reportsPaths` 最穩定。 ([docs.sonarsource.com][4], [Sonar Community][5])
