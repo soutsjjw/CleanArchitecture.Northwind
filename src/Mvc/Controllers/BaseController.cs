@@ -21,7 +21,7 @@ public class BaseController<T> : Controller
         _logger = logger;
     }
 
-    public void GenerateGenderOptions()
+    protected void GenerateGenderOptions()
     {
         var items = Enum.GetValues(typeof(Gender))
             .Cast<Gender>()
@@ -33,16 +33,27 @@ public class BaseController<T> : Controller
         ViewBag.GenderOptions = items;
     }
 
-    public void GenerateDepartmentAndOfficeOptions()
+    protected void GenerateDepartmentAndOfficeOptions()
     {
         var commonService = HttpContext.RequestServices.GetService(typeof(ICommonService)) as ICommonService;
         ViewBag.Departments = commonService?.GetDepartmentOptions();
         ViewBag.Offices = commonService?.GetOfficeOptions();
     }
 
-    public void GenerateDepartmentOptions()
+    protected void GenerateDepartmentOptions()
     {
         var commonService = HttpContext.RequestServices.GetService(typeof(ICommonService)) as ICommonService;
         ViewBag.Departments = commonService?.GetDepartmentOptions();
+    }
+
+    protected void AddFieldErrors(Dictionary<string, string[]> fieldErrors)
+    {
+        foreach (var field in fieldErrors)
+        {
+            foreach (var value in field.Value)
+            {
+                ModelState.AddModelError(field.Key, value);
+            }
+        }
     }
 }

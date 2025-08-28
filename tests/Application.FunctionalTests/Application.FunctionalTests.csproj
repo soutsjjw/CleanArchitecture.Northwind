@@ -47,7 +47,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\WebAPI\WebAPI.csproj" />
+      <ProjectReference Include="..\..\Src\Mvc\Mvc.csproj" />
     </ItemGroup>
 
 </Project>

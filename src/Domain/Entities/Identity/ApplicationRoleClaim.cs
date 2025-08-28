@@ -24,7 +24,7 @@ public class ApplicationRoleClaim : IdentityRoleClaim<string>
     /// </summary>
     /// <param name="roleClaimDescription">角色聲明描述</param>
     /// <param name="roleClaimGroup">角色聲明群組</param>
-    public ApplicationRoleClaim(string roleClaimDescription, string roleClaimGroup) : base()
+    public ApplicationRoleClaim(string roleClaimDescription, string? roleClaimGroup) : base()
     {
         RoleClaimDescription = roleClaimDescription;
         RoleClaimGroup = roleClaimGroup;
@@ -40,5 +40,5 @@ public class ApplicationRoleClaim : IdentityRoleClaim<string>
     /// </summary>
     public string? RoleClaimGroup { get; set; }
 
-    public virtual ApplicationRole Role { get; set; }
+    public virtual ApplicationRole? Role { get; set; }
 }

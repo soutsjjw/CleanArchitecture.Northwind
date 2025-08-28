@@ -77,30 +77,17 @@ WHERE 1 = 1 ";
     {
         var sql = @"
 INSERT INTO [dbo].[AspNetUserProfiles]
-([UserId], [FullName], [IDNo], [Gender], [Title], [DepartmentId], [OfficeId], [IsTotpEnabled], [TotpSecretKey], [TotpRecoveryCodes], [Status], [Created], [CreatedBy])
+([UserId], [FullName], [IDNo], [Gender], [Title], [DepartmentId], [OfficeId], [Status], [Created], [CreatedBy])
 VALUES
-(@UserId, @FullName, ENCRYPTBYPASSPHRASE(@SQLPassPhrase, @IDNo), @Gender, @Title, @DepartmentId, @OfficeId, @IsTotpEnabled, @TotpSecretKey, @TotpRecoveryCodes, @Status, @Created, @CreatedBy);
+(@UserId, @FullName, ENCRYPTBYPASSPHRASE(@SQLPassPhrase, @IDNo), @Gender, @Title, @DepartmentId, @OfficeId, @Status, @Created, @CreatedBy);
 ";
 
-        var parameters = new DynamicParameters();
-        parameters.Add("SQLPassPhrase", _dataProtectionSettings.SQLPassPhrase);
-        parameters.Add("UserId", profile.UserId);
-        parameters.Add("FullName", profile.FullName);
-        parameters.Add("IDNo", profile.IDNo);
-        parameters.Add("Gender", profile.Gender);
-        parameters.Add("Title", profile.Title);
-        parameters.Add("DepartmentId", profile.DepartmentId);
-        parameters.Add("OfficeId", profile.OfficeId);
-        parameters.Add("IsTotpEnabled", profile.IsTotpEnabled);
-        parameters.Add("TotpSecretKey", profile.TotpSecretKey);
-        parameters.Add("TotpRecoveryCodes", profile.TotpRecoveryCodes);
-        parameters.Add("Status", profile.Status);
+        var parameters = BuildBaseParams(profile);
+
         parameters.Add("Created", profile.Created ?? DateTime.Now);
-        parameters.Add("CreatedBy", profile.CreatedBy);
+        parameters.Add("CreatedBy", createdBy);
 
-        int affectedRows = await _dbConnection.ExecuteAsync(sql, parameters);
-
-        return affectedRows;
+        return await _dbConnection.ExecuteAsync(sql, parameters);
     }
 
     public async Task<int> UpdateUserProfileAsync(ApplicationUserProfile profile, string lastModifiedBy)
@@ -120,24 +107,30 @@ SET
 WHERE [UserId] = @UserId;
 ";
 
-        var parameters = new DynamicParameters();
-        parameters.Add("SQLPassPhrase", _dataProtectionSettings.SQLPassPhrase);
-        parameters.Add("UserId", profile.UserId);
-        parameters.Add("FullName", profile.FullName);
-        parameters.Add("IDNo", profile.IDNo);
-        parameters.Add("Gender", profile.Gender);
-        parameters.Add("Title", profile.Title);
-        parameters.Add("DepartmentId", profile.DepartmentId);
-        parameters.Add("OfficeId", profile.OfficeId);
-        parameters.Add("IsTotpEnabled", profile.IsTotpEnabled);
-        parameters.Add("TotpSecretKey", profile.TotpSecretKey);
-        parameters.Add("TotpRecoveryCodes", profile.TotpRecoveryCodes);
-        parameters.Add("Status", profile.Status);
+        var parameters = BuildBaseParams(profile);
+
         parameters.Add("LastModified", profile.LastModified ?? DateTime.Now);
         parameters.Add("LastModifiedBy", profile.LastModifiedBy);
 
-        int affectedRows = await _dbConnection.ExecuteAsync(sql, parameters);
-
-        return affectedRows;
+        return await _dbConnection.ExecuteAsync(sql, parameters);
     }
+
+    #region Private
+
+    private DynamicParameters BuildBaseParams(ApplicationUserProfile profile)
+    {
+        var p = new DynamicParameters();
+        p.Add("SQLPassPhrase", _dataProtectionSettings.SQLPassPhrase);
+        p.Add("UserId", profile.UserId);
+        p.Add("FullName", profile.FullName);
+        p.Add("IDNo", profile.IDNo);
+        p.Add("Gender", profile.Gender);
+        p.Add("Title", profile.Title);
+        p.Add("DepartmentId", profile.DepartmentId);
+        p.Add("OfficeId", profile.OfficeId);
+        p.Add("Status", profile.Status);
+        return p;
+    }
+
+    #endregion
 }

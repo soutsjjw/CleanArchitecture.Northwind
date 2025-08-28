@@ -67,7 +67,7 @@ public class ApplicationDbContextInitialiser
         }
     }
 
-    public async Task TrySeedAsync()
+    private async Task TrySeedAsync()
     {
         #region Identity Seed
 
@@ -78,35 +78,43 @@ public class ApplicationDbContextInitialiser
         await AddSystemAdminUserAsync();
         var adminUserId = await AddAdministratorUserAsync();
 
-        await AddDefaultUserAsync("SalesNAManager", adminUserId, "北區業務管理", 1, 1);
-        await AddDefaultUserAsync("SalesNAA", adminUserId, "北區業務A", 1, 1);
-        await AddDefaultUserAsync("SalesNAB", adminUserId, "北區業務B", 1, 1);
-        await AddDefaultUserAsync("SalesNAC", adminUserId, "北區業務C", 1, 1);
+        var defaultUserList = new List<DefaultUserModel>
+        {
+            new DefaultUserModel("SalesNAManager", adminUserId, "北區業務管理", 1, 1),
+            new DefaultUserModel("SalesNAA", adminUserId, "北區業務A", 1, 1),
+            new DefaultUserModel("SalesNAB", adminUserId, "北區業務B", 1, 1),
+            new DefaultUserModel("SalesNAC", adminUserId, "北區業務C", 1, 1),
 
-        await AddDefaultUserAsync("SalesCAManager", adminUserId, "中區業務管理", 1, 2);
-        await AddDefaultUserAsync("SalesCAA", adminUserId, "中區業務A", 1, 2);
-        await AddDefaultUserAsync("SalesCAB", adminUserId, "中區業務B", 1, 2);
-        await AddDefaultUserAsync("SalesCAC", adminUserId, "中區業務C", 1, 2);
+            new DefaultUserModel("SalesCAManager", adminUserId, "中區業務管理", 1, 2),
+            new DefaultUserModel("SalesCAA", adminUserId, "中區業務A", 1, 2),
+            new DefaultUserModel("SalesCAB", adminUserId, "中區業務B", 1, 2),
+            new DefaultUserModel("SalesCAC", adminUserId, "中區業務C", 1, 2),
 
-        await AddDefaultUserAsync("SalesSAManager", adminUserId, "南區業務管理", 1, 3);
-        await AddDefaultUserAsync("SalesSAA", adminUserId, "南區業務A", 1, 3);
-        await AddDefaultUserAsync("SalesSAB", adminUserId, "南區業務B", 1, 3);
-        await AddDefaultUserAsync("SalesSAC", adminUserId, "南區業務C", 1, 3);
+            new DefaultUserModel("SalesSAManager", adminUserId, "南區業務管理", 1, 3),
+            new DefaultUserModel("SalesSAA", adminUserId, "南區業務A", 1, 3),
+            new DefaultUserModel("SalesSAB", adminUserId, "南區業務B", 1, 3),
+            new DefaultUserModel("SalesSAC", adminUserId, "南區業務C", 1, 3),
 
-        await AddDefaultUserAsync("SalesEAManager", adminUserId, "東區業務管理", 1, 4);
-        await AddDefaultUserAsync("SalesEAA", adminUserId, "東區業務A", 1, 4);
-        await AddDefaultUserAsync("SalesEAB", adminUserId, "東區業務B", 1, 4);
-        await AddDefaultUserAsync("SalesEAC", adminUserId, "東區業務C", 1, 4);
+            new DefaultUserModel("SalesEAManager", adminUserId, "東區業務管理", 1, 4),
+            new DefaultUserModel("SalesEAA", adminUserId, "東區業務A", 1, 4),
+            new DefaultUserModel("SalesEAB", adminUserId, "東區業務B", 1, 4),
+            new DefaultUserModel("SalesEAC", adminUserId, "東區業務C", 1, 4),
 
-        await AddDefaultUserAsync("HrTaManager", adminUserId, "招募與訓練組長", 6, 1);
-        await AddDefaultUserAsync("HrTaA", adminUserId, "招募與訓練組員", 6, 1);
-        await AddDefaultUserAsync("HrTaB", adminUserId, "招募與訓練組員", 6, 1);
-        await AddDefaultUserAsync("HrTaC", adminUserId, "招募與訓練組員", 6, 1);
+            new DefaultUserModel("HrTaManager", adminUserId, "招募與訓練組長", 6, 1),
+            new DefaultUserModel("HrTaA", adminUserId, "招募與訓練組員", 6, 1),
+            new DefaultUserModel("HrTaB", adminUserId, "招募與訓練組員", 6, 1),
+            new DefaultUserModel("HrTaC", adminUserId, "招募與訓練組員", 6, 1),
 
-        await AddDefaultUserAsync("HrCbManager", adminUserId, "薪資與福利組組長", 6, 2);
-        await AddDefaultUserAsync("HrCbA", adminUserId, "薪資與福利組員", 6, 2);
-        await AddDefaultUserAsync("HrCbB", adminUserId, "薪資與福利組員", 6, 2);
-        await AddDefaultUserAsync("HrCbC", adminUserId, "薪資與福利組員", 6, 2);
+            new DefaultUserModel("HrCbManager", adminUserId, "薪資與福利組組長", 6, 2),
+            new DefaultUserModel("HrCbA", adminUserId, "薪資與福利組員", 6, 2),
+            new DefaultUserModel("HrCbB", adminUserId, "薪資與福利組員", 6, 2),
+            new DefaultUserModel("HrCbC", adminUserId, "薪資與福利組員", 6, 2),
+        };
+
+        foreach (var user in defaultUserList)
+        {
+            await AddDefaultUserAsync(user);
+        }
 
         await AddDepartmentAsync();
 
@@ -119,7 +127,7 @@ public class ApplicationDbContextInitialiser
         var instnwndPath = FindInstNwnd();
         var sqlText = await File.ReadAllTextAsync(instnwndPath);
 
-        await AddCategoriesAsync(adminUserId, sqlText);
+        await AddCategoriesAsync(sqlText);
 
         await AddCustomersAsync(adminUserId, sqlText);
 
@@ -129,72 +137,74 @@ public class ApplicationDbContextInitialiser
 
         await AddProductsAsync(adminUserId, sqlText);
 
-        await AddShippersAsync(adminUserId, sqlText);
+        await AddShippersAsync(sqlText);
 
         await AddOrdersAsync(adminUserId, sqlText);
 
-        await AddOrderDetailsAsync(adminUserId, sqlText);
+        await AddOrderDetailsAsync(sqlText);
 
-        await AddRegionsAsync(adminUserId, sqlText);
+        await AddRegionsAsync(sqlText);
 
-        await AddTerritoriesAsync(adminUserId, sqlText);
+        await AddTerritoriesAsync(sqlText);
 
-        await AddEmployeeTerritoriesAsync(adminUserId, sqlText);
+        await AddEmployeeTerritoriesAsync(sqlText);
 
         #endregion
 
         // Default data
         // Seed, if necessary
-        //if (!_context.TodoLists.Any())
-        //{
-        //    _context.TodoLists.Add(new TodoList
-        //    {
-        //        Title = "Todo List",
-        //        Items =
-        //        {
-        //            new TodoItem { Title = "Make a todo list 📃" },
-        //            new TodoItem { Title = "Check off the first item ✅" },
-        //            new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-        //            new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-        //        }
-        //    });
-
-        //    await _context.SaveChangesAsync();
-        //}
+        if (!await _context.TodoLists.AnyAsync())
+        {
+            _context.TodoLists.Add(new TodoList
+            {
+                Title = "Todo List",
+                Items =
+                    {
+                        new TodoItem { Title = "Make a todo list 📃" },
+                        new TodoItem { Title = "Check off the first item ✅" },
+                        new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
+                        new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
+                    }
+            });
+        }
     }
 
     #region Identity Seed
 
-    public async Task AddDefaultRolesAsync()
+    private async Task AddDefaultRolesAsync()
     {
         var role = new ApplicationRole(Roles.SystemAdmin, 1, "系統管理員");
 
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        if (!await _roleManager.Roles.AnyAsync(r => r.Name == role.Name))
         {
             await _roleManager.CreateAsync(role);
         }
 
         role = new ApplicationRole(Roles.Administrator, 2, "管理員");
 
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        if (!await _roleManager.Roles.AnyAsync(r => r.Name == role.Name))
         {
             await _roleManager.CreateAsync(role);
         }
 
         role = new ApplicationRole(Roles.GeneralUser, 3, "一般使用者");
 
-        if (_roleManager.Roles.All(r => r.Name != role.Name))
+        if (!await _roleManager.Roles.AnyAsync(r => r.Name == role.Name))
         {
             await _roleManager.CreateAsync(role);
         }
     }
 
-    public async Task<string> AddSystemAdminUserAsync()
+    private async Task<string> AddSystemAdminUserAsync()
     {
         var systemAdmin = new ApplicationUser { UserName = "systemadmin@localhost", Email = "systemadmin@localhost" };
         ApplicationUser? user;
 
-        if (_userManager.Users.All(u => u.UserName != systemAdmin.UserName))
+        if (await _userManager.Users.AnyAsync(u => u.UserName == systemAdmin.UserName))
+        {
+            user = await _userManager.FindByEmailAsync(systemAdmin.Email);
+        }
+        else
         {
             await _userManager.CreateAsync(systemAdmin, "SystemAdmin1!");
             await _userManager.AddToRolesAsync(systemAdmin, new[] { Roles.SystemAdmin });
@@ -217,20 +227,20 @@ public class ApplicationDbContextInitialiser
 
             await _context.SaveChangesAsync();
         }
-        else
-        {
-            user = await _userManager.FindByEmailAsync(systemAdmin.Email);
-        }
 
         return user.Id;
     }
 
-    public async Task<string> AddAdministratorUserAsync()
+    private async Task<string> AddAdministratorUserAsync()
     {
         var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
         ApplicationUser? user;
 
-        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
+        if (await _userManager.Users.AnyAsync(u => u.UserName == administrator.UserName))
+        {
+            user = await _userManager.FindByEmailAsync(administrator.Email);
+        }
+        else
         {
             await _userManager.CreateAsync(administrator, "Administrator1!");
             await _userManager.AddToRolesAsync(administrator, new[] { Roles.Administrator });
@@ -253,53 +263,49 @@ public class ApplicationDbContextInitialiser
 
             await _context.SaveChangesAsync();
         }
-        else
-        {
-            user = await _userManager.FindByEmailAsync(administrator.Email);
-        }
 
         return user.Id;
     }
 
-    public async Task AddDefaultUserAsync(string userName, string adminUserId, string title, int departmentId, int officeId)
+    private async Task AddDefaultUserAsync(DefaultUserModel model)
     {
-        var defaultUser = new ApplicationUser { UserName = $"{userName.ToLower()}@localhost", Email = $"{userName.ToLower()}@localhost" };
+        var defaultUser = new ApplicationUser { UserName = $"{model.UserName.ToLower()}@localhost", Email = $"{model.UserName.ToLower()}@localhost" };
 
-        if (_userManager.Users.All(u => u.UserName != defaultUser.UserName))
+        if (await _userManager.Users.AnyAsync(u => u.UserName == defaultUser.UserName))
+            return;
+
+        await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
+        await _userManager.AddToRolesAsync(defaultUser, new[] { Roles.GeneralUser });
+
+        var user = await _userManager.FindByEmailAsync(defaultUser.Email);
+        user.EmailConfirmed = true;
+        user.LastPasswordChangedDate = DateTime.Now;
+        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
         {
-            await _userManager.CreateAsync(defaultUser, "P@ssw0rdTest");
-            await _userManager.AddToRolesAsync(defaultUser, new[] { Roles.GeneralUser });
+            byte[] randomNumber = new byte[1];
+            rng.GetBytes(randomNumber);
 
-            var user = await _userManager.FindByEmailAsync(defaultUser.Email);
-            user.EmailConfirmed = true;
-            user.LastPasswordChangedDate = DateTime.Now;
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            _context.UserProfiles.Add(new ApplicationUserProfile
             {
-                byte[] randomNumber = new byte[1];
-                rng.GetBytes(randomNumber);
-
-                _context.UserProfiles.Add(new ApplicationUserProfile
-                {
-                    UserId = user.Id,
-                    FullName = userName.ToUpper(),
-                    Gender = (Gender)(randomNumber[0] % 3),
-                    Title = title,
-                    DepartmentId = departmentId,
-                    OfficeId = officeId,
-                    IsTotpEnabled = false,
-                    Status = Status.Enabled,
-                    Created = DateTime.Now,
-                    CreatedBy = adminUserId,
-                });
-            }
-
-            await _context.SaveChangesAsync();
+                UserId = user.Id,
+                FullName = model.UserName.ToUpper(),
+                Gender = (Gender)(randomNumber[0] % 3),
+                Title = model.Title,
+                DepartmentId = model.DepartmentId,
+                OfficeId = model.OfficeId,
+                IsTotpEnabled = false,
+                Status = Status.Enabled,
+                Created = DateTime.Now,
+                CreatedBy = model.AdminUserId,
+            });
         }
+
+        await _context.SaveChangesAsync();
     }
 
-    public async Task AddDepartmentAsync()
+    private async Task AddDepartmentAsync()
     {
-        if (_context.Departments.Any())
+        if (await _context.Departments.AnyAsync())
             return;
 
         _context.Departments.AddRange(new List<Department>
@@ -321,9 +327,9 @@ public class ApplicationDbContextInitialiser
         await tx.CommitAsync();
     }
 
-    public async Task AddOfficeAsync()
+    private async Task AddOfficeAsync()
     {
-        if (_context.Offices.Any())
+        if (await _context.Offices.AnyAsync())
             return;
 
         _context.Offices.AddRange(new List<Office>
@@ -372,18 +378,22 @@ public class ApplicationDbContextInitialiser
 
     #region Northwind Seed
 
-    public async Task AddCategoriesAsync(string adminUserId, string sqlText)
+    private static Regex GenerateNorthwindSQLFileRegex(string regex)
+        => new Regex(regex,
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
+            TimeSpan.FromMilliseconds(100));
+
+    private async Task AddCategoriesAsync(string sqlText)
     {
-        if (_context.Categories.Any())
+        if (await _context.Categories.AnyAsync())
             return;
 
         // 允許：INSERT 或 INSERT INTO；"Categories" 或 [Categories]；欄位為 "CategoryID","CategoryName","Description","Picture"
         // 重點：(?<pic>0x[0-9A-Fa-f]*) 允許 0x 後面是 0~多個 hex 字元（你的檔是純 0x）
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:""Categories""|\[Categories\]|(?:\[dbo\]\.)?\[Categories\])\s*"
           + @"\(\s*(?:""CategoryID""|\[CategoryID\])\s*,\s*(?:""CategoryName""|\[CategoryName\])\s*,\s*(?:""Description""|\[Description\])\s*,\s*(?:""Picture""|\[Picture\])\s*\)\s*"
-          + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*'(?<name>(?:''|[^'])*)'\s*,\s*'(?<desc>(?:''|[^'])*)'\s*,\s*(?<pic>0x[0-9A-Fa-f]*)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline, TimeSpan.FromMilliseconds(100));
+          + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*'(?<name>(?:''|[^'])*)'\s*,\s*'(?<desc>(?:''|[^'])*)'\s*,\s*(?<pic>0x[0-9A-Fa-f]*)\s*\)");
 
         static byte[] HexToBytes(string hex)
         {
@@ -429,19 +439,12 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddCustomersAsync(string adminUserId, string sqlText)
     {
-        if (_context.Customers.Any())
+        if (await _context.Customers.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.Now;
 
-        // INSERT "Customers" VALUES('ALFKI','Alfreds ...','Maria ...','Sales ...','Obere Str. 57','Berlin',NULL,'12209','Germany','030-0074321','030-0076545')
-        // 支援：
-        // - INSERT 或 INSERT INTO
-        // - "Customers" / [Customers] / [dbo].[Customers]
-        // - N'...' 或 '...'
-        // - NULL
-        // - 多行與空白
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[Customers\]|""Customers""))\s*VALUES\s*\(\s*"
           + @"(?<id>(?:N)?'(?<idv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<company>(?:N)?'(?<companyv>(?:''|[^'])*)'|NULL)\s*,\s*"
@@ -453,10 +456,7 @@ public class ApplicationDbContextInitialiser
           + @"(?<postal>(?:N)?'(?<postalv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<country>(?:N)?'(?<countryv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*,\s*"
-          + @"(?<fax>(?:N)?'(?<faxv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100)
-        );
+          + @"(?<fax>(?:N)?'(?<faxv>(?:''|[^'])*)'|NULL)\s*\)");
 
         static string? Unwrap(Group token, Group inner)
             => token.Value.Equals("NULL", StringComparison.OrdinalIgnoreCase)
@@ -490,18 +490,12 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddEmployeesAsync(string adminUserId, string sqlText)
     {
-        if (_context.Employees.Any())
+        if (await _context.Employees.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.Now;
 
-        // INSERT "Employees"("EmployeeID","LastName","FirstName","Title","TitleOfCourtesy",
-        //                    "BirthDate","HireDate","Address","City","Region","PostalCode",
-        //                    "Country","HomePhone","Extension","Photo","Notes","ReportsTo","PhotoPath")
-        // VALUES (1,'Davolio','Nancy','Sales Representative','Ms.','12/08/1948','05/01/1992',
-        //         '507 - 20th Ave. E.Apt. 2A','Seattle','WA','98122','USA','(206) 555-9857','5467',0x,
-        //         '...notes...',2,'http://accweb/emmployees/davolio.bmp')
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[Employees\]|""Employees""))\s*"
           + @"\(\s*(?:""EmployeeID""|\[EmployeeID\])\s*,\s*(?:""LastName""|\[LastName\])\s*,\s*(?:""FirstName""|\[FirstName\])\s*,\s*(?:""Title""|\[Title\])\s*,\s*(?:""TitleOfCourtesy""|\[TitleOfCourtesy\])\s*,\s*(?:""BirthDate""|\[BirthDate\])\s*,\s*(?:""HireDate""|\[HireDate\])\s*,\s*(?:""Address""|\[Address\])\s*,\s*(?:""City""|\[City\])\s*,\s*(?:""Region""|\[Region\])\s*,\s*(?:""PostalCode""|\[PostalCode\])\s*,\s*(?:""Country""|\[Country\])\s*,\s*(?:""HomePhone""|\[HomePhone\])\s*,\s*(?:""Extension""|\[Extension\])\s*,\s*(?:""Photo""|\[Photo\])\s*,\s*(?:""Notes""|\[Notes\])\s*,\s*(?:""ReportsTo""|\[ReportsTo\])\s*,\s*(?:""PhotoPath""|\[PhotoPath\])\s*\)\s*"
           + @"VALUES\s*\(\s*"
@@ -522,10 +516,7 @@ public class ApplicationDbContextInitialiser
           + @"(?<photo>0x[0-9A-Fa-f]*|NULL)\s*,\s*"
           + @"(?<notes>(?:N)?'(?<notesv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<reports>\d+|NULL)\s*,\s*"
-          + @"(?<path>(?:N)?'(?<pathv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100)
-        );
+          + @"(?<path>(?:N)?'(?<pathv>(?:''|[^'])*)'|NULL)\s*\)");
 
         static string? Unwrap(Group token, Group inner)
             => token.Value.Equals("NULL", StringComparison.OrdinalIgnoreCase)
@@ -606,13 +597,13 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddSuppliersAsync(string adminUserId, string sqlText)
     {
-        if (_context.Suppliers.Any())
+        if (await _context.Suppliers.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.Now;
         var createdBy = string.IsNullOrWhiteSpace(adminUserId) ? "seed" : adminUserId;
 
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Suppliers)\]|""Suppliers""))\s*\(\s*"
           + @"(?:""SupplierID""|\[SupplierID\])\s*,\s*(?:""CompanyName""|\[CompanyName\])\s*,\s*(?:""ContactName""|\[ContactName\])\s*,\s*(?:""ContactTitle""|\[ContactTitle\])\s*,\s*(?:""Address""|\[Address\])\s*,\s*(?:""City""|\[City\])\s*,\s*(?:""Region""|\[Region\])\s*,\s*(?:""PostalCode""|\[PostalCode\])\s*,\s*(?:""Country""|\[Country\])\s*,\s*(?:""Phone""|\[Phone\])\s*,\s*(?:""Fax""|\[Fax\])\s*,\s*(?:""HomePage""|\[HomePage\])\s*\)\s*"
           + @"VALUES\s*\(\s*"
@@ -627,9 +618,7 @@ public class ApplicationDbContextInitialiser
           + @"(?<country>(?:N)?'(?<countryv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<fax>(?:N)?'(?<faxv>(?:''|[^'])*)'|NULL)\s*,\s*"
-          + @"(?<home>(?:N)?'(?<homev>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+          + @"(?<home>(?:N)?'(?<homev>(?:''|[^'])*)'|NULL)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -675,13 +664,13 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddProductsAsync(string adminUserId, string sqlText)
     {
-        if (_context.Products.Any())
+        if (await _context.Products.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.Now;
         var createdBy = string.IsNullOrWhiteSpace(adminUserId) ? "seed" : adminUserId;
 
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Products)\]|""Products""))\s*\(\s*"
           + @"(?:""ProductID""|\[ProductID\])\s*,\s*(?:""ProductName""|\[ProductName\])\s*,\s*(?:""SupplierID""|\[SupplierID\])\s*,\s*(?:""CategoryID""|\[CategoryID\])\s*,\s*(?:""QuantityPerUnit""|\[QuantityPerUnit\])\s*,\s*(?:""UnitPrice""|\[UnitPrice\])\s*,\s*(?:""UnitsInStock""|\[UnitsInStock\])\s*,\s*(?:""UnitsOnOrder""|\[UnitsOnOrder\])\s*,\s*(?:""ReorderLevel""|\[ReorderLevel\])\s*,\s*(?:""Discontinued""|\[Discontinued\])\s*\)\s*"
           + @"VALUES\s*\(\s*"
@@ -694,9 +683,7 @@ public class ApplicationDbContextInitialiser
           + @"(?<stock>-?\d+|NULL)\s*,\s*"
           + @"(?<onorder>-?\d+|NULL)\s*,\s*"
           + @"(?<reorder>-?\d+|NULL)\s*,\s*"
-          + @"(?<disc>-?\d+|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+          + @"(?<disc>-?\d+|NULL)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -751,19 +738,15 @@ public class ApplicationDbContextInitialiser
         await tx.CommitAsync();
     }
 
-    public async Task AddShippersAsync(string adminUserId, string sqlText)
+    public async Task AddShippersAsync(string sqlText)
     {
-        if (_context.Shippers.Any())
+        if (await _context.Shippers.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
-        var createdBy = string.IsNullOrWhiteSpace(adminUserId) ? "seed" : adminUserId;
-
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Shippers)\]|""Shippers""))\s*\(\s*"
           + @"(?:""ShipperID""|\[ShipperID\])\s*,\s*(?:""CompanyName""|\[CompanyName\])\s*,\s*(?:""Phone""|\[Phone\])\s*\)\s*"
-          + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*(?<company>(?:N)?'(?<companyv>(?:''|[^'])*)'|NULL)\s*,\s*(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline, TimeSpan.FromMilliseconds(100));
+          + @"VALUES\s*\(\s*(?<id>\d+)\s*,\s*(?<company>(?:N)?'(?<companyv>(?:''|[^'])*)'|NULL)\s*,\s*(?<phone>(?:N)?'(?<phonev>(?:''|[^'])*)'|NULL)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
 
@@ -799,13 +782,13 @@ public class ApplicationDbContextInitialiser
 
     public async Task AddOrdersAsync(string adminUserId, string sqlText)
     {
-        if (_context.Orders.Any())
+        if (await _context.Orders.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.Now;
         var createdBy = string.IsNullOrWhiteSpace(adminUserId) ? "seed" : adminUserId;
 
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Orders)\]|""Orders""))\s*\(\s*"
           + @"(?:""OrderID""|\[OrderID\])\s*,\s*(?:""CustomerID""|\[CustomerID\])\s*,\s*(?:""EmployeeID""|\[EmployeeID\])\s*,\s*(?:""OrderDate""|\[OrderDate\])\s*,\s*(?:""RequiredDate""|\[RequiredDate\])\s*,\s*(?:""ShippedDate""|\[ShippedDate\])\s*,\s*(?:""ShipVia""|\[ShipVia\])\s*,\s*(?:""Freight""|\[Freight\])\s*,\s*(?:""ShipName""|\[ShipName\])\s*,\s*(?:""ShipAddress""|\[ShipAddress\])\s*,\s*(?:""ShipCity""|\[ShipCity\])\s*,\s*(?:""ShipRegion""|\[ShipRegion\])\s*,\s*(?:""ShipPostalCode""|\[ShipPostalCode\])\s*,\s*(?:""ShipCountry""|\[ShipCountry\])\s*\)\s*"
           + @"VALUES\s*\(\s*"
@@ -822,9 +805,7 @@ public class ApplicationDbContextInitialiser
           + @"(?<shipcity>(?:N)?'(?<shipcityv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<shipregion>(?:N)?'(?<shipregionv>(?:''|[^'])*)'|NULL)\s*,\s*"
           + @"(?<shippostal>(?:N)?'(?<shippostalv>(?:''|[^'])*)'|NULL)\s*,\s*"
-          + @"(?<shipcountry>(?:N)?'(?<shipcountryv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+          + @"(?<shipcountry>(?:N)?'(?<shipcountryv>(?:''|[^'])*)'|NULL)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -890,32 +871,6 @@ public class ApplicationDbContextInitialiser
             .OrderBy(o => o.Id)
             .ToList();
 
-        //var orders = matches.Select(m => new Order
-        //{
-        //    Id = int.Parse(m.Groups["id"].Value, CultureInfo.InvariantCulture),
-        //    CustomerId = Unwrap(m.Groups["cust"], m.Groups["custv"]),
-        //    DepartmentId = 1,
-        //    OfficeId = 1,
-        //    EmployeeId = ToIntOrNull(m.Groups["emp"].Value),
-        //    OrderDate = ParseDateOrNull(Unwrap(m.Groups["od"], m.Groups["odv"])),
-        //    RequiredDate = ParseDateOrNull(Unwrap(m.Groups["req"], m.Groups["reqv"])),
-        //    ShippedDate = ParseDateOrNull(Unwrap(m.Groups["shipd"], m.Groups["shipdv"])),
-        //    ShipVia = ToIntOrNull(m.Groups["shipvia"].Value),
-        //    Freight = ToDecimalOrNull(m.Groups["freight"].Value),
-        //    ShipName = Unwrap(m.Groups["shipname"], m.Groups["shipnamev"]),
-        //    ShipAddress = Unwrap(m.Groups["shipaddr"], m.Groups["shipaddrv"]),
-        //    ShipCity = Unwrap(m.Groups["shipcity"], m.Groups["shipcityv"]),
-        //    ShipRegion = Unwrap(m.Groups["shipregion"], m.Groups["shipregionv"]),
-        //    ShipPostalCode = Unwrap(m.Groups["shippostal"], m.Groups["shippostalv"]),
-        //    ShipCountry = Unwrap(m.Groups["shipcountry"], m.Groups["shipcountryv"]),
-        //    Created = now,
-        //    CreatedBy = createdBy
-        //})
-        //.GroupBy(o => o.Id)       // 檔案若不小心重複同一 OrderID，只取第一筆
-        //.Select(g => g.First())
-        //.OrderBy(o => o.Id)
-        //.ToList();
-
         using var tx = await _context.Database.BeginTransactionAsync();
         await _context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [dbo].[Orders] ON");
 
@@ -926,18 +881,14 @@ public class ApplicationDbContextInitialiser
         await tx.CommitAsync();
     }
 
-    public async Task AddOrderDetailsAsync(string adminUserId, string sqlText)
+    public async Task AddOrderDetailsAsync(string sqlText)
     {
-        if (_context.OrderDetails.Any())
+        if (await _context.OrderDetails.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
-
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:(?:\[dbo\]\.)?(?:\[(?:Order Details)\]|""Order Details""))\s*VALUES\s*\(\s*"
-          + @"(?<order>\d+)\s*,\s*(?<product>\d+)\s*,\s*(?<price>-?\d+(?:\.\d+)?)\s*,\s*(?<qty>\d+)\s*,\s*(?<disc>-?\d+(?:\.\d+)?)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+          + @"(?<order>\d+)\s*,\s*(?<product>\d+)\s*,\s*(?<price>-?\d+(?:\.\d+)?)\s*,\s*(?<qty>\d+)\s*,\s*(?<disc>-?\d+(?:\.\d+)?)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -973,21 +924,17 @@ public class ApplicationDbContextInitialiser
         await tx.CommitAsync();
     }
 
-    public async Task AddRegionsAsync(string adminUserId, string sqlText)
+    public async Task AddRegionsAsync(string sqlText)
     {
-        if (_context.Regions.Any())
+        if (await _context.Regions.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
-
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:" +
                 @"(?:(?:\[dbo\]\.)?(?:\[Region\]|""Region""))" + // [Region] 或 "Region"（可含 dbo.）
                 @"|(?:dbo\.)?Region" +                            // 裸表名 Region（可含 dbo.）
             @")\s*VALUES\s*\(\s*" +
-            @"(?<id>\d+)\s*,\s*(?<desc>(?:N)?'(?<descv>(?:''|[^'])*)'|NULL)\s*\)",
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+            @"(?<id>\d+)\s*,\s*(?<desc>(?:N)?'(?<descv>(?:''|[^'])*)'|NULL)\s*\)");
 
         MatchCollection matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -1013,21 +960,18 @@ public class ApplicationDbContextInitialiser
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddEmployeeTerritoriesAsync(string adminUserId, string sqlText)
+    public async Task AddEmployeeTerritoriesAsync(string sqlText)
     {
-        if (_context.EmployeeTerritories.Any())
+        if (await _context.EmployeeTerritories.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
-
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:" +
                 @"(?:(?:\[dbo\]\.)?(?:\[EmployeeTerritories\]|""EmployeeTerritories""))" + // [dbo].[EmployeeTerritories] / "EmployeeTerritories"
                 @"|(?:dbo\.)?EmployeeTerritories" +                                        // 裸表名（可含 dbo.）
             @")\s*VALUES\s*\(\s*" +
-            @"(?<emp>\d+)\s*,\s*(?<terr>(?:N)?'(?<terrv>(?:''|[^'])*)'|\d+)\s*\)",        // TerritoryID 可能是 '06897' 或 06897（雖然型別是字串）
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+            @"(?<emp>\d+)\s*,\s*(?<terr>(?:N)?'(?<terrv>(?:''|[^'])*)'|\d+)\s*\)"          // TerritoryID 可能是 '06897' 或 06897（雖然型別是字串）
+            );
 
         var matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -1056,23 +1000,20 @@ public class ApplicationDbContextInitialiser
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddTerritoriesAsync(string adminUserId, string sqlText)
+    public async Task AddTerritoriesAsync(string sqlText)
     {
-        if (_context.Territories.Any())
+        if (await _context.Territories.AnyAsync())
             return;
 
-        var now = DateTimeOffset.UtcNow;
-
-        var pattern = new Regex(
+        var pattern = GenerateNorthwindSQLFileRegex(
             @"INSERT\s+(?:INTO\s+)?(?:" +
                 @"(?:(?:\[dbo\]\.)?(?:\[(?:Terrories|Territories)\]|""Territories""))" + // 引號/中括號/含 dbo.
                 @"|(?:dbo\.)?Territories" +                                             // 裸表名（含可選 dbo.）
             @")\s*VALUES\s*\(\s*" +
             @"(?<id>(?:N)?'(?<idv>(?:''|[^'])*)'|\d+|NULL)\s*,\s*" +     // TerritoryID: 字串或數字或 NULL
             @"(?<desc>(?:N)?'(?<descv>(?:''|[^'])*)'|NULL)\s*,\s*" +     // TerritoryDescription: 字串或 NULL
-            @"(?<region>\d+|NULL)\s*\)\s*;?",                            // RegionID: 整數或 NULL
-            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline,
-            TimeSpan.FromMilliseconds(100));
+            @"(?<region>\d+|NULL)\s*\)\s*;?"                             // RegionID: 整數或 NULL
+            );
 
         var matches = pattern.Matches(sqlText);
         if (matches.Count == 0)
@@ -1110,7 +1051,7 @@ public class ApplicationDbContextInitialiser
 
     #endregion
 
-    public static string FindInstNwnd(string relative = "sql/instnwnd.sql")
+    private static string FindInstNwnd(string relative = "sql/instnwnd.sql")
     {
         // 1) 先試 bin\...\sql\instnwnd.sql
         var pathInBin = Path.Combine(AppContext.BaseDirectory, relative);
@@ -1134,5 +1075,27 @@ public class ApplicationDbContextInitialiser
         }
 
         throw new FileNotFoundException($"找不到 {relative}，請確認路徑。起點：{AppContext.BaseDirectory}");
+    }
+
+    private sealed class DefaultUserModel
+    {
+        public string UserName { get; set; }
+
+        public string AdminUserId { get; set; }
+
+        public string Title { get; set; }
+
+        public int DepartmentId { get; set; }
+
+        public int OfficeId { get; set; }
+
+        public DefaultUserModel(string userName, string adminUserId, string title, int departmentId, int officeId)
+        {
+            UserName = userName;
+            AdminUserId = adminUserId;
+            Title = title;
+            DepartmentId = departmentId;
+            OfficeId = officeId;
+        }
     }
 }

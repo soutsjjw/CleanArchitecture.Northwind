@@ -6,4 +6,6 @@
      data-sitekey="@Model"
      data-theme="light"
      data-size="flexible"></div>
+@* 不加入 SRI(Subresource Integrity)的原因 *@
+@* https://community.cloudflare.com/t/subresource-integrity-cors-for-turnstile-javascript-link/440769 *@
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

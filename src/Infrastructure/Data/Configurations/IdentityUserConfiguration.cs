@@ -86,7 +86,7 @@ public class ApplicationUserClaimConfiguration : IEntityTypeConfiguration<Applic
 {
     public void Configure(EntityTypeBuilder<ApplicationUserClaim> builder)
     {
-        //TODO: 此設置沒有作用，必須在 ApplicationDbContext -> OnModelCreating 再進行設置
+        // 此設置沒有作用，必須在 ApplicationDbContext -> OnModelCreating 再進行設置
         builder.HasOne(uc => uc.User)
             .WithMany(u => u.Claims)
             .HasForeignKey(uc => uc.UserId)

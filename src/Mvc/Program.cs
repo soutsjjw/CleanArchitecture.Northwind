@@ -48,3 +48,9 @@ app.MapControllerRoute(
 app.MapFallbackToController("PageNotFound", "Error");
 
 app.Run();
+
+// 單元測試用
+public partial class Program
+{
+    protected Program() { }
+}

@@ -1,63 +1,41 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Mvc.Extensions;
 
 public static class RedirectToActionResultExtensions
 {
     public static RedirectToActionResult WithInfo(this RedirectToActionResult result, Controller controller, string message, string? title = null)
-        => result.WithInfo(controller, new List<string> { message }, title);
+        => result.WithToast(controller, ToastType.Info, new[] { message }, title);
 
     public static RedirectToActionResult WithInfo(this RedirectToActionResult result, Controller controller, List<string> messages, string? title = null)
-    {
-        if (messages == null || messages.Count == 0)
-            return result;
-
-        controller.TempData?.AddToast("Info", messages, title);
-        return result;
-    }
+        => result.WithToast(controller, ToastType.Info, messages, title);
 
     public static RedirectToActionResult WithSuccess(this RedirectToActionResult result, Controller controller, string message, string? title = null)
-        => result.WithSuccess(controller, new List<string> { message }, title);
+        => result.WithToast(controller, ToastType.Success, new[] { message }, title);
 
     public static RedirectToActionResult WithSuccess(this RedirectToActionResult result, Controller controller, List<string> messages, string? title = null)
-    {
-        if (messages == null || messages.Count == 0)
-            return result;
-
-        controller.TempData?.AddToast("Success", messages, title);
-        return result;
-    }
+        => result.WithToast(controller, ToastType.Success, messages, title);
 
     public static RedirectToActionResult WithWarning(this RedirectToActionResult result, Controller controller, string message, string? title = null)
-        => result.WithWarning(controller, new List<string> { message }, title);
+        => result.WithToast(controller, ToastType.Warning, new[] { message }, title);
 
     public static RedirectToActionResult WithWarning(this RedirectToActionResult result, Controller controller, List<string> messages, string? title = null)
-    {
-        if (messages == null || messages.Count == 0)
-            return result;
-
-        controller.TempData?.AddToast("Warning", messages, title);
-        return result;
-    }
+        => result.WithToast(controller, ToastType.Warning, messages, title);
 
     public static RedirectToActionResult WithError(this RedirectToActionResult result, Controller controller, string message, string? title = null)
-        => result.WithError(controller, new List<string> { message }, title);
+        => result.WithToast(controller, ToastType.Error, new[] { message }, title);
 
     public static RedirectToActionResult WithError(this RedirectToActionResult result, Controller controller, List<string> messages, string? title = null)
+        => result.WithToast(controller, ToastType.Error, messages, title);
+
+    private static RedirectToActionResult WithToast(this RedirectToActionResult result, Controller controller, ToastType type, IEnumerable<string>? messages, string? title = null)
     {
-        if (messages == null || messages.Count == 0)
+        var list = ToastExtensionsHelper.FilterMessages(messages);
+
+        if (list is null || list.Count == 0)
             return result;
 
-        controller.TempData?.AddToast("Error", messages, title);
+        ToastExtensionsHelper.AddToast(controller.TempData, type, list, title);
         return result;
-    }
-
-    private static void AddToast(this ITempDataDictionary? tempData, string type, List<string> messages, string? title = null)
-    {
-        if (tempData == null) return;
-        tempData[$"Toast.{type}.Messages"] = messages;
-        if (!string.IsNullOrEmpty(title))
-            tempData[$"Toast.{type}.Title"] = title;
     }
 }
