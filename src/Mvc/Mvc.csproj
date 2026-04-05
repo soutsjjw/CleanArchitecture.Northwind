@@ -29,7 +29,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Settings.Configuration" />
     <PackageReference Include="Serilog.Sinks.Console" />
