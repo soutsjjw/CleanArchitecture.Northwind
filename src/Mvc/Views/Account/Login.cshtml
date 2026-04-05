@@ -4,6 +4,15 @@
     ViewData["Title"] = "帳號登入";
 }
 
+@section Styles {
+    <style asp-add-nonce>
+        #cloudflare-default-region {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+}
+
 <div class="auth-content">
     <div class="card">
         <div class="card-body text-center">
@@ -11,74 +20,113 @@
                 <img class="brand" src="@Url.Content("~/images/bootstraper-logo.png")" alt="bootstraper logo">
             </div>
             <h4 class="mb-4 text-muted">帳號登入</h4>
-            <form id="frmForm" asp-controller="Account"
-                  asp-action="Login" method="post" autocomplete="off" novalidate>
+            <form id="frmForm" asp-controller="Account" asp-action="Login" method="post" autocomplete="off" novalidate>
                 <div class="mb-3 text-start">
                     <label asp-for="Email" class="form-label">Email</label>
                     <input asp-for="Email" class="form-control" placeholder="輸入 Email">
-                </div>
-                <div class="mb-3 text-start">
-                    <label asp-for="Password" class="form-label">密碼</label>
-                    <div class="input-group input-group-flat">
-                        <input asp-for="Password" class="form-control" type="password" autocomplete="off" placeholder="請輸入密碼" />
-                        <span class="input-group-text">
-                            <i class="fa-solid fa-eye-slash" id="togglePassword"
-                               style="cursor: pointer" onclick="togglePassword('Password')"></i>
-                        </span>
                     </div>
-                </div>
-                <div class="mb-3 text-start">
-                    <div id="cloudflare-default-region">
-                        驗證載入中...
+                    <div class="mb-3 text-start">
+                        <label asp-for="Password" class="form-label">密碼</label>
+                        <div class="input-group input-group-flat">
+                            <input asp-for="Password" class="form-control" type="password" autocomplete="off"
+                                   placeholder="請輸入密碼" />
+                            <span class="input-group-text">
+                                <i class="fa-solid fa-eye-slash" id="togglePassword" role="button" tabindex="0"
+                                   aria-controls="Password" aria-label="顯示或隱藏密碼" style="cursor: pointer"></i>
+                            </span>
+                        </div>
                     </div>
-                    <div id="cloudflare-component">
-                        @await Component.InvokeAsync("Cloudflare")
+                    <div class="mb-3 text-start">
+                        <div id="cloudflare-shell">
+                            <div id="cloudflare-default-region">
+                                驗證載入中...
+                            </div>
+                            <div id="cloudflare-component">
+                                @await Component.InvokeAsync("Cloudflare")
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <button id="btnLogin" type="submit" class="btn btn-primary mb-4" style="width:100%" disabled>登入</button>
-            </form>
-            <p class="mb-2 text-muted">忘記密碼？ <a asp-action="ForgotPassword">重設</a></p>
-            <p class="mb-0 text-muted">還沒有帳號？ <a asp-action="Register">註冊帳號</a></p>
+                    <button id="btnLogin" type="submit" class="btn btn-primary mb-4" style="width:100%" disabled>登入</button>
+                </form>
+                <p class="mb-2 text-muted">忘記密碼？ <a asp-action="ForgotPassword">重設</a></p>
+                <p class="mb-0 text-muted">還沒有帳號？ <a asp-action="Register">註冊帳號</a></p>
+            </div>
         </div>
     </div>
-</div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
 
-    <script asp-add-nonce>
-        $("#frmForm").validate({
+        <script asp-add-nonce>
+            function bindPasswordToggle() {
+            const passwordInput = document.getElementById("Password");
+            const toggleIcon = document.getElementById("togglePassword");
+
+            if (!passwordInput || !toggleIcon) {
+            return;
+            }
+
+            const toggle = function () {
+            const wasInvalid = passwordInput.classList.contains("input-validation-error");
+            const nextType = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+
+            passwordInput.setAttribute("type", nextType);
+            toggleIcon.classList.toggle("fa-eye");
+            toggleIcon.classList.toggle("fa-eye-slash");
+
+            if (wasInvalid) {
+            passwordInput.classList.remove("input-validation-error");
+            }
+            };
+
+            toggleIcon.addEventListener("click", toggle);
+            toggleIcon.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+            }
+            });
+            }
+
+            window.onTurnstileSuccess = function () {
+            $("#cloudflare-default-region").hide();
+            $("#btnLogin").prop("disabled", false);
+            };
+
+            bindPasswordToggle();
+
+            $("#frmForm").validate({
             errorClass: "input-validation-error",
-            errorPlacement: function() {},
+            errorPlacement: function () { },
             rules: {
-                Email: {
-                    required: true,
-                    email: true,
-                },
-                Password: {
-                    required: true,
-                }
+            Email: {
+            required: true,
+            email: true,
+            },
+            Password: {
+            required: true,
+            }
             },
             messages: {
-                Email: {
-                    required: $("#Email").data("val-required"),
-                    email: $("#Email").data("val-email"),
-                },
-                Password: {
-                    required: $("#Password").data("val-required"),
-                }
+            Email: {
+            required: $("#Email").data("val-required"),
+            email: $("#Email").data("val-email"),
             },
-            invalidHandler: function(event, validator) {
-                toastr.clear();
-
-                for(var i = 0; i < validator.errorList.length; i++) {
-                    toastr.error(validator.errorList[i].message);
-                }
-            },
-            submitHandler: function(form) {
-                $("#loadingOverlay").removeClass("d-none");
-                form.submit();
+            Password: {
+            required: $("#Password").data("val-required"),
             }
-        });
-    </script>
-}
+            },
+            invalidHandler: function (event, validator) {
+            toastr.clear();
+
+            for (var i = 0; i < validator.errorList.length; i++) {
+            toastr.error(validator.errorList[i].message);
+            }
+            },
+            submitHandler: function (form) {
+            $("#loadingOverlay").removeClass("d-none");
+            form.submit();
+            }
+            });
+        </script>
+    }
