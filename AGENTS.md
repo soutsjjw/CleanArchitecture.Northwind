@@ -2,9 +2,24 @@
 
 ---
 
-## 🌏 Respond language（回覆語言）
+## 🌏 Output Language（輸出語言｜最高優先）
 
-- Always respond in Traditional Chinese（始終使用繁體中文回覆）
+- ALL assistant-facing text MUST be in Traditional Chinese.
+- This includes:
+  - plans
+  - progress updates
+  - code explanations
+  - review comments
+  - commit organization summaries
+  - final answers
+- Do NOT reply in English unless the content is:
+  - code
+  - shell commands
+  - file names
+  - branch names
+  - log output
+  - commit subject lines explicitly requested to stay in English
+- If any other instruction conflicts with this rule, this rule wins
 
 ## 🎯 Core Principles（核心原則）
 
