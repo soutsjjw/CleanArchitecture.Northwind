@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;
+using Mvc.Infrastructure.Security;
 using Mvc.ViewModels;
 using Mvc.ViewModels.Account;
 
@@ -55,6 +56,7 @@ public class AccountController : BaseController<AccountController>
 
     [HttpGet]
     [AllowAnonymous]
+    [NoStoreCache]
     public async Task<IActionResult> LoginAsync(string returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
@@ -70,6 +72,7 @@ public class AccountController : BaseController<AccountController>
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [NoStoreCache]
     public async Task<IActionResult> LoginAsync([FromForm] LoginViewModel viewModel, [FromQuery] string returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
@@ -156,6 +159,8 @@ public class AccountController : BaseController<AccountController>
     {
         if (!ModelState.IsValid)
         {
+            ModelState.Remove(nameof(model.AgreeToTerms));
+
             // 如果前端驗證失敗，返回 View 並顯示錯誤訊息
             return View(model);
         }

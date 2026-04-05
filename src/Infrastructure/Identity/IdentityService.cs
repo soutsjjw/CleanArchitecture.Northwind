@@ -527,7 +527,6 @@ public class IdentityService : IIdentityService
     public async Task SignOutAsync()
     {
         await _signInManager.SignOutAsync();
-        _logger.LogInformation("使用者已成功登出");
     }
 
     /// <summary>
@@ -547,7 +546,6 @@ public class IdentityService : IIdentityService
     /// <returns>表示非同步退出操作的任務。 </returns>
     public async Task RefreshSignInAsync(ApplicationUser user, bool useCookies)
     {
-        //await _signInManager.RefreshSignInAsync(user);
         await SignInAsync(user, useCookies);
     }
 

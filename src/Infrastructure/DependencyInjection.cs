@@ -152,17 +152,18 @@ public static class DependencyInjection
     private static void AddIdentityAuthorize(IServiceCollection services, IConfiguration configuration)
     {
         services
-            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-            {
-                options.LoginPath = "/Account/Login";
-                options.LogoutPath = "/Account/Logout";
-                options.AccessDeniedPath = "/Account/AccessDenied";
-                options.Cookie.HttpOnly = true;                             // 僅在 HTTPS 使用
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.SlidingExpiration = true;                           // 滑動過期時間
-                options.ExpireTimeSpan = TimeSpan.FromHours(8);             // Cookie 過期時間
-            });
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Account/Login";
+            options.LogoutPath = "/Account/Logout";
+            options.AccessDeniedPath = "/Error/AccessDenied";
+            options.Cookie.HttpOnly = true;                             // 僅在 HTTPS 使用
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.SlidingExpiration = true;                           // 滑動過期時間
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);             // Cookie 過期時間
+        });
 
         services.AddAuthorization();
 

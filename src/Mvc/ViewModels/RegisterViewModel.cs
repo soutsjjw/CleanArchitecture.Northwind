@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Mvc.Infrastructure.Security;
 
 namespace Mvc.ViewModels;
 
@@ -32,8 +33,9 @@ public class RegisterViewModel : IValidatableObject
 
     public int OfficeId { get; set; }
 
-    [Required(ErrorMessage = "必須同意條款與政策")]
-    [Range(typeof(bool), "true", "true", ErrorMessage = "必須同意條款與政策")]
+    //[Required(ErrorMessage = "必須同意條款與政策")]
+    //[Range(typeof(bool), "true", "true", ErrorMessage = "必須同意條款與政策")]
+    [MustBeTrue(ErrorMessage = "必須同意條款與政策")]
     public bool AgreeToTerms { get; set; } = true;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -104,7 +104,7 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script src="~/js/deptOfficeLinkage.js"></script>
-    <script>
+    <script asp-add-nonce>
         var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
         var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
 

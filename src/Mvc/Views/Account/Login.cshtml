@@ -28,17 +28,14 @@
                     </div>
                 </div>
                 <div class="mb-3 text-start">
-                    <div class="form-check">
-                        <input class="form-check-input" name="remember" type="checkbox" value="" id="check1">
-                        <label class="form-check-label" for="check1">
-                            在這裝置上記住我
-                        </label>
+                    <div id="cloudflare-default-region">
+                        驗證載入中...
+                    </div>
+                    <div id="cloudflare-component">
+                        @await Component.InvokeAsync("Cloudflare")
                     </div>
                 </div>
-                <div class="mb-3 text-start">
-                    @await Component.InvokeAsync("Cloudflare")
-                </div>
-                <button type="submit" class="btn btn-primary mb-4" style="width:100%">登入</button>
+                <button id="btnLogin" type="submit" class="btn btn-primary mb-4" style="width:100%" disabled>登入</button>
             </form>
             <p class="mb-2 text-muted">忘記密碼？ <a asp-action="ForgotPassword">重設</a></p>
             <p class="mb-0 text-muted">還沒有帳號？ <a asp-action="Register">註冊帳號</a></p>
@@ -49,7 +46,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    <script>
+    <script asp-add-nonce>
         $("#frmForm").validate({
             errorClass: "input-validation-error",
             errorPlacement: function() {},
