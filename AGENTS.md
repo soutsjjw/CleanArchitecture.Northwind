@@ -2,6 +2,10 @@
 
 ---
 
+## 🌏 Respond language（回覆語言）
+
+- Always respond in Traditional Chinese（始終使用繁體中文回覆）
+
 ## 🎯 Core Principles（核心原則）
 
 - Always follow Clean Architecture（必須遵守分層架構）
