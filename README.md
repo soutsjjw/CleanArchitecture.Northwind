@@ -15,6 +15,12 @@ cd .\src\Web\
 dotnet watch run
 ```
 
+## .NET 10 現況
+
+- 專案已正式切換為 `net10.0`
+- `global.json` 已固定使用 `.NET 10 SDK`
+- 中央套件版本已收斂為 `.NET 10` 對應版本
+
 Navigate to https://localhost:5001. The application will automatically reload if you change any of the source files.
 
 ## Code Styles & Formatting

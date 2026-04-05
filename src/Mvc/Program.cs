@@ -26,11 +26,7 @@ builder.Services.AddWebServices(builder.Configuration, builder.Environment);
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
-#if NET10_0_OR_GREATER
     o.KnownIPNetworks.Clear();
-#else
-    o.KnownNetworks.Clear();
-#endif
     o.KnownProxies.Clear();
 });
 
