@@ -25,7 +25,7 @@ public class Result : IResult
             {
                 _Errors = Array.Empty<string>();
 
-                FieldErrors.Select(field => field.Value)
+                FieldErrors.Select(fieldError => fieldError.Value)
                     .Where(values => values != null)
                     .SelectMany(values => values)
                     .ToList()
