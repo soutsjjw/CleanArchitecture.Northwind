@@ -23,12 +23,4 @@ public record UpdateUserCommand : IRequest<Result>
     public DateTimeOffset? LockoutEnd { get; set; }
 
     public bool EmailConfirmed { get; set; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<UserDetailDto, UpdateUserCommand>();
-        }
-    }
 }

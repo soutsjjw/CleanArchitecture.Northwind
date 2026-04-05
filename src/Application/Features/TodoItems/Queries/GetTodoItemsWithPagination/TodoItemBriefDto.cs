@@ -10,12 +10,4 @@ public class TodoItemBriefDto
     public string? Title { get; init; }
 
     public bool Done { get; init; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<TodoItem, TodoItemBriefDto>();
-        }
-    }
 }

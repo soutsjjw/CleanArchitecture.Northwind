@@ -1,12 +1,16 @@
-﻿using System.Reflection;
+using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Behaviours;
+using CleanArchitecture.Northwind.Application.Common.Mappings;
+using Mapster;
+using MapsterMapper;
 
 namespace Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        services.AddAutoMapper(Assembly.GetExecutingAssembly());
+        services.AddSingleton(CreateTypeAdapterConfig());
+        services.AddScoped<IMapper, ServiceMapper>();
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
@@ -20,5 +24,13 @@ public static class DependencyInjection
         });
 
         return services;
+    }
+
+    private static TypeAdapterConfig CreateTypeAdapterConfig()
+    {
+        TypeAdapterConfig config = new();
+        MapsterConfiguration.RegisterMappings(config);
+        config.Compile();
+        return config;
     }
 }

@@ -1,4 +1,3 @@
-﻿using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Account.Commands.UpdateProfile;
 using CleanArchitecture.Northwind.Application.Features.Member.Commands.ChangePassword;
@@ -7,6 +6,7 @@ using CleanArchitecture.Northwind.Application.Features.Totp.Commands.DeactivateT
 using CleanArchitecture.Northwind.Application.Features.Totp.Commands.EnableTotp;
 using CleanArchitecture.Northwind.Application.Features.Totp.Commands.GenerateTotp;
 using CleanArchitecture.Northwind.Application.Features.Totp.Commands.VerifyTotp;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;
 using Mvc.ViewModels.Account;
@@ -108,7 +108,12 @@ public class MemberController : BaseController<MemberController>
             return View().WithError(result.Errors.ToList(), "產生 TOTP 失敗");
         }
 
-        var viewModel = _mapper.Map<SetupTotpViewModel>(result.Data);
+        var viewModel = new SetupTotpViewModel
+        {
+            QrCodeImage = result.Data.QrCodeImage,
+            ManualEntryKey = result.Data.ManualEntryKey,
+            RecoveryCodes = result.Data.RecoveryCodes
+        };
 
         return View(viewModel);
     }

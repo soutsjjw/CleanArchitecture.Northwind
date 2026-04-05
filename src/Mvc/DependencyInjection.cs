@@ -1,4 +1,3 @@
-﻿using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Mvc.Services;
 using CleanArchitecture.Northwind.Mvc.StartupExtensions;
@@ -47,8 +46,6 @@ public static class DependencyInjection
         services.AddEndpointsApiExplorer();
 
         services.AddCustomizedMiddleware();
-
-        services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
         return services;
     }

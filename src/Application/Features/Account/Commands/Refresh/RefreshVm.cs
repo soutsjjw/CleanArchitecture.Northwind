@@ -13,12 +13,4 @@ public class RefreshVm
     public required long ExpiresIn { get; init; }
 
     public required string RefreshToken { get; init; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<AccessTokenResponse, RefreshVm>();
-        }
-    }
 }

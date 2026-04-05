@@ -15,12 +15,4 @@ public class TodoListDto
     public string? Colour { get; init; }
 
     public IReadOnlyCollection<TodoItemDto> Items { get; init; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<TodoList, TodoListDto>();
-        }
-    }
 }

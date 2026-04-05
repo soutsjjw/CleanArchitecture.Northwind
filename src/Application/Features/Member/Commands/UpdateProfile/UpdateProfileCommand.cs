@@ -15,12 +15,4 @@ public record UpdateProfileCommand : IRequest<Result>
     public Gender Gender { get; set; }
 
     public string Title { get; set; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<ProfileVm, UpdateProfileCommand>();
-        }
-    }
 }

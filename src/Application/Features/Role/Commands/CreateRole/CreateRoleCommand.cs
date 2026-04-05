@@ -6,12 +6,4 @@ public record CreateRoleCommand : IRequest<Result>
 {
     public string Name { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<CreateRoleDto, CreateRoleCommand>();
-        }
-    }
 }

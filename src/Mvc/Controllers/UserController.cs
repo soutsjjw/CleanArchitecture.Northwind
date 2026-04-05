@@ -1,10 +1,10 @@
-﻿using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.User.Commands.ResendConfirmationEmail;
 using CleanArchitecture.Northwind.Application.Features.User.Commands.UpdateUser;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.GetAllUsers;
 using CleanArchitecture.Northwind.Application.Features.User.Queries.UserDetail;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;

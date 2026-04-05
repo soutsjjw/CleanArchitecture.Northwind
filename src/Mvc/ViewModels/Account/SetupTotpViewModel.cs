@@ -1,6 +1,3 @@
-﻿using AutoMapper;
-using CleanArchitecture.Northwind.Application.Features.Totp.Commands.GenerateTotp;
-
 namespace Mvc.ViewModels.Account;
 
 /// <summary>
@@ -28,12 +25,4 @@ public class SetupTotpViewModel
     /// 驗證碼
     /// </summary>
     public string Code { get; set; } = string.Empty;
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<GenerateTotpVm, SetupTotpViewModel>();
-        }
-    }
 }

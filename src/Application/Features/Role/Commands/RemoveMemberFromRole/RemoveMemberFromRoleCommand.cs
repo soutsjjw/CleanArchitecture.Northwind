@@ -6,12 +6,4 @@ public record RemoveMemberFromRoleCommand : IRequest<Result>
 {
     public string UserId { get; set; } = string.Empty;
     public string RoleId { get; set; } = string.Empty;
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<RemoveMemberFromRoleDto, RemoveMemberFromRoleCommand>();
-        }
-    }
 }

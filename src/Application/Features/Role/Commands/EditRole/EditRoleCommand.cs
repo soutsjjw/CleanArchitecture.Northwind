@@ -11,14 +11,6 @@ public record EditRoleCommand : IRequest<Result>
     public string RoleId { get; set; } = default!;
     public string RoleName { get; set; } = default!;
     public List<EditRoleItemCommand> Items { get; set; } = new();
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<EditRolePrepareDto, EditRoleCommand>();
-        }
-    }
 }
 
 public class EditRoleItemCommand
@@ -31,12 +23,4 @@ public class EditRoleItemCommand
     public bool Update { get; set; }
     public bool Delete { get; set; }
     public bool System { get; set; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<EditRoleItemPrepareDto, EditRoleItemCommand>();
-        }
-    }
 }

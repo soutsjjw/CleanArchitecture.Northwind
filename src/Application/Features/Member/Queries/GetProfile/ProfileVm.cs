@@ -16,12 +16,4 @@ public class ProfileVm
     public string Title { get; set; }
 
     public bool IsTotpEnabled { get; set; }
-
-    private class Mapping : Profile
-    {
-        public Mapping()
-        {
-            CreateMap<ApplicationUserProfile, ProfileVm>();
-        }
-    }
 }

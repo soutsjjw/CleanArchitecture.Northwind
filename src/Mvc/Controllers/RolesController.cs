@@ -1,4 +1,3 @@
-﻿using AutoMapper;
 using CleanArchitecture.Northwind.Application.Common.DTOs;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
@@ -10,6 +9,7 @@ using CleanArchitecture.Northwind.Application.Features.Role.Queries.EditRolePrep
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetAccount;
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetAllRoles;
 using CleanArchitecture.Northwind.Application.Features.Role.Queries.GetRoleMembers;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mvc.Extensions;

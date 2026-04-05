@@ -1,31 +1,31 @@
-﻿using System.Reflection;
 using System.Runtime.CompilerServices;
-using AutoMapper;
-using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Mappings;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
 using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
 using CleanArchitecture.Northwind.Domain.Entities;
+using Mapster;
+using MapsterMapper;
 using NUnit.Framework;
 
 namespace CleanArchitecture.Northwind.Application.UnitTests.Common.Mappings;
 public class MappingTests
 {
-    private readonly IConfigurationProvider _configuration;
+    private readonly TypeAdapterConfig _configuration;
     private readonly IMapper _mapper;
 
     public MappingTests()
     {
-        _configuration = new MapperConfiguration(config =>
-            config.AddMaps(Assembly.GetAssembly(typeof(IApplicationDbContext))));
-
-        _mapper = _configuration.CreateMapper();
+        _configuration = new TypeAdapterConfig();
+        MapsterConfiguration.RegisterMappings(_configuration);
+        _configuration.Compile();
+        _mapper = new Mapper(_configuration);
     }
 
     [Test]
     public void ShouldHaveValidConfiguration()
     {
-        _configuration.AssertConfigurationIsValid();
+        _configuration.Compile();
     }
 
     [Test]
@@ -37,8 +37,15 @@ public class MappingTests
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);
+        var mapMethod = typeof(IMapper)
+            .GetMethods()
+            .Single(method => method.Name == nameof(IMapper.Map)
+                && method.IsGenericMethodDefinition
+                && method.GetGenericArguments().Length == 1
+                && method.GetParameters().Length == 1
+                && method.GetParameters()[0].ParameterType == typeof(object));
 
-        _mapper.Map(instance, source, destination);
+        mapMethod.MakeGenericMethod(destination).Invoke(_mapper, new[] { instance });
     }
 
     private object GetInstanceOf(Type type)
@@ -46,7 +53,6 @@ public class MappingTests
         if (type.GetConstructor(Type.EmptyTypes) != null)
             return Activator.CreateInstance(type)!;
 
-        // Type without parameterless constructor
         return RuntimeHelpers.GetUninitializedObject(type);
     }
 }
