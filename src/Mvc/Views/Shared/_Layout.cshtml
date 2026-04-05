@@ -48,7 +48,7 @@
     @await Component.InvokeAsync("Toast")
     @if (!string.IsNullOrEmpty(antiMsg))
     {
-        <script>
+        <script asp-add-nonce>
             toastr.warning("@(antiMsg)");
         </script>
     }

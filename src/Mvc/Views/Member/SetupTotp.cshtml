@@ -78,7 +78,7 @@
 </div>
 
 @section Scripts {
-    <script>
+    <script asp-add-nonce>
         $('#download').on('click', function () {
             let content = '';
             $('.badge').each(function () {

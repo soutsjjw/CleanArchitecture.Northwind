@@ -92,7 +92,7 @@
 @section Scripts {
     @if (Model.IsTotpEnabled)
     {
-        <script>
+        <script asp-add-nonce>
             $(function () {
                 var $form = $('#deactivateTotpForm');
                 var $modal = $('#deactivateTotpModal');

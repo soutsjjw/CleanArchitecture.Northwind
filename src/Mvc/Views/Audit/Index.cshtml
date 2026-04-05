@@ -87,7 +87,7 @@
 </div>
 <form id="__af__">@Html.AntiForgeryToken()</form>
 @section Scripts {
-    <script>
+    <script asp-add-nonce>
         $(function () {
             // 取得 Anti-forgery Token
             function getAfToken() {

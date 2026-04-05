@@ -136,7 +136,7 @@
 </div>
 
 @section Scripts {
-    <script>
+    <script asp-add-nonce>
         $(function () {
             const $modal = $('#userModal');
             const modal = new bootstrap.Modal($modal[0], { backdrop: 'static', keyboard: false });
@@ -306,7 +306,7 @@
 
     <script src="~/js/deptOfficeLinkage.js"></script>
     <script src="~/js/pagination.js"></script>
-    <script>
+    <script asp-add-nonce>
         var departmentList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Departments));
         var officeList = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Offices));
         window.initDeptOfficeLinkage('#frmSearch', officeList);
