@@ -30,11 +30,22 @@ public class ErrorController : Controller
             viewModel.StackTrace = iExceptionHandlerFeature.Error.StackTrace;
         }
 
+        Response.StatusCode = 500;
+
         return View(viewModel);
     }
 
     public IActionResult PageNotFound()
     {
+        Response.StatusCode = 404;
+
+        return View();
+    }
+
+    public IActionResult AccessDenied()
+    {
+        Response.StatusCode = 403;
+
         return View();
     }
 }

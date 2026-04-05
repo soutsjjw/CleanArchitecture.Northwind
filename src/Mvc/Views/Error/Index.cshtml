@@ -92,7 +92,7 @@
 }
 
 @section Scripts {
-    <script>
+    <script asp-add-nonce>
         document.addEventListener('keydown', function(e) {
             if (e.key === "Escape") {
                 var modal = document.getElementById('stackModal');
