@@ -50,7 +50,7 @@ public class MailService : IMailService
     private MimeMessage BuildEmailMessage(MailRequest request)
     {
         var email = new MimeMessage();
-        email.Sender = MailboxAddress.Parse(request.From ?? _mailSettings.From);
+        email.From.Add(MailboxAddress.Parse(_mailSettings.DisplayName ?? _mailSettings.From));
         email.To.Add(MailboxAddress.Parse(request.To));
         email.Subject = request.Subject;
 

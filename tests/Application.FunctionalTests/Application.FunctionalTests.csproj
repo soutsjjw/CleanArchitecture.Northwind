@@ -42,6 +42,12 @@
         </PackageReference>
         <PackageReference Include="FluentAssertions" />
         <PackageReference Include="Moq" />
+        <PackageReference Include="NuGet.Packaging">
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="NuGet.Protocol">
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="Respawn" />
         <PackageReference Include="Testcontainers.MsSql" />
     </ItemGroup>
