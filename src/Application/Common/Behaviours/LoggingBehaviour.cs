@@ -3,7 +3,9 @@ using MediatR.Pipeline;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.Common.Behaviours;
-public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest> where TRequest : notnull
+
+public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>
+    where TRequest : notnull
 {
     private readonly ILogger _logger;
     private readonly IUser _user;

@@ -1,15 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace CleanArchitecture.Northwind.Domain.Entities;
 
-namespace CleanArchitecture.Northwind.Domain.Entities;
-
-public class TodoList : BaseAuditableEntity<int>
+public class TodoList : BaseAuditableEntity
 {
-    [Key]
-    public override int Id { get; set; }
-
     public string? Title { get; set; }
 
-    public Colour Colour { get; set; } = Colour.White;
+    public Colour Colour { get; set; } = Colour.Grey;
 
     public IList<TodoItem> Items { get; private set; } = new List<TodoItem>();
 }

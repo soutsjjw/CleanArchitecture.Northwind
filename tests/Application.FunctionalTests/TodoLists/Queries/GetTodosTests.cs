@@ -1,51 +1,50 @@
-﻿using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
+﻿using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.ValueObjects;
 
-using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
-
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.TodoLists.Queries;
-public class GetTodosTests : BaseTestFixture
+
+public class GetTodosTests : TestBase
 {
     [Test]
     public async Task ShouldReturnPriorityLevels()
     {
-        await RunAsDefaultUserAsync();
+        await TestApp.RunAsDefaultUserAsync();
 
         var query = new GetTodosQuery();
 
-        var result = await SendAsync(query);
+        var result = await TestApp.SendAsync(query);
 
-        result.PriorityLevels.Should().NotBeEmpty();
+        result.PriorityLevels.ShouldNotBeEmpty();
     }
 
     [Test]
     public async Task ShouldReturnAllListsAndItems()
     {
-        await RunAsDefaultUserAsync();
+        await TestApp.RunAsDefaultUserAsync();
 
-        await AddAsync(new TodoList
+        await TestApp.AddAsync(new TodoList
         {
             Title = "Shopping",
             Colour = Colour.Blue,
             Items =
-                    {
-                        new TodoItem { Title = "Apples", Done = true },
-                        new TodoItem { Title = "Milk", Done = true },
-                        new TodoItem { Title = "Bread", Done = true },
-                        new TodoItem { Title = "Toilet paper" },
-                        new TodoItem { Title = "Pasta" },
-                        new TodoItem { Title = "Tissues" },
-                        new TodoItem { Title = "Tuna" }
-                    }
+                {
+                    new TodoItem { Title = "Apples", Done = true },
+                    new TodoItem { Title = "Milk", Done = true },
+                    new TodoItem { Title = "Bread", Done = true },
+                    new TodoItem { Title = "Toilet paper" },
+                    new TodoItem { Title = "Pasta" },
+                    new TodoItem { Title = "Tissues" },
+                    new TodoItem { Title = "Tuna" }
+                }
         });
 
         var query = new GetTodosQuery();
 
-        var result = await SendAsync(query);
+        var result = await TestApp.SendAsync(query);
 
-        result.Lists.Should().HaveCount(1);
-        result.Lists.First().Items.Should().HaveCount(7);
+        result.Lists.Count.ShouldBe(1);
+        result.Lists.First().Items.Count.ShouldBe(7);
     }
 
     [Test]
@@ -53,8 +52,8 @@ public class GetTodosTests : BaseTestFixture
     {
         var query = new GetTodosQuery();
 
-        var action = () => SendAsync(query);
+        var action = () => TestApp.SendAsync(query);
 
-        await action.Should().ThrowAsync<UnauthorizedAccessException>();
+        await Should.ThrowAsync<UnauthorizedAccessException>(action);
     }
 }

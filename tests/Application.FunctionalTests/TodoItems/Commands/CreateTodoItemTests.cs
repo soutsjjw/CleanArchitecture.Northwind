@@ -1,28 +1,26 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Exceptions;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
-using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
-using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
-
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.TodoItems.Commands;
-public class CreateTodoItemTests : BaseTestFixture
+
+public class CreateTodoItemTests : TestBase
 {
     [Test]
     public async Task ShouldRequireMinimumFields()
     {
         var command = new CreateTodoItemCommand();
 
-        await FluentActions.Invoking(() =>
-            SendAsync(command)).Should().ThrowAsync<ValidationException>();
+        await Should.ThrowAsync<ValidationException>(() => TestApp.SendAsync(command));
     }
 
     [Test]
     public async Task ShouldCreateTodoItem()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await TestApp.RunAsDefaultUserAsync();
 
-        var listId = await SendAsync(new CreateTodoListCommand
+        var listId = await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "New List"
         });
@@ -33,16 +31,16 @@ public class CreateTodoItemTests : BaseTestFixture
             Title = "Tasks"
         };
 
-        var itemId = await SendAsync(command);
+        var itemId = await TestApp.SendAsync(command);
 
-        var item = await FindAsync<TodoItem>(itemId);
+        var item = await TestApp.FindAsync<TodoItem>(itemId);
 
-        item.Should().NotBeNull();
-        item!.ListId.Should().Be(command.ListId);
-        item.Title.Should().Be(command.Title);
-        item.CreatedBy.Should().Be(userId);
-        item.Created.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMilliseconds(10000));
-        item.LastModifiedBy.Should().Be(userId);
-        item.LastModified.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.ShouldNotBeNull();
+        item!.ListId.ShouldBe(command.ListId);
+        item.Title.ShouldBe(command.Title);
+        item.CreatedBy.ShouldBe(userId);
+        item.Created.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.LastModifiedBy.ShouldBe(userId);
+        item.LastModified.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
     }
 }

@@ -1,58 +1,61 @@
 using System.Runtime.CompilerServices;
-using CleanArchitecture.Northwind.Application.Common.Mappings;
-using CleanArchitecture.Northwind.Application.Common.Models;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Queries.GetTodoItemsWithPagination;
-using CleanArchitecture.Northwind.Application.Features.TodoLists.Queries.GetTodos;
+using AutoMapper;
+using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.TodoLists.Queries.GetTodos;
 using CleanArchitecture.Northwind.Domain.Entities;
-using Mapster;
-using MapsterMapper;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace CleanArchitecture.Northwind.Application.UnitTests.Common.Mappings;
+
 public class MappingTests
 {
-    private readonly TypeAdapterConfig _configuration;
-    private readonly IMapper _mapper;
+    private ILoggerFactory? _loggerFactory;
+    private MapperConfiguration? _configuration;
+    private IMapper? _mapper;
 
-    public MappingTests()
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
     {
-        _configuration = new TypeAdapterConfig();
-        MapsterConfiguration.RegisterMappings(_configuration);
-        _configuration.Compile();
-        _mapper = new Mapper(_configuration);
+        // Minimal logger factory for tests
+        _loggerFactory = LoggerFactory.Create(b => b.AddDebug().SetMinimumLevel(LogLevel.Debug));
+
+        _configuration = new MapperConfiguration(cfg =>
+            cfg.AddMaps(typeof(IApplicationDbContext).Assembly),
+            loggerFactory: _loggerFactory);
+
+        _mapper = _configuration.CreateMapper();
     }
 
     [Test]
     public void ShouldHaveValidConfiguration()
     {
-        _configuration.Compile();
+        _configuration!.AssertConfigurationIsValid();
     }
 
     [Test]
     [TestCase(typeof(TodoList), typeof(TodoListDto))]
     [TestCase(typeof(TodoItem), typeof(TodoItemDto))]
-    [TestCase(typeof(TodoList), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemBriefDto))]
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);
-        var mapMethod = typeof(IMapper)
-            .GetMethods()
-            .Single(method => method.Name == nameof(IMapper.Map)
-                && method.IsGenericMethodDefinition
-                && method.GetGenericArguments().Length == 1
-                && method.GetParameters().Length == 1
-                && method.GetParameters()[0].ParameterType == typeof(object));
 
-        mapMethod.MakeGenericMethod(destination).Invoke(_mapper, new[] { instance });
+        _mapper!.Map(instance, source, destination);
     }
 
-    private object GetInstanceOf(Type type)
+    private static object GetInstanceOf(Type type)
     {
         if (type.GetConstructor(Type.EmptyTypes) != null)
             return Activator.CreateInstance(type)!;
 
+        // Type without parameterless constructor
         return RuntimeHelpers.GetUninitializedObject(type);
+    }
+
+
+    [OneTimeTearDown]
+    public void OneTimeTearDown()
+    {
+        _loggerFactory?.Dispose();
     }
 }

@@ -1,11 +1,12 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Behaviours;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 
 namespace CleanArchitecture.Northwind.Application.UnitTests.Common.Behaviours;
+
 public class RequestLoggerTests
 {
     private Mock<ILogger<CreateTodoItemCommand>> _logger = null!;

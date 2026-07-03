@@ -1,12 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace CleanArchitecture.Northwind.Domain.Entities;
 
-namespace CleanArchitecture.Northwind.Domain.Entities;
-
-public class TodoItem : BaseAuditableEntity<int>
+public class TodoItem : BaseAuditableEntity
 {
-    [Key]
-    public override int Id { get; set; }
-
     public int ListId { get; set; }
 
     public string? Title { get; set; }
@@ -14,8 +9,6 @@ public class TodoItem : BaseAuditableEntity<int>
     public string? Note { get; set; }
 
     public PriorityLevel Priority { get; set; }
-
-    public DateTime? Reminder { get; set; }
 
     private bool _done;
     public bool Done

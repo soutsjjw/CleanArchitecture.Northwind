@@ -1,33 +1,33 @@
-﻿using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItem;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItemDetail;
-using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+﻿using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItemDetail;
+using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Enums;
 
-using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
-
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.TodoItems.Commands;
-public class UpdateTodoItemDetailTests : BaseTestFixture
+
+public class UpdateTodoItemDetailTests : TestBase
 {
     [Test]
     public async Task ShouldRequireValidTodoItemId()
     {
         var command = new UpdateTodoItemCommand { Id = 99, Title = "New Title" };
-        await FluentActions.Invoking(() => SendAsync(command)).Should().ThrowAsync<NotFoundException>();
+
+        await Should.ThrowAsync<NotFoundException>(() => TestApp.SendAsync(command));
     }
 
     [Test]
     public async Task ShouldUpdateTodoItem()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await TestApp.RunAsDefaultUserAsync();
 
-        var listId = await SendAsync(new CreateTodoListCommand
+        var listId = await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "New List"
         });
 
-        var itemId = await SendAsync(new CreateTodoItemCommand
+        var itemId = await TestApp.SendAsync(new CreateTodoItemCommand
         {
             ListId = listId,
             Title = "New Item"
@@ -41,16 +41,16 @@ public class UpdateTodoItemDetailTests : BaseTestFixture
             Priority = PriorityLevel.High
         };
 
-        await SendAsync(command);
+        await TestApp.SendAsync(command);
 
-        var item = await FindAsync<TodoItem>(itemId);
+        var item = await TestApp.FindAsync<TodoItem>(itemId);
 
-        item.Should().NotBeNull();
-        item!.ListId.Should().Be(command.ListId);
-        item.Note.Should().Be(command.Note);
-        item.Priority.Should().Be(command.Priority);
-        item.LastModifiedBy.Should().NotBeNull();
-        item.LastModifiedBy.Should().Be(userId);
-        item.LastModified.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.ShouldNotBeNull();
+        item!.ListId.ShouldBe(command.ListId);
+        item.Note.ShouldBe(command.Note);
+        item.Priority.ShouldBe(command.Priority);
+        item.LastModifiedBy.ShouldNotBeNull();
+        item.LastModifiedBy.ShouldBe(userId);
+        item.LastModified.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
     }
 }

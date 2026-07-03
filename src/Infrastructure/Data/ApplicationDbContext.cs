@@ -1,63 +1,15 @@
 ﻿using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Domain.Entities;
-using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Data;
-public class ApplicationDbContext : IdentityDbContext<
-        ApplicationUser, ApplicationRole, string,
-        ApplicationUserClaim, ApplicationUserRole, ApplicationUserLogin,
-        ApplicationRoleClaim, ApplicationUserToken>, IApplicationDbContext
+
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplicationDbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
-    #region Identity
-
-    public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
-
-    public DbSet<ApplicationUserProfile> UserProfiles => Set<ApplicationUserProfile>();
-
-    public DbSet<ApplicationUserPasswordHistory> UserPasswordHistories => Set<ApplicationUserPasswordHistory>();
-
-    public DbSet<Department> Departments => Set<Department>();
-
-    public DbSet<Office> Offices => Set<Office>();
-
-    public DbSet<PersonalDataAccessLog> PersonalDataAccessLogs => Set<PersonalDataAccessLog>();
-
-    #endregion
-
-    #region Northwind
-
-    public DbSet<Category> Categories => Set<Category>();
-
-    public DbSet<Customer> Customers => Set<Customer>();
-
-    public DbSet<CustomerCustomerDemo> CustomerCustomerDemos => Set<CustomerCustomerDemo>();
-
-    public DbSet<CustomerDemographic> CustomerDemographics => Set<CustomerDemographic>();
-
-    public DbSet<Employee> Employees => Set<Employee>();
-
-    public DbSet<EmployeeTerritory> EmployeeTerritories => Set<EmployeeTerritory>();
-
-    public DbSet<Order> Orders => Set<Order>();
-
-    public DbSet<OrderDetail> OrderDetails => Set<OrderDetail>();
-
-    public DbSet<Product> Products => Set<Product>();
-
-    public DbSet<Region> Regions => Set<Region>();
-
-    public DbSet<Shipper> Shippers => Set<Shipper>();
-
-    public DbSet<Supplier> Suppliers => Set<Supplier>();
-
-    public DbSet<Territory> Territories => Set<Territory>();
-
-    #endregion
 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
@@ -67,12 +19,5 @@ public class ApplicationDbContext : IdentityDbContext<
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-        // 明確設置每個外鍵屬性
-        builder.Entity<ApplicationUserClaim>()
-            .HasOne(uc => uc.User)
-            .WithMany(u => u.Claims)
-            .HasForeignKey(uc => uc.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }
