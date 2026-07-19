@@ -2,6 +2,6 @@
 
 namespace CleanArchitecture.Northwind.Infrastructure.Identity;
 
-public class ApplicationUser : IdentityUser
+public class ApplicationUserX : IdentityUser
 {
 }

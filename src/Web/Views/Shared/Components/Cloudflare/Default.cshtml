@@ -1,0 +1,26 @@
+﻿@model string
+
+@* https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/ *@
+
+<style asp-add-nonce>
+    .turnstile-host {
+        padding-right: 3px;
+        box-sizing: border-box;
+    }
+
+    .turnstile-host .cf-turnstile {
+        width: 100%;
+    }
+</style>
+
+<div class="turnstile-host">
+    <div class="cf-turnstile"
+         data-sitekey="@Model"
+         data-theme="light"
+         data-size="flexible"
+         data-callback="onTurnstileSuccess"
+         appearance="always"></div>
+</div>
+@* 不加入 SRI(Subresource Integrity)的原因 *@
+@* https://community.cloudflare.com/t/subresource-integrity-cors-for-turnstile-javascript-link/440769 *@
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

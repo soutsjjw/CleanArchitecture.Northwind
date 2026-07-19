@@ -1,0 +1,47 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutEmpty.cshtml";
+    ViewData["Title"] = "拒絕存取 (403 錯誤)";
+}
+
+<div class="container-tight py-4">
+    <div class="page vertical-align text-center">
+        <div class="page-content vertical-align-middle">
+            <header>
+                <h1 class="animation-slide-top">403</h1>
+                <p>拒絕存取 !</p>
+            </header>
+            <p class="error-advise">
+                很抱歉，您無法存取此網頁。這可能是因為以下原因：
+            </p>
+            <ul>
+                <li>您沒有足夠的權限來檢視此內容。</li>
+                <li>該網頁僅限特定使用者或角色存取。</li>
+            </ul>
+            <p class="error-advise">
+                您可以嘗試以下方法：
+            </p>
+            <ul>
+                <li>確認您已登入正確的帳號。</li>
+                <li>聯絡系統管理員以申請存取權限。</li>
+                <li>回到首頁，瀏覽其他可用資源。</li>
+            </ul>
+            <p class="error-advise">
+                如果您仍有疑問，請聯絡我們的客服團隊以獲得進一步協助。
+            </p>
+            <div>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+                    回首頁
+                </a>
+            </div>
+            <br />
+            <footer class="page-copyright">
+                <p>© 2021. All RIGHT RESERVED.</p>
+            </footer>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link href="~/css/error.css" rel="stylesheet" />
+}

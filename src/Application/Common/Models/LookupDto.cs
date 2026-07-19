@@ -1,6 +1,4 @@
-﻿using CleanArchitecture.Northwind.Domain.Entities;
-
-namespace CleanArchitecture.Northwind.Application.Common.Models;
+﻿namespace CleanArchitecture.Northwind.Application.Common.Models;
 
 public class LookupDto
 {
@@ -8,12 +6,10 @@ public class LookupDto
 
     public string? Title { get; init; }
 
-    private class Mapping : Profile
+    private class Mapping : IRegister
     {
-        public Mapping()
+        public void Register(TypeAdapterConfig config)
         {
-            CreateMap<TodoList, LookupDto>();
-            CreateMap<TodoItem, LookupDto>();
         }
     }
 }

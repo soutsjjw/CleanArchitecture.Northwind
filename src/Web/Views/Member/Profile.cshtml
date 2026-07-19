@@ -1,0 +1,133 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Member.Queries.GetProfile
+@using CleanArchitecture.Northwind.Domain.Enums
+@using CleanArchitecture.Northwind.Infrastructure.Extensions
+@model ProfileVm
+@{
+    ViewData["Title"] = "個人資料";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+            <div class="page-title">
+                <h3>個人資料</h3>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">個人資料</div>
+                        <div class="card-body">
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="FullName" class="form-label">姓名</label>
+                                <p class="ms-3">@Model.FullName</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="IDNo" class="form-label">身分證號</label>
+                                <p class="ms-3">@(string.IsNullOrEmpty(Model.IDNo) ? CleanArchitecture.Northwind.Web.Common.WebConstants.BlankContent : Model.IDNo)</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Gender">性別</label>
+                                <p class="ms-3">@(((Gender)Model.Gender).GetDisplayName())</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Title" class="form-label">職稱</label>
+                                <p class="ms-3">@(string.IsNullOrEmpty(Model.Title) ? CleanArchitecture.Northwind.Web.Common.WebConstants.BlankContent : Model.Title)</p>
+                            </div>
+                            <div class="form-group mb-3 text-start">
+                                <label asp-for="Title" class="form-label">是否啟用 Totp</label>
+                                <p class="ms-3">@(Model.IsTotpEnabled ? "是" : "否")</p>
+                            </div>
+                            <div class="mb-3 d-flex justify-content-center gap-2">
+                                <a class="btn btn-primary" asp-action="ProfileEdit" onclick="toggleLoadingOverlay()">編輯</a>
+                                @if (!Model.IsTotpEnabled)
+                                {
+                                    <a type="button" class="btn btn-secondary" asp-action="SetupTotp" onclick="toggleLoadingOverlay()">
+                                        啟用 TOTP
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deactivateTotpModal">
+                                        停用 TOTP
+                                    </button>
+                                }
+                                <a class="btn btn-danger" asp-action="PasswordChange" onclick="toggleLoadingOverlay()">修改密碼</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</div>
+
+@if (Model.IsTotpEnabled)
+{
+    <div class="modal fade" id="deactivateTotpModal" tabindex="-1" aria-labelledby="deactivateTotpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="deactivateTotpForm" method="post" asp-action="DeactivateTotp">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deactivateTotpModalLabel">驗證 TOTP 後停用</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="TotpCode" class="form-label">請輸入 TOTP 驗證碼</label>
+                            <input type="text" class="form-control" id="TotpCode" name="TotpCode" autocomplete="one-time-code" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-danger">確認停用</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @if (Model.IsTotpEnabled)
+    {
+        <script asp-add-nonce>
+            $(function () {
+                var $form = $('#deactivateTotpForm');
+                var $modal = $('#deactivateTotpModal');
+                var $totpCode = $('#deactivateTotpForm #TotpCode');
+
+                $form.on('submit', function (e) {
+                    e.preventDefault();
+
+                    if ($totpCode.val() === '')
+                    {
+                        $totpCode.addClass('input-validation-error');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: $form.attr('action'),
+                        type: 'POST',
+                        data: $form.serialize(),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        success: function (result) {
+                            if (result.success) {
+                                $modal.modal('hide');
+                                // 可選：重新整理頁面或顯示成功訊息
+                                location.reload();
+                            } else {
+                                $totpCode.addClass('input-validation-error');
+                                toastr.error(result.error || 'TOTP 驗證失敗')
+                            }
+                        },
+                        error: function () {
+                            toastr.error('伺服器錯誤，請稍後再試。')
+                        }
+                    });
+                });
+                });
+        </script>
+    }
+}

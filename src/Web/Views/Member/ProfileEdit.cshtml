@@ -1,0 +1,53 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Member.Queries.GetProfile
+@using CleanArchitecture.Northwind.Domain.Enums
+@model ProfileVm
+@{
+    ViewData["Title"] = "個人資料";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+            <div class="page-title">
+                <h3>@ViewData["Title"]</h3>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">@ViewData["Title"]</div>
+                        <div class="card-body">
+                            <form id="frmForm" asp-controller="Member" asp-action="ProfileEdit" method="post" autocomplete="off" novalidate>
+                                <div class="form-group mb-3 text-start">
+                                    <label asp-for="FullName" class="form-label">姓名</label>
+                                    <input asp-for="FullName" class="form-control" placeholder="你的姓名" />
+                                </div>
+                                <div class="form-group mb-3 text-start">
+                                    <label asp-for="IDNo" class="form-label">身分證號</label>
+                                    <input asp-for="IDNo" class="form-control" placeholder="身分證號" />
+                                </div>
+                                <div class="form-group mb-3 text-start">
+                                    <label asp-for="Gender">性別</label>
+                                    @Html.DropDownListFor(
+                                        m => m.Gender,
+                                        (IEnumerable<SelectListItem>)ViewBag.GenderOptions,
+                                        "請選擇",
+                                        new { @class = "form-control" })
+                                </div>
+                                <div class="form-group mb-3 text-start">
+                                    <label asp-for="Title" class="form-label">職稱</label>
+                                    <input asp-for="Title" class="form-control" placeholder="職稱" />
+                                </div>
+                                <div class="mb-3 text-center">
+                                    <button type="submit" class="btn btn-primary" onclick="toggleLoadingOverlay()">更新</button>
+                                    <a class="btn btn-outline-secondary" asp-action="Profile" onclick="toggleLoadingOverlay()">取消</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-2"></div>
+    </div>
+</div>

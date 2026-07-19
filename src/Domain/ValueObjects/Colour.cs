@@ -14,6 +14,8 @@ public class Colour(string code) : ValueObject
         return colour;
     }
 
+    public static Colour White => new("#FFFFFF");
+
     public static Colour Red => new("#E05C4D");
 
     public static Colour Orange => new("#D98B2B");

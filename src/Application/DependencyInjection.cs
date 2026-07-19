@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Behaviours;
+using CleanArchitecture.Northwind.Application.Common.Mappings;
 using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -8,10 +9,8 @@ public static class DependencyInjection
 {
     public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddAutoMapper(cfg =>
-            cfg.AddMaps(Assembly.GetExecutingAssembly()));
-
-        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        builder.Services.AddSingleton(CreateTypeAdapterConfig());
+        builder.Services.AddScoped<IMapper, ServiceMapper>();
 
         builder.Services.AddMediatR(cfg =>
         {
@@ -22,5 +21,13 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
             cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
         });
+    }
+
+    private static TypeAdapterConfig CreateTypeAdapterConfig()
+    {
+        TypeAdapterConfig config = new();
+        MapsterConfiguration.RegisterMappings(config);
+        config.Compile();
+        return config;
     }
 }

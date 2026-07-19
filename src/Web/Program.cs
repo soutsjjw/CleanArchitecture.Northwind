@@ -1,15 +1,35 @@
+using CleanArchitecture.Northwind.Infrastructure.Configurations;
 using CleanArchitecture.Northwind.Infrastructure.Data;
-using Scalar.AspNetCore;
+using CleanArchitecture.Northwind.Web.Infrastructure.Security;
+using CleanArchitecture.Northwind.Web.StartupExtensions;
+using Microsoft.AspNetCore.HttpOverrides;
+
+const string HstsValue = "max-age=31536000; includeSubDomains; preload";
+
+static bool ShouldSendHsts(HttpContext ctx)
+{
+    if (!ctx.Request.IsHttps) return false;
+    var host = (ctx.Request.Host.Host ?? string.Empty).ToLowerInvariant();
+    // 避免把本機釘住（HSTS 會被瀏覽器記住）
+    if (host is "localhost" or "127.0.0.1" or "::1") return false;
+    return true;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.AddServiceDefaults();
-
-builder.AddKeyVaultIfConfigured();
 builder.AddApplicationServices();
-builder.AddInfrastructureServices();
+builder.AddInfrastructureServices(true);
 builder.AddWebServices();
+
+// 在反向代理/容器後面，讓 IsHttps 等能正確判斷（X-Forwarded-Proto/For）
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
+    o.KnownIPNetworks.Clear();
+    o.KnownProxies.Clear();
+});
+
+builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
 
 var app = builder.Build();
 
@@ -17,30 +37,72 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
+
+    // 顯示 Cloudflare 配置
+    var cloudflare = builder.Configuration.GetSection("Cloudflare").Get<CloudflareOptions>();
+    Console.WriteLine($"SiteKey = {cloudflare.SiteKey}, SecretKey = {cloudflare.SecretKey}, SiteVerify = {cloudflare.SiteVerify}");
 }
-else
+
+// 例外處理頁（所有環境）
+app.UseExceptionHandler("/Error/Index");
+
+// 需在最前面，讓後續 IsHttps 判斷正確
+app.UseForwardedHeaders();
+
+// HTTPS 相關
+app.UseHttpsRedirection();
+
+// ★ 全域補 HSTS（所有環境），包含開發用資源（如 aspnetcore-browser-refresh.js）
+//   但排除 localhost/127.0.0.1/::1，以免本機被 HSTS 釘住造成調試不便。
+app.Use(async (ctx, next) =>
 {
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    ctx.Response.OnStarting(() =>
+    {
+        if (ShouldSendHsts(ctx) && !ctx.Response.Headers.ContainsKey("Strict-Transport-Security"))
+        {
+            ctx.Response.Headers["Strict-Transport-Security"] = HstsValue;
+        }
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
+// ★ 正式環境仍啟用官方 UseHsts（行為更完整；若已存在標頭則不會重覆）
+if (!app.Environment.IsDevelopment())
+{
     app.UseHsts();
 }
 
+app.UseCustomizedMiddleware();
+
+app.UseSecurityHeaders(app.Environment);
+
 app.UseHttpsRedirection();
-app.UseCors(static builder =>
-    builder.AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowAnyOrigin());
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // 1 年 + immutable（若檔名帶指紋）
+        ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    }
+});
 
-app.UseFileServer();
+app.UseRouting();
 
-app.MapOpenApi();
-app.MapScalarApiReference();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseExceptionHandler(options => { });
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Map("/", () => Results.Redirect("/scalar"));
-
-app.MapDefaultEndpoints();
-app.MapEndpoints(typeof(Program).Assembly);
-
+app.MapFallbackToController("PageNotFound", "Error");
 
 app.Run();
+
+// 單元測試用
+public partial class Program
+{
+    protected Program() { }
+}

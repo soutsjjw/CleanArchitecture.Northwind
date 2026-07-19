@@ -30,7 +30,6 @@
       <PackageReference Include="Moq" />
       <PackageReference Include="Respawn" />
       <PackageReference Include="Shouldly" />
-      <PackageReference Include="Aspire.Hosting.Testing" />
     </ItemGroup>
 
     <ItemGroup>
@@ -42,7 +41,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\Shared\Shared.csproj" />
         <ProjectReference Include="..\..\src\Web\Web.csproj" />
-        <ProjectReference Include="..\TestAppHost\TestAppHost.csproj" />
     </ItemGroup>
 
 </Project>

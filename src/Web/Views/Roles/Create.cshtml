@@ -1,0 +1,22 @@
+﻿@using CleanArchitecture.Northwind.Application.Features.Role.Commands.CreateRole
+@model CreateRoleDto
+@{
+    ViewData["Title"] = "新增角色";
+}
+<div class="container mt-4" style="max-width:520px;">
+    <h3>@ViewData["Title"]</h3>
+    <form asp-action="Create" method="post" class="mt-3">
+        <div class="mb-3">
+            <label class="form-label">角色名稱</label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-summary="All" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">說明</label>
+            <input asp-for="Description" class="form-control" />
+            <span asp-validation-summary="All" class="text-danger"></span>
+        </div>
+        <button class="btn btn-primary">建立</button>
+        <a asp-action="Index" class="btn btn-link">返回</a>
+    </form>
+</div>

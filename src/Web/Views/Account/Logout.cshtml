@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "登出";
+}
+
+<div class="container-xl d-flex flex-column justify-content-center">
+    <div class="empty">
+        <div class="empty-img">
+            <img src="~/images/figure_hipparu_people.png" style="height:300px;" alt="">
+        </div>
+
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <p class="empty-title">準備登出</p>
+            <p class="empty-subtitle text-secondary">
+                您即將登出您的帳號。點擊下面的按鈕以完成登出。
+            </p>
+            <div class="empty-action">
+                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" /><path d="M12 16h.01" /></svg>
+                        登出
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <p class="empty-title">您已成功登出</p>
+            <p class="empty-subtitle text-secondary">感謝您的使用！您已成功登出系統。</p>
+            <p class="empty-subtitle text-secondary">為了保護您的帳號安全，請確保在使用完畢後關閉所有瀏覽器窗口。</p>
+            <p class="empty-subtitle text-secondary">如果您需要重新登入，請點擊<a asp-controller="Account" asp-action="Login">這裡</a>。</p>
+            <p class="empty-subtitle text-secondary">祝您有個美好的一天！</p>
+        }
+    </div>
+</div>

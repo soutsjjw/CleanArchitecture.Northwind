@@ -1,0 +1,49 @@
+﻿@{
+    var infoMessages = ViewData["InfoMessages"] as List<string>;
+    var infoTitle = ViewData["InfoTitle"] as string;
+    var successMessages = ViewData["SuccessMessages"] as List<string>;
+    var successTitle = ViewData["SuccessTitle"] as string;
+    var warningMessages = ViewData["WarningMessages"] as List<string>;
+    var warningTitle = ViewData["WarningTitle"] as string;
+    var errorMessages = ViewData["ErrorMessages"] as List<string>;
+    var errorTitle = ViewData["ErrorTitle"] as string;
+}
+
+<script src="/js/toastr-init.js"></script>
+
+@if (infoMessages != null && infoMessages.Any())
+{
+    <script asp-add-nonce>
+        @foreach (var message in infoMessages)
+        {
+            <text>toastr.info('@message', '@infoTitle');</text>
+        }
+    </script>
+}
+@if (successMessages != null && successMessages.Any())
+{
+    <script asp-add-nonce>
+        @foreach(var message in successMessages)
+        {
+            <text>toastr.success('@message', '@successTitle');</text>
+        }
+    </script>
+}
+@if (warningMessages != null && warningMessages.Any())
+{
+    <script asp-add-nonce>
+        @foreach (var message in warningMessages)
+        {
+            <text>toastr.warning('@message', '@warningTitle');</text>
+        }
+    </script>
+}
+@if (errorMessages != null && errorMessages.Any())
+{
+    <script asp-add-nonce>
+        @foreach (var message in errorMessages)
+        {
+            <text>toastr.error('@message', '@errorTitle');</text>
+        }
+    </script>
+}
