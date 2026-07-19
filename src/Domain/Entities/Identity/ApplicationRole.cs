@@ -2,22 +2,25 @@
 
 namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
-public class ApplicationRole : IdentityRole, IAuditableEntity
+public class ApplicationRole : IdentityRole<string>, IAuditableEntity
 {
     public ApplicationRole()
     {
+        Id = Guid.NewGuid().ToString();
         RoleClaims = new HashSet<ApplicationRoleClaim>();
         UserRoles = new HashSet<ApplicationUserRole>();
     }
 
     public ApplicationRole(string roleName) : base(roleName)
     {
+        Id = Guid.NewGuid().ToString();
         RoleClaims = new HashSet<ApplicationRoleClaim>();
         UserRoles = new HashSet<ApplicationUserRole>();
     }
 
     public ApplicationRole(string roleName, int sort, string description) : base(roleName)
     {
+        Id = Guid.NewGuid().ToString();
         RoleClaims = new HashSet<ApplicationRoleClaim>();
         UserRoles = new HashSet<ApplicationUserRole>();
 

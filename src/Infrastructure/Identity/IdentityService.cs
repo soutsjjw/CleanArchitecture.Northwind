@@ -1,4 +1,4 @@
-ï»¿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
 using CleanArchitecture.Northwind.Application.Common.Exceptions;
@@ -126,7 +126,7 @@ public class IdentityService : IIdentityService
     {
         if (!_userManager.SupportsUserEmail)
         {
-            throw new BadRequestException("éœ€è¦å…·æœ‰é›»å­éƒµä»¶æ”¯æ´çš„ä½¿ç”¨è€…å„²å­˜");
+            throw new BadRequestException("»İ­n¨ã¦³¹q¤l¶l¥ó¤ä´©ªº¨Ï¥ÎªÌÀx¦s");
         }
 
         var emailStore = (IUserEmailStore<ApplicationUser>)_userStore;
@@ -139,17 +139,17 @@ public class IdentityService : IIdentityService
 
         if ((await _userManager.FindByEmailAsync(email)) != null)
         {
-            _logger.LogError("å¸³è™Ÿ {Email} é‡è¤‡è¨»å†Š", email);
+            _logger.LogError("±b¸¹ {Email} ­«½Æµù¥U", email);
 
-            throw new ArgumentException("å¸³è™Ÿè¨»å†Šå¤±æ•—");
+            throw new ArgumentException("±b¸¹µù¥U¥¢±Ñ");
         }
 
         var user = new ApplicationUser();
-        // è¨­ç½®æˆ–æ›´æ”¹å¸³è™Ÿåç¨±
+        // ³]¸m©Î§ó§ï±b¸¹¦WºÙ
         await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
-        // è¨­ç½®æˆ–æ›´æ”¹å¸³è™Ÿçš„é›»å­éƒµä»¶åœ°å€
+        // ³]¸m©Î§ó§ï±b¸¹ªº¹q¤l¶l¥ó¦a§}
         await emailStore.SetEmailAsync(user, email, CancellationToken.None);
-        // CreateAsync æ–¹æ³•å¯ä»¥å»ºç«‹å¸³è™Ÿï¼Œä½†ä¸¦ä¸æœƒè‡ªå‹•è¨­ç½®å¸³è™Ÿåç¨±å’Œé›»å­éƒµä»¶åœ°å€
+        // CreateAsync ¤èªk¥i¥H«Ø¥ß±b¸¹¡A¦ı¨Ã¤£·|¦Û°Ê³]¸m±b¸¹¦WºÙ©M¹q¤l¶l¥ó¦a§}
         var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)
@@ -166,7 +166,7 @@ public class IdentityService : IIdentityService
 
         if (user == null)
         {
-            throw new UnauthorizedException("æœªæ‰¾åˆ°ä½¿ç”¨è€…");
+            throw new UnauthorizedException("¥¼§ä¨ì¨Ï¥ÎªÌ");
         }
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -257,10 +257,10 @@ public class IdentityService : IIdentityService
                     new Claim("DepartmentId", user.Profile?.DepartmentId.ToString())
                 };
 
-            // æ·»åŠ è²æ˜åˆ° ClaimsIdentity
+            // ²K¥[Án©ú¨ì ClaimsIdentity
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // ç™»å…¥ä½¿ç”¨è€…ä¸¦é™„åŠ è²æ˜
+            // µn¤J¨Ï¥ÎªÌ¨Ãªş¥[Án©ú
             await _signInManager.SignInWithClaimsAsync(user, isPersistent: false, additionalClaims: claims);
         }
         else
@@ -295,7 +295,7 @@ public class IdentityService : IIdentityService
 
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
-            throw new UnauthorizedException("æœªæ‰¾åˆ°ä½¿ç”¨è€…");
+            throw new UnauthorizedException("¥¼§ä¨ì¨Ï¥ÎªÌ");
 
         if (user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
             throw new UnauthorizedException(LoggingEvents.Account.InvalidClientToken);
@@ -309,10 +309,10 @@ public class IdentityService : IIdentityService
     {
         var user = await _userManager.FindByEmailAsync(email);
 
-        // é€™æ®µé‚è¼¯ç”¨æ–¼é˜²æ­¢é§­å®¢æ ¹æ“šéŒ¯èª¤è¨Šæ¯ç²çŸ¥å¸³è™Ÿæ˜¯å¦å­˜åœ¨
+        // ³o¬qÅŞ¿è¥Î©ó¨¾¤îÀb«È®Ú¾Ú¿ù»~°T®§Àòª¾±b¸¹¬O§_¦s¦b
         if (user == null)
         {
-            // æ¨¡æ“¬ä¸€å€‹éŒ¯èª¤çš„æª¢æŸ¥ï¼Œè®“é§­å®¢ç„¡æ³•è¼•æ˜“åˆ†è¾¨
+            // ¼ÒÀÀ¤@­Ó¿ù»~ªºÀË¬d¡AÅıÀb«ÈµLªk»´©ö¤À¿ë
             await Task.Delay(100);
 
             _logger.LogWarning(LoggingEvents.Account.UserNotFoundFormat, email);
@@ -340,7 +340,7 @@ public class IdentityService : IIdentityService
 
         if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
         {
-            // æ¨¡æ“¬ä¸€å€‹éŒ¯èª¤çš„æª¢æŸ¥ï¼Œè®“é§­å®¢ç„¡æ³•è¼•æ˜“åˆ†è¾¨
+            // ¼ÒÀÀ¤@­Ó¿ù»~ªºÀË¬d¡AÅıÀb«ÈµLªk»´©ö¤À¿ë
             await Task.Delay(100);
 
             _logger.LogWarning(LoggingEvents.Account.ResetPasswordUseNonExistentEmailFormat, user);
@@ -437,7 +437,7 @@ public class IdentityService : IIdentityService
         var token = await GenerateEmailConfirmationTokenAsync(userId);
         var confirmationLink = $"{_appConfig.SiteUrl}{_identitySettings.ConfirmEmailTokenUrl}?token={token}&email={email}";
 
-        // ä¿¡ä»¶å…§å®¹
+        // «H¥ó¤º®e
         var letterModel = new ConfirmationEmailLetterModel()
         {
             SystemName = _appConfig.SystemName,
@@ -446,13 +446,13 @@ public class IdentityService : IIdentityService
             ConfirmationLink = confirmationLink
         };
 
-        // å–å¾—ç¯„æœ¬
+        // ¨ú±o½d¥»
         var html = await _mailService.GetMailContentAsync(letterModel, "ConfirmationEmailLetter");
 
         return await _mailService.SendAsync(new MailRequest
         {
             To = email,
-            Subject = $"æ­¡è¿åŠ å…¥ {_appConfig.SystemName}ï¼è«‹é©—è­‰ä½ çš„é›»å­éƒµä»¶åœ°å€",
+            Subject = $"Åwªï¥[¤J {_appConfig.SystemName}¡I½ĞÅçÃÒ§Aªº¹q¤l¶l¥ó¦a§}",
             Body = html,
         });
     }
@@ -473,7 +473,7 @@ public class IdentityService : IIdentityService
         resetCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
         resetCodeLink = $"{resetCodeLink}?resetCode={resetCode}&email={email}";
 
-        // ä¿¡ä»¶å…§å®¹
+        // «H¥ó¤º®e
         var letterModel = new ForgotPasswordLetterModel()
         {
             SystemName = _appConfig.SystemName,
@@ -483,13 +483,13 @@ public class IdentityService : IIdentityService
             ResetCodeLink = resetCodeLink
         };
 
-        // å–å¾—ç¯„æœ¬
+        // ¨ú±o½d¥»
         var html = await _mailService.GetMailContentAsync(letterModel, "ForgotPasswordLetter");
 
         return await _mailService.SendAsync(new MailRequest
         {
             To = user.Email ?? "",
-            Subject = $"é‡è¨­ä½ çš„ {_appConfig.SystemName} å¯†ç¢¼",
+            Subject = $"­«³]§Aªº {_appConfig.SystemName} ±K½X",
             Body = html,
         });
     }
@@ -520,53 +520,53 @@ public class IdentityService : IIdentityService
     }
 
     /// <summary>
-    /// éåŒæ­¥è¨»éŠ·ç›®å‰ä½¿ç”¨è€…ã€‚
+    /// «D¦P¨Bµù¾P¥Ø«e¨Ï¥ÎªÌ¡C
     /// </summary>
-    /// <remarks>æ­¤æ–¹æ³•æ¸…é™¤ä½¿ç”¨è€…çš„é©—è­‰å·¥ä½œéšæ®µåŠæ‰€æœ‰é—œè¯çš„ Cookieã€‚æ­¤æ–¹æ³•æ‡‰åœ¨ä½¿ç”¨è€…é¸æ“‡é€€å‡ºæ‡‰ç”¨ç¨‹å¼æ™‚å‘¼å«ã€‚</remarks>
-    /// <returns>è¡¨ç¤ºéåŒæ­¥é€€å‡ºæ“ä½œçš„ä»»å‹™ã€‚ </returns>
+    /// <remarks>¦¹¤èªk²M°£¨Ï¥ÎªÌªºÅçÃÒ¤u§@¶¥¬q¤Î©Ò¦³ÃöÁpªº Cookie¡C¦¹¤èªkÀ³¦b¨Ï¥ÎªÌ¿ï¾Ü°h¥XÀ³¥Îµ{¦¡®É©I¥s¡C</remarks>
+    /// <returns>ªí¥Ü«D¦P¨B°h¥X¾Ş§@ªº¥ô°È¡C </returns>
     public async Task SignOutAsync()
     {
         await _signInManager.SignOutAsync();
     }
 
     /// <summary>
-    /// ç¢ºå®šæŒ‡å®šä½¿ç”¨è€…ç›®å‰æ˜¯å¦å·²ç™»å…¥ã€‚
+    /// ½T©w«ü©w¨Ï¥ÎªÌ¥Ø«e¬O§_¤wµn¤J¡C
     /// </summary>
-    /// <param name="user"><see cref="ClaimsPrincipal"/> ä»£è¡¨è¦æª¢æŸ¥çš„ä½¿ç”¨è€…ã€‚</param>
-    /// <returns>å¦‚æœä½¿ç”¨è€…å·²ç™»å…¥ç‚º <see langword="true"/>ï¼›å¦å‰‡ <see langword="false"/>.</returns>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> ¥Nªí­nÀË¬dªº¨Ï¥ÎªÌ¡C</param>
+    /// <returns>¦pªG¨Ï¥ÎªÌ¤wµn¤J¬° <see langword="true"/>¡F§_«h <see langword="false"/>.</returns>
     public bool IsSignedIn(ClaimsPrincipal user)
     {
         return _signInManager.IsSignedIn(user);
     }
 
     /// <summary>
-    /// åˆ·æ–°æŒ‡å®šä½¿ç”¨è€…çš„ç™»å…¥æœƒè©±ã€‚
+    /// ¨ê·s«ü©w¨Ï¥ÎªÌªºµn¤J·|¸Ü¡C
     /// </summary>
-    /// <param name="user"><see cref="ClaimsPrincipal"/> ä»£è¡¨è¦æª¢æŸ¥çš„ä½¿ç”¨è€…ã€‚</param>
-    /// <returns>è¡¨ç¤ºéåŒæ­¥é€€å‡ºæ“ä½œçš„ä»»å‹™ã€‚ </returns>
+    /// <param name="user"><see cref="ClaimsPrincipal"/> ¥Nªí­nÀË¬dªº¨Ï¥ÎªÌ¡C</param>
+    /// <returns>ªí¥Ü«D¦P¨B°h¥X¾Ş§@ªº¥ô°È¡C </returns>
     public async Task RefreshSignInAsync(ApplicationUser user, bool useCookies)
     {
         await SignInAsync(user, useCookies);
     }
 
     /// <summary>
-    /// æª¢æŸ¥å¯†ç¢¼æ˜¯å¦èˆ‡å‰ä¸‰æ¬¡ç›¸åŒ
+    /// ÀË¬d±K½X¬O§_»P«e¤T¦¸¬Û¦P
     /// </summary>
-    /// <param name="user">ä½¿ç”¨è€…</param>
-    /// <param name="newPassword">æ–°å¯†ç¢¼</param>
-    /// <returns>å¦‚æœç›¸åŒå‰‡å›å‚³ trueï¼Œå¦å‰‡ false</returns>
+    /// <param name="user">¨Ï¥ÎªÌ</param>
+    /// <param name="newPassword">·s±K½X</param>
+    /// <returns>¦pªG¬Û¦P«h¦^¶Ç true¡A§_«h false</returns>
     public bool IsPasswordSameAsLastThree(ApplicationUser user, string newPassword)
     {
         if (user.PasswordHistories == null || user.PasswordHistories.Count < 1)
             return false;
 
-        // å‡è¨­ PasswordHistories å„²å­˜å¯†ç¢¼é›œæ¹Šå€¼
+        // °²³] PasswordHistories Àx¦s±K½XÂø´ê­È
         var lastThree = user.PasswordHistories
             .OrderByDescending(x => x.ChangedAt)
             .Take(3)
             .Select(x => x.PasswordHash);
 
-        // æª¢æŸ¥æ–°å¯†ç¢¼æ˜¯å¦èˆ‡å‰ä¸‰æ¬¡ç›¸åŒ
+        // ÀË¬d·s±K½X¬O§_»P«e¤T¦¸¬Û¦P
         foreach (var hash in lastThree)
         {
             if (_userManager.PasswordHasher.VerifyHashedPassword(user, hash, newPassword) == PasswordVerificationResult.Success)

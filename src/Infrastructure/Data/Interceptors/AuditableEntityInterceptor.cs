@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
+
 public class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     private readonly IUser _user;

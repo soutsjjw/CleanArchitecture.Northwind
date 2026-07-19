@@ -1,31 +1,30 @@
-﻿using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.CreateTodoItem;
-using CleanArchitecture.Northwind.Application.Features.TodoItems.Commands.UpdateTodoItem;
-using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
+﻿using CleanArchitecture.Northwind.Application.TodoItems.Commands.CreateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoItems.Commands.UpdateTodoItem;
+using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
-using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
-
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.TodoItems.Commands;
-public class UpdateTodoItemTests : BaseTestFixture
+
+public class UpdateTodoItemTests : TestBase
 {
     [Test]
     public async Task ShouldRequireValidTodoItemId()
     {
         var command = new UpdateTodoItemCommand { Id = 99, Title = "New Title" };
-        await FluentActions.Invoking(() => SendAsync(command)).Should().ThrowAsync<NotFoundException>();
+        await Should.ThrowAsync<NotFoundException>(() => TestApp.SendAsync(command));
     }
 
     [Test]
     public async Task ShouldUpdateTodoItem()
     {
-        var userId = await RunAsDefaultUserAsync();
+        var userId = await TestApp.RunAsDefaultUserAsync();
 
-        var listId = await SendAsync(new CreateTodoListCommand
+        var listId = await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "New List"
         });
 
-        var itemId = await SendAsync(new CreateTodoItemCommand
+        var itemId = await TestApp.SendAsync(new CreateTodoItemCommand
         {
             ListId = listId,
             Title = "New Item"
@@ -37,14 +36,14 @@ public class UpdateTodoItemTests : BaseTestFixture
             Title = "Updated Item Title"
         };
 
-        await SendAsync(command);
+        await TestApp.SendAsync(command);
 
-        var item = await FindAsync<TodoItem>(itemId);
+        var item = await TestApp.FindAsync<TodoItem>(itemId);
 
-        item.Should().NotBeNull();
-        item!.Title.Should().Be(command.Title);
-        item.LastModifiedBy.Should().NotBeNull();
-        item.LastModifiedBy.Should().Be(userId);
-        item.LastModified.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.ShouldNotBeNull();
+        item!.Title.ShouldBe(command.Title);
+        item.LastModifiedBy.ShouldNotBeNull();
+        item.LastModifiedBy.ShouldBe(userId);
+        item.LastModified.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
     }
 }

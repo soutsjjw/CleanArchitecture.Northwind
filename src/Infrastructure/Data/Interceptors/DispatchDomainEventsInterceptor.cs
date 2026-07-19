@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
+
 public class DispatchDomainEventsInterceptor : SaveChangesInterceptor
 {
     private readonly IMediator _mediator;

@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Infrastructure.Data;
+
 public static class InitialiserExtensions
 {
     public static async Task InitialiseDatabaseAsync(this WebApplication app)
@@ -45,7 +46,20 @@ public class ApplicationDbContextInitialiser
     {
         try
         {
-            await _context.Database.MigrateAsync();
+            // 僅在資料庫不存在時創建
+            if (!await _context.Database.CanConnectAsync())
+            {
+                await _context.Database.MigrateAsync();
+            }
+            else
+            {
+                // 資料庫已存在,檢查是否有待應用的遷移
+                var pendingMigrations = await _context.Database.GetPendingMigrationsAsync();
+                if (pendingMigrations.Any())
+                {
+                    await _context.Database.MigrateAsync();
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -150,23 +164,6 @@ public class ApplicationDbContextInitialiser
         await AddEmployeeTerritoriesAsync(sqlText);
 
         #endregion
-
-        // Default data
-        // Seed, if necessary
-        if (!await _context.TodoLists.AnyAsync())
-        {
-            _context.TodoLists.Add(new TodoList
-            {
-                Title = "Todo List",
-                Items =
-                    {
-                        new TodoItem { Title = "Make a todo list 📃" },
-                        new TodoItem { Title = "Check off the first item ✅" },
-                        new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-                        new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-                    }
-            });
-        }
     }
 
     #region Identity Seed

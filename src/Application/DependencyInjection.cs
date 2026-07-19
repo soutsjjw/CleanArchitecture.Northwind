@@ -1,29 +1,26 @@
-using System.Reflection;
+﻿using System.Reflection;
 using CleanArchitecture.Northwind.Application.Common.Behaviours;
 using CleanArchitecture.Northwind.Application.Common.Mappings;
-using Mapster;
-using MapsterMapper;
+using Microsoft.Extensions.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection;
+
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
-        services.AddSingleton(CreateTypeAdapterConfig());
-        services.AddScoped<IMapper, ServiceMapper>();
+        builder.Services.AddSingleton(CreateTypeAdapterConfig());
+        builder.Services.AddScoped<IMapper, ServiceMapper>();
 
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
-        services.AddMediatR(cfg =>
+        builder.Services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
+            cfg.AddOpenRequestPreProcessor(typeof(LoggingBehaviour<>));
+            cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));
+            cfg.AddOpenBehavior(typeof(AuthorizationBehaviour<,>));
+            cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
+            cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
         });
-
-        return services;
     }
 
     private static TypeAdapterConfig CreateTypeAdapterConfig()

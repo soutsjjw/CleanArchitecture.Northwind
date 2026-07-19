@@ -1,31 +1,30 @@
-﻿using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.CreateTodoList;
-using CleanArchitecture.Northwind.Application.Features.TodoLists.Commands.DeleteTodoList;
+﻿using CleanArchitecture.Northwind.Application.TodoLists.Commands.CreateTodoList;
+using CleanArchitecture.Northwind.Application.TodoLists.Commands.DeleteTodoList;
 using CleanArchitecture.Northwind.Domain.Entities;
 
-using static CleanArchitecture.Northwind.Application.FunctionalTests.Testing;
-
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.TodoLists.Commands;
-public class DeleteTodoListTests : BaseTestFixture
+
+public class DeleteTodoListTests : TestBase
 {
     [Test]
     public async Task ShouldRequireValidTodoListId()
     {
         var command = new DeleteTodoListCommand(99);
-        await FluentActions.Invoking(() => SendAsync(command)).Should().ThrowAsync<NotFoundException>();
+        await Should.ThrowAsync<NotFoundException>(() => TestApp.SendAsync(command));
     }
 
     [Test]
     public async Task ShouldDeleteTodoList()
     {
-        var listId = await SendAsync(new CreateTodoListCommand
+        var listId = await TestApp.SendAsync(new CreateTodoListCommand
         {
             Title = "New List"
         });
 
-        await SendAsync(new DeleteTodoListCommand(listId));
+        await TestApp.SendAsync(new DeleteTodoListCommand(listId));
 
-        var list = await FindAsync<TodoList>(listId);
+        var list = await TestApp.FindAsync<TodoList>(listId);
 
-        list.Should().BeNull();
+        list.ShouldBeNull();
     }
 }

@@ -1,4 +1,4 @@
-global using Ardalis.GuardClauses;
+﻿global using Ardalis.GuardClauses;
 global using FluentValidation;
 global using Mapster;
 global using MapsterMapper;

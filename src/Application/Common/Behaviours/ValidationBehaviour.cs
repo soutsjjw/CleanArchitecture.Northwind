@@ -1,6 +1,8 @@
 ﻿using CleanArchitecture.Northwind.Application.Common.Models;
+using ValidationException = CleanArchitecture.Northwind.Application.Common.Exceptions.ValidationException;
 
 namespace CleanArchitecture.Northwind.Application.Common.Behaviours;
+
 public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
@@ -11,24 +13,20 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
         _validators = validators;
     }
 
-    public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         if (_validators.Any())
         {
-            var context = new ValidationContext<TRequest>(request);
-
             var validationResults = await Task.WhenAll(
-                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+                _validators.Select(v =>
+                    v.ValidateAsync(new ValidationContext<TRequest>(request), cancellationToken)));
 
             var failures = validationResults
+                .Where(r => r.Errors.Any())
                 .SelectMany(r => r.Errors)
-                .Where(e => e is not null)
                 .ToList();
 
-            if (failures.Count > 0)
+            if (failures.Count != 0)
             {
                 // 聚合成欄位 -> 訊息陣列
                 var fieldErrors = failures

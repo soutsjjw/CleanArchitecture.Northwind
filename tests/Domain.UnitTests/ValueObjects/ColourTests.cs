@@ -1,49 +1,59 @@
-﻿using CleanArchitecture.Northwind.Domain.Exceptions;
+using CleanArchitecture.Northwind.Domain.Exceptions;
 using CleanArchitecture.Northwind.Domain.ValueObjects;
-using FluentAssertions;
 using NUnit.Framework;
+using Shouldly;
 
 namespace CleanArchitecture.Northwind.Domain.UnitTests.ValueObjects;
+
 public class ColourTests
 {
     [Test]
     public void ShouldReturnCorrectColourCode()
     {
-        var code = "#FFFFFF";
+        var code = "#E05C4D";
 
         var colour = Colour.From(code);
 
-        colour.Code.Should().Be(code);
+        colour.Code.ShouldBe(code);
     }
 
     [Test]
     public void ToStringReturnsCode()
     {
-        var colour = Colour.White;
+        var colour = Colour.Red;
 
-        colour.ToString().Should().Be(colour.Code);
+        colour.ToString().ShouldBe(colour.Code);
     }
 
     [Test]
     public void ShouldPerformImplicitConversionToColourCodeString()
     {
-        string code = Colour.White;
+        string code = Colour.Red;
 
-        code.Should().Be("#FFFFFF");
+        code.ShouldBe("#E05C4D");
     }
 
     [Test]
     public void ShouldPerformExplicitConversionGivenSupportedColourCode()
     {
-        var colour = (Colour)"#FFFFFF";
+        var colour = (Colour)"#E05C4D";
 
-        colour.Should().Be(Colour.White);
+        colour.ShouldBe(Colour.Red);
     }
 
     [Test]
     public void ShouldThrowUnsupportedColourExceptionGivenNotSupportedColourCode()
     {
-        FluentActions.Invoking(() => Colour.From("##FF33CC"))
-            .Should().Throw<UnsupportedColourException>();
+        Should.Throw<UnsupportedColourException>(() => Colour.From("##FF33CC"));
+    }
+
+    [Test]
+    public void ShouldBeComparableWithOperators()
+    {
+        var color1 = new Colour("#E05C4D");
+        var color2 = new Colour("#E05C4D");
+        var color3 = new Colour("#AAAAAA");
+        (color1 == color2).ShouldBe(true);
+        (color1 == color3).ShouldBe(false);
     }
 }

@@ -26,127 +26,128 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Extensions.DependencyInjection;
+
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration, bool useIdentityAuthorize = false)
+    public static void AddInfrastructureServices(this IHostApplicationBuilder builder, bool useIdentityAuthorize = false)
     {
         #region 資料庫
 
-        var envConnectionStringKey = configuration.GetConnectionString("DefaultConnection");
+        var envConnectionStringKey = builder.Configuration.GetConnectionString("DefaultConnection");
         var connectionString = Environment.GetEnvironmentVariable(envConnectionStringKey ?? "");
 
         Guard.Against.Null(connectionString, message: "Connection string 'DefaultConnection' not found.");
 
-        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
-        services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
-        services.AddDbContext<ApplicationDbContext>((sp, options) =>
+        builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
 
             options.UseSqlServer(connectionString);
+            options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
-        services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
-        services.AddScoped<ApplicationDbContextInitialiser>();
+        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
         // 分散式記憶體快取
-        services.AddDistributedMemoryCache();
+        builder.Services.AddDistributedMemoryCache();
 
         #endregion
 
         #region 驗證
 
         if (useIdentityAuthorize)
-            AddIdentityAuthorize(services, configuration);
+            AddIdentityAuthorize(builder.Services, builder.Configuration);
         else
-            AddJWTAuthorize(services, configuration);
+            AddJWTAuthorize(builder.Services, builder.Configuration);
 
-        services.AddScoped<RoleManager<ApplicationRole>>();
+        builder.Services.AddScoped<RoleManager<ApplicationRole>>();
 
-        services.AddSingleton(System.TimeProvider.System);
-        services.AddTransient<IIdentityService, IdentityService>();
+        builder.Services.AddSingleton(System.TimeProvider.System);
+        builder.Services.AddTransient<IIdentityService, IdentityService>();
 
-        services.AddAuthorization();
+        builder.Services.AddAuthorization();
 
-        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
-        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         // 既有（精確 + 可帶資源）Handler
-        services.AddScoped<IAuthorizationHandler, PermissionResourceAuthorizationHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, PermissionResourceAuthorizationHandler>();
 
         #endregion
 
-        services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
+        builder.Services.AddScoped<IDbConnection>(sp => new SqlConnection(connectionString));
 
         // 註冊 DapperRepository
-        services.AddScoped(typeof(IRepository<Order>), typeof(OrdersRepository));
-        services.AddScoped(typeof(IUserProfileRepository), typeof(UserProfileRepository));
+        builder.Services.AddScoped(typeof(IRepository<Order>), typeof(OrdersRepository));
+        builder.Services.AddScoped(typeof(IUserProfileRepository), typeof(UserProfileRepository));
 
-        services.AddTransient<IOrdersService, OrdersService>();
+        builder.Services.AddTransient<IOrdersService, OrdersService>();
 
         #region 服務
 
-        services.AddTransient<IFileService, FileService>();
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddTransient<IDateTimeService, DateTimeService>();
-        services.AddTransient<IMailService, MailService>();
-        services.AddSingleton<ICurrentUserService, CurrentUserService>();
-        services.AddSingleton<ICloudflareService, CloudflareService>();
-        services.AddScoped<ICommonService, CommonService>();
-        services.AddSingleton<IExcelExporter, ExcelExporter>();
-        services.AddSingleton<IAppLogFileService, SerilogAppLogFileService>();
+        builder.Services.AddTransient<IFileService, FileService>();
+        builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+        builder.Services.AddTransient<IDateTimeService, DateTimeService>();
+        builder.Services.AddTransient<IMailService, MailService>();
+        builder.Services.AddSingleton<ICurrentUserService, CurrentUserService>();
+        builder.Services.AddSingleton<ICloudflareService, CloudflareService>();
+        builder.Services.AddScoped<ICommonService, CommonService>();
+        builder.Services.AddSingleton<IExcelExporter, ExcelExporter>();
+        builder.Services.AddSingleton<IAppLogFileService, SerilogAppLogFileService>();
 
         #endregion
 
-        services.AddMemoryCache();
-        services.Configure<PermissionResolverOptions>(o =>
+        builder.Services.AddMemoryCache();
+        builder.Services.Configure<PermissionResolverOptions>(o =>
         {
             o.CacheSeconds = 60;                        // 0 關閉快取
             o.ClaimType = PermissionConstants.ClaimType;
         });
 
-        services.AddScoped<IPermissionResolver, PermissionDbResolver>();
+        builder.Services.AddScoped<IPermissionResolver, PermissionDbResolver>();
 
         #region 設置
 
-        services.Configure<AppConfigurationSettings>(configuration.GetSection("AppConfigurationSettings"))
+        builder.Services.Configure<AppConfigurationSettings>(builder.Configuration.GetSection("AppConfigurationSettings"))
             .AddSingleton(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value)
             .AddSingleton<IAppConfigurationSettings>(s => s.GetRequiredService<IOptions<AppConfigurationSettings>>().Value);
 
-        services.Configure<IdentitySettings>(configuration.GetSection("IdentitySettings"))
+        builder.Services.Configure<IdentitySettings>(builder.Configuration.GetSection("IdentitySettings"))
             .AddSingleton(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value)
             .AddSingleton<IIdentitySettings>(s => s.GetRequiredService<IOptions<IdentitySettings>>().Value);
 
-        services.Configure<JwtOptionSettings>(configuration.GetSection("JwtOptions"));
-        services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
-        services.Configure<CloudflareOptions>(configuration.GetSection("Cloudflare"));
-        services.Configure<DataProtectionSettings>(configuration.GetSection("DataProtection"));
+        builder.Services.Configure<JwtOptionSettings>(builder.Configuration.GetSection("JwtOptions"));
+        builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+        builder.Services.Configure<CloudflareOptions>(builder.Configuration.GetSection("Cloudflare"));
+        builder.Services.Configure<DataProtectionSettings>(builder.Configuration.GetSection("DataProtection"));
 
         #endregion
 
         #region DataProtection
 
         // 配置 DataProtection 服務並持久化密鑰到本地文件系統
-        services.AddDataProtection()
-                .SetApplicationName(configuration["AppConfigurationSettings:SystemName"] ?? "")
+        builder.Services.AddDataProtection()
+                .SetApplicationName(builder.Configuration["AppConfigurationSettings:SystemName"] ?? "")
                 .PersistKeysToFileSystem(new DirectoryInfo(@"C:\keys"));
 
         // 讀取配置中的 Purpose 值
-        var purpose = configuration["DataProtection:Purpose"] ?? "";
+        var purpose = builder.Configuration["DataProtection:Purpose"] ?? "";
 
         // 註冊自定義的 DataProtectionService 並傳遞 purpose
-        services.AddSingleton<IDataProtectionService>(provider =>
+        builder.Services.AddSingleton<IDataProtectionService>(provider =>
             new DataProtectionService(provider.GetRequiredService<IDataProtectionProvider>(), purpose));
 
         #endregion
-
-        return services;
     }
 
     private static void AddIdentityAuthorize(IServiceCollection services, IConfiguration configuration)
@@ -165,7 +166,7 @@ public static class DependencyInjection
             options.ExpireTimeSpan = TimeSpan.FromHours(8);             // Cookie 過期時間
         });
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder();
 
         services
             .AddIdentity<ApplicationUser, ApplicationRole>(options =>

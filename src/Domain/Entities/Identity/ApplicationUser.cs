@@ -2,8 +2,13 @@
 
 namespace CleanArchitecture.Northwind.Domain.Entities.Identity;
 
-public class ApplicationUser : IdentityUser
+public class ApplicationUser : IdentityUser<string>
 {
+    public ApplicationUser()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
+
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
     public DateTime? LastPasswordChangedDate { get; set; }
