@@ -5,9 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
-    <PackageVersion Include="AutoMapper" Version="16.1.1" />
-    <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.0" />
-    <PackageVersion Include="Azure.Identity" Version="1.19.0" />
     <PackageVersion Include="ClosedXML" Version="0.105.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Dapper" Version="2.1.79" />
@@ -22,18 +19,13 @@
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.8.2" />
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.8.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.10" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
-    <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.5" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="nunit" Version="4.6.1" />
@@ -42,24 +34,12 @@
     <PackageVersion Include="Otp.NET" Version="1.4.1" />
     <PackageVersion Include="QRCoder" Version="1.8.0" />
     <PackageVersion Include="Respawn" Version="7.0.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.15" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.MSSqlServer" Version="10.0.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
-    <PackageVersion Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.2.0" />
     <PackageVersion Include="Aspire.Hosting.Azure.Sql" Version="13.2.0" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.2.0" />
-    <PackageVersion Include="Aspire.Hosting.Azure.AppContainers" Version="13.2.0" />
-    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.2.0" />
-    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.2.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.4.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
   </ItemGroup>
 </Project>
