@@ -7,12 +7,12 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.Infrastructure;
 
-public class WebApiFactory(string connectionString) : WebApplicationFactory<Program>
+public class WebApiFactory(string connectionStringEnvironmentVariable) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder
-            .UseSetting("ConnectionStrings:CleanArchitecture.NorthwindDb", connectionString);
+            .UseSetting("ConnectionStrings:DefaultConnection", connectionStringEnvironmentVariable);
 
         builder.ConfigureTestServices(services =>
         {

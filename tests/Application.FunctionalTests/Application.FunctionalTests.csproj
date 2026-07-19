@@ -30,12 +30,7 @@
       <PackageReference Include="Moq" />
       <PackageReference Include="Respawn" />
       <PackageReference Include="Shouldly" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Using Include="Aspire.Hosting" />
-      <Using Include="Aspire.Hosting.ApplicationModel" />
-      <Using Include="Aspire.Hosting.Testing" />
+      <PackageReference Include="Testcontainers.MsSql" />
     </ItemGroup>
 
     <ItemGroup>
