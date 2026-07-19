@@ -11,10 +11,8 @@ Run `dotnet build` to build the solution.
 To run the application:
 
 ```bash
-dotnet run --project .\src\AppHost
+dotnet run --project .\src\Web
 ```
-
-The Aspire dashboard will open automatically, showing the application URLs and logs.
 
 ## Code Styles & Formatting
 

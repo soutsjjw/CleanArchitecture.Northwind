@@ -1,19 +1,7 @@
-using CleanArchitecture.Northwind.Infrastructure.Configurations;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Web.Infrastructure.Security;
 using CleanArchitecture.Northwind.Web.StartupExtensions;
 using Microsoft.AspNetCore.HttpOverrides;
-
-const string HstsValue = "max-age=31536000; includeSubDomains; preload";
-
-static bool ShouldSendHsts(HttpContext ctx)
-{
-    if (!ctx.Request.IsHttps) return false;
-    var host = (ctx.Request.Host.Host ?? string.Empty).ToLowerInvariant();
-    // 避免把本機釘住（HSTS 會被瀏覽器記住）
-    if (host is "localhost" or "127.0.0.1" or "::1") return false;
-    return true;
-}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +9,7 @@ builder.AddApplicationServices();
 builder.AddInfrastructureServices(true);
 builder.AddWebServices();
 
-// 在反向代理/容器後面，讓 IsHttps 等能正確判斷（X-Forwarded-Proto/For）
+// Trust proxy headers before middleware reads Request.Scheme or remote IP.
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
     o.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
@@ -37,53 +25,29 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
-
-    // 顯示 Cloudflare 配置
-    var cloudflare = builder.Configuration.GetSection("Cloudflare").Get<CloudflareOptions>();
-    Console.WriteLine($"SiteKey = {cloudflare.SiteKey}, SecretKey = {cloudflare.SecretKey}, SiteVerify = {cloudflare.SiteVerify}");
 }
 
-// 例外處理頁（所有環境）
-app.UseExceptionHandler("/Error/Index");
-
-// 需在最前面，讓後續 IsHttps 判斷正確
+// Forwarded headers must run before HSTS, HTTPS redirection, and security headers.
 app.UseForwardedHeaders();
 
-// HTTPS 相關
-app.UseHttpsRedirection();
+app.UseExceptionHandler("/Error/Index");
 
-// ★ 全域補 HSTS（所有環境），包含開發用資源（如 aspnetcore-browser-refresh.js）
-//   但排除 localhost/127.0.0.1/::1，以免本機被 HSTS 釘住造成調試不便。
-app.Use(async (ctx, next) =>
-{
-    ctx.Response.OnStarting(() =>
-    {
-        if (ShouldSendHsts(ctx) && !ctx.Response.Headers.ContainsKey("Strict-Transport-Security"))
-        {
-            ctx.Response.Headers["Strict-Transport-Security"] = HstsValue;
-        }
-        return Task.CompletedTask;
-    });
-
-    await next();
-});
-
-// ★ 正式環境仍啟用官方 UseHsts（行為更完整；若已存在標頭則不會重覆）
 if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
 
-app.UseCustomizedMiddleware();
+app.UseHttpsRedirection();
 
 app.UseSecurityHeaders(app.Environment);
 
-app.UseHttpsRedirection();
+app.UseCustomizedMiddleware();
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        // 1 年 + immutable（若檔名帶指紋）
+        // 1 year + immutable for fingerprinted static assets.
         ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
     }
 });
@@ -101,7 +65,7 @@ app.MapFallbackToController("PageNotFound", "Error");
 
 app.Run();
 
-// 單元測試用
+// For integration tests.
 public partial class Program
 {
     protected Program() { }
