@@ -1,6 +1,6 @@
-﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
-using CleanArchitecture.Northwind.Application.Common.Interfaces.Database;
+using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders;
 using CleanArchitecture.Northwind.Domain.Constants;
+using CleanArchitecture.Northwind.Web.ViewModels.Orders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,30 +9,70 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 [Authorize(Policy = Policies.Orders)]
 public class OrdersController : BaseController<OrdersController>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly IAuthorizationService _authorizationService;
-    private readonly IOrdersService _ordersService;
-
-    public OrdersController(IApplicationDbContext context,
-        IAuthorizationService authorizationService,
-        IOrdersService ordersService,
-        ILogger<OrdersController> logger)
+    public OrdersController(ILogger<OrdersController> logger)
         : base(logger)
     {
-        _context = context;
-        _authorizationService = authorizationService;
-        _ordersService = ordersService;
     }
 
+    [HttpGet]
     [Authorize(Policy = Policies.Orders_Read)]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string? keyword,
+        DateTime? orderedFrom,
+        DateTime? orderedTo,
+        OrderShippingStatus? shippingStatus,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
-        var list = await _ordersService.GetAllAsync();
+        var result = await Mediator.Send(new GetOrdersQuery
+        {
+            Keyword = keyword,
+            OrderedFrom = orderedFrom,
+            OrderedTo = orderedTo,
+            ShippingStatus = shippingStatus,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        });
 
-        var entity = list.Single(x => x.Id == 10250);
-        var ok = await _authorizationService.AuthorizeAsync(User, entity, Policies.Orders_Read);
-        if (!ok.Succeeded) return Forbid();
+        if (!result.Succeeded)
+        {
+            return RedirectToAction("Index", "Home");
+        }
 
-        return View(list);
+        return View(MapToViewModel(result.Data));
+    }
+
+    private static OrderIndexViewModel MapToViewModel(OrdersDto dto)
+    {
+        return new OrderIndexViewModel
+        {
+            Keyword = dto.Keyword,
+            OrderedFrom = dto.OrderedFrom,
+            OrderedTo = dto.OrderedTo,
+            ShippingStatus = dto.ShippingStatus,
+            Pagination = dto.Orders,
+            TotalCount = dto.Orders.TotalCount,
+            FirstItemIndex = dto.Orders.FirstItemIndex,
+            LastItemIndex = dto.Orders.LastItemIndex,
+            Items = dto.Orders.Items
+                .Select(order => new OrderItemViewModel
+                {
+                    Id = order.Id,
+                    CustomerId = order.CustomerId,
+                    CustomerName = order.CustomerName,
+                    EmployeeName = order.EmployeeName,
+                    OrderDate = order.OrderDate,
+                    RequiredDate = order.RequiredDate,
+                    ShippedDate = order.ShippedDate,
+                    ShipperName = order.ShipperName,
+                    Freight = order.Freight,
+                    ShipCity = order.ShipCity,
+                    ShipCountry = order.ShipCountry,
+                    LineCount = order.LineCount,
+                    TotalAmount = order.TotalAmount,
+                    ShippingStatus = order.ShippingStatus
+                })
+                .ToList()
+        };
     }
 }

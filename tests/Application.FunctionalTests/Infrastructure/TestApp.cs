@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Domain.Constants;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Identity;
 using MediatR;
@@ -57,11 +58,11 @@ public static class TestApp
 
         if (roles.Length > 0)
         {
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
             foreach (var role in roles)
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                await roleManager.CreateAsync(new ApplicationRole(role));
             }
 
             await userManager.AddToRolesAsync(user, roles);

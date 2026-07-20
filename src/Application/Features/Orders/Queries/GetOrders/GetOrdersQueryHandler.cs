@@ -1,0 +1,90 @@
+using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Models;
+
+namespace CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders;
+
+public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<OrdersDto>>
+{
+    private readonly IApplicationDbContext _context;
+
+    public GetOrdersQueryHandler(IApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Result<OrdersDto>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
+    {
+        var today = DateTime.Today;
+        var query = _context.Orders
+            .AsNoTracking()
+            .Select(order => new OrderItemDto
+            {
+                Id = order.Id,
+                CustomerId = order.CustomerId,
+                CustomerName = order.Customer != null ? order.Customer.CompanyName : string.Empty,
+                EmployeeName = order.Employee != null ? order.Employee.FirstName + " " + order.Employee.LastName : string.Empty,
+                OrderDate = order.OrderDate,
+                RequiredDate = order.RequiredDate,
+                ShippedDate = order.ShippedDate,
+                ShipperName = order.Shipper != null ? order.Shipper.CompanyName : string.Empty,
+                Freight = order.Freight ?? 0m,
+                ShipCity = order.ShipCity ?? string.Empty,
+                ShipCountry = order.ShipCountry ?? string.Empty,
+                LineCount = order.OrderDetails.Count,
+                TotalAmount = order.OrderDetails
+                    .Sum(detail => detail.UnitPrice * detail.Quantity * (decimal)(1 - detail.Discount)),
+                ShippingStatus = order.ShippedDate.HasValue
+                    ? OrderShippingStatus.Shipped
+                    : order.RequiredDate.HasValue && order.RequiredDate.Value.Date < today
+                        ? OrderShippingStatus.Overdue
+                        : OrderShippingStatus.Unshipped
+            });
+
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            var keyword = request.Keyword.Trim().ToLower();
+            query = query.Where(order =>
+                order.Id.ToString().Contains(keyword) ||
+                (order.CustomerId != null && order.CustomerId.ToLower().Contains(keyword)) ||
+                order.CustomerName.ToLower().Contains(keyword) ||
+                order.EmployeeName.ToLower().Contains(keyword) ||
+                order.ShipperName.ToLower().Contains(keyword) ||
+                order.ShipCity.ToLower().Contains(keyword) ||
+                order.ShipCountry.ToLower().Contains(keyword));
+        }
+
+        if (request.OrderedFrom.HasValue)
+        {
+            var orderedFrom = request.OrderedFrom.Value.Date;
+            query = query.Where(order => order.OrderDate.HasValue && order.OrderDate.Value.Date >= orderedFrom);
+        }
+
+        if (request.OrderedTo.HasValue)
+        {
+            var orderedTo = request.OrderedTo.Value.Date;
+            query = query.Where(order => order.OrderDate.HasValue && order.OrderDate.Value.Date <= orderedTo);
+        }
+
+        if (request.ShippingStatus.HasValue && request.ShippingStatus.Value != OrderShippingStatus.All)
+        {
+            query = query.Where(order => order.ShippingStatus == request.ShippingStatus.Value);
+        }
+
+        query = query.OrderByDescending(order => order.OrderDate).ThenByDescending(order => order.Id);
+
+        var orders = await PaginatedList<OrderItemDto>.CreateAsync(
+            query,
+            request.PageNumber,
+            request.PageSize,
+            cancellationToken);
+
+        return await Result<OrdersDto>.SuccessAsync(new OrdersDto
+        {
+            Keyword = request.Keyword,
+            OrderedFrom = request.OrderedFrom,
+            OrderedTo = request.OrderedTo,
+            ShippingStatus = request.ShippingStatus,
+            Orders = orders
+        });
+    }
+}

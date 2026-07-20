@@ -1,9 +1,154 @@
-﻿@model List<CleanArchitecture.Northwind.Domain.Entities.Order>
+@using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders
+@model CleanArchitecture.Northwind.Web.ViewModels.Orders.OrderIndexViewModel
 @{
+    ViewData["Title"] = "訂單管理";
 }
 
-@foreach(var item in Model)
-{
-    @(item.Id)
-    <hr />
+<div class="container mt-4">
+    <h3>@ViewData["Title"]</h3>
+
+    <form id="frmSearch" method="get" asp-action="Index" class="row g-2 mb-3">
+        <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+        <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">關鍵字</label>
+            <input type="text"
+                   name="keyword"
+                   class="form-control"
+                   placeholder="訂單編號、客戶、員工、城市"
+                   value="@Model.Keyword" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">訂單日期起</label>
+            <input type="date"
+                   name="orderedFrom"
+                   class="form-control"
+                   value="@Model.OrderedFrom?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">訂單日期迄</label>
+            <input type="date"
+                   name="orderedTo"
+                   class="form-control"
+                   value="@Model.OrderedTo?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">出貨狀態</label>
+            <select name="shippingStatus" class="form-select">
+                <option value="">@(CleanArchitecture.Northwind.Web.Common.WebConstants.SelectOptionLabel)</option>
+                @foreach (var status in Enum.GetValues<OrderShippingStatus>())
+                {
+                    if (status == OrderShippingStatus.All)
+                    {
+                        continue;
+                    }
+
+                    <option value="@status" selected="@(Model.ShippingStatus == status ? "selected" : null)">
+                        @GetShippingStatusText(status)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary" onclick="toggleLoadingOverlay()">查詢</button>
+            <a asp-action="Index" class="btn btn-secondary">取消</a>
+        </div>
+
+        @if (Model.TotalCount == 0)
+        {
+            <partial name="_NoDataPartial" model="@(string.Empty)" />
+        }
+        else
+        {
+            <div class="text-muted mb-2">
+                顯示第 @Model.FirstItemIndex–@Model.LastItemIndex 筆，總計 @Model.TotalCount 筆
+            </div>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>訂單編號</th>
+                        <th>客戶</th>
+                        <th>負責員工</th>
+                        <th>訂單日期</th>
+                        <th>需求日期</th>
+                        <th>出貨狀態</th>
+                        <th>目的地</th>
+                        <th class="text-end">明細</th>
+                        <th class="text-end">金額</th>
+                        <th class="text-end">運費</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Items)
+                    {
+                        <tr>
+                            <td>@order.Id</td>
+                            <td>
+                                @order.CustomerName
+                                <div class="small text-muted">@order.CustomerId</div>
+                            </td>
+                            <td>@order.EmployeeName</td>
+                            <td>@FormatDate(order.OrderDate)</td>
+                            <td>@FormatDate(order.RequiredDate)</td>
+                            <td>
+                                <span class="badge @GetShippingStatusBadgeClass(order.ShippingStatus)">
+                                    @GetShippingStatusText(order.ShippingStatus)
+                                </span>
+                                @if (order.ShippedDate.HasValue)
+                                {
+                                    <div class="small text-muted">@FormatDate(order.ShippedDate)</div>
+                                }
+                                else if (!string.IsNullOrEmpty(order.ShipperName))
+                                {
+                                    <div class="small text-muted">@order.ShipperName</div>
+                                }
+                            </td>
+                            <td>@JoinLocation(order.ShipCity, order.ShipCountry)</td>
+                            <td class="text-end">@order.LineCount</td>
+                            <td class="text-end">@order.TotalAmount.ToString("C")</td>
+                            <td class="text-end">@order.Freight.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        }
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        window.initPagination('#frmSearch');
+    </script>
+}
+
+@functions {
+    private static string FormatDate(DateTime? value)
+        => value.HasValue ? value.Value.ToString("yyyy/MM/dd") : "-";
+
+    private static string JoinLocation(string city, string country)
+        => string.Join(" / ", new[] { city, country }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private static string GetShippingStatusText(OrderShippingStatus status)
+        => status switch
+        {
+            OrderShippingStatus.Shipped => "已出貨",
+            OrderShippingStatus.Overdue => "逾期未出貨",
+            OrderShippingStatus.Unshipped => "未出貨",
+            _ => "全部"
+        };
+
+    private static string GetShippingStatusBadgeClass(OrderShippingStatus status)
+        => status switch
+        {
+            OrderShippingStatus.Shipped => "text-bg-success",
+            OrderShippingStatus.Overdue => "text-bg-danger",
+            OrderShippingStatus.Unshipped => "text-bg-warning",
+            _ => "text-bg-secondary"
+        };
 }
