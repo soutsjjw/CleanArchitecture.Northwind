@@ -1,0 +1,42 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Orders.OrderDetailViewModel
+
+<div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-labelledby="deleteOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form asp-action="Delete" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="deleteOrderModalLabel">刪除訂單 #@Model.Id</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row mb-3">
+                    <dt class="col-sm-3">客戶</dt><dd class="col-sm-9">@Model.CustomerName (@Model.CustomerId)</dd>
+                    <dt class="col-sm-3">負責員工</dt><dd class="col-sm-9">@Model.EmployeeName</dd>
+                    <dt class="col-sm-3">訂單日期</dt><dd class="col-sm-9">@FormatDate(Model.OrderDate)</dd>
+                    <dt class="col-sm-3">出貨日期</dt><dd class="col-sm-9">@FormatDate(Model.ShippedDate)</dd>
+                    <dt class="col-sm-3">收貨資訊</dt><dd class="col-sm-9">@Model.ShipName<br />@Model.ShipAddress @Model.ShipCity @Model.ShipRegion @Model.ShipPostalCode @Model.ShipCountry</dd>
+                </dl>
+
+                <h6>訂單明細</h6>
+                <table class="table table-sm table-bordered mb-0">
+                    <thead><tr><th>產品</th><th class="text-end">數量</th><th class="text-end">小計</th></tr></thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr><td>@item.ProductName</td><td class="text-end">@item.Quantity</td><td class="text-end">@item.TotalAmount.ToString("C")</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-danger">刪除</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@functions {
+    private static string FormatDate(DateTime? value) => value?.ToString("yyyy/MM/dd") ?? "-";
+}

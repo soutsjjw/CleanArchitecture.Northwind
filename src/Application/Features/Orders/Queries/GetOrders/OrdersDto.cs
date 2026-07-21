@@ -12,6 +12,10 @@ public class OrdersDto
 
     public OrderShippingStatus? ShippingStatus { get; init; }
 
+    public OrderSortField? SortBy { get; init; }
+
+    public bool SortDescending { get; init; }
+
     public PaginatedList<OrderItemDto> Orders { get; init; } = default!;
 }
 
@@ -52,4 +56,13 @@ public enum OrderShippingStatus
     Unshipped = 1,
     Shipped = 2,
     Overdue = 3
+}
+
+public enum OrderSortField
+{
+    Id,
+    CustomerName,
+    OrderDate,
+    ShippingStatus,
+    TotalAmount
 }

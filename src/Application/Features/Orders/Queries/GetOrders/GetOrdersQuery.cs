@@ -15,4 +15,8 @@ public record GetOrdersQuery : IRequest<Result<OrdersDto>>
     public DateTime? OrderedTo { get; init; }
 
     public OrderShippingStatus? ShippingStatus { get; init; }
+
+    public OrderSortField? SortBy { get; init; }
+
+    public bool SortDescending { get; init; }
 }

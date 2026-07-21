@@ -17,6 +17,7 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
         var today = DateTime.Today;
         var query = _context.Orders
             .AsNoTracking()
+            .Where(order => !order.IsDelete)
             .Select(order => new OrderItemDto
             {
                 Id = order.Id,
@@ -70,7 +71,20 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
             query = query.Where(order => order.ShippingStatus == request.ShippingStatus.Value);
         }
 
-        query = query.OrderByDescending(order => order.OrderDate).ThenByDescending(order => order.Id);
+        query = (request.SortBy, request.SortDescending) switch
+        {
+            (OrderSortField.Id, false) => query.OrderBy(order => order.Id),
+            (OrderSortField.Id, true) => query.OrderByDescending(order => order.Id),
+            (OrderSortField.CustomerName, false) => query.OrderBy(order => order.CustomerName).ThenBy(order => order.Id),
+            (OrderSortField.CustomerName, true) => query.OrderByDescending(order => order.CustomerName).ThenByDescending(order => order.Id),
+            (OrderSortField.OrderDate, false) => query.OrderBy(order => order.OrderDate).ThenBy(order => order.Id),
+            (OrderSortField.OrderDate, true) => query.OrderByDescending(order => order.OrderDate).ThenByDescending(order => order.Id),
+            (OrderSortField.ShippingStatus, false) => query.OrderBy(order => order.ShippingStatus).ThenBy(order => order.Id),
+            (OrderSortField.ShippingStatus, true) => query.OrderByDescending(order => order.ShippingStatus).ThenByDescending(order => order.Id),
+            (OrderSortField.TotalAmount, false) => query.OrderBy(order => order.TotalAmount).ThenBy(order => order.Id),
+            (OrderSortField.TotalAmount, true) => query.OrderByDescending(order => order.TotalAmount).ThenByDescending(order => order.Id),
+            _ => query.OrderByDescending(order => order.OrderDate).ThenByDescending(order => order.Id)
+        };
 
         var orders = await PaginatedList<OrderItemDto>.CreateAsync(
             query,
@@ -84,6 +98,8 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
             OrderedFrom = request.OrderedFrom,
             OrderedTo = request.OrderedTo,
             ShippingStatus = request.ShippingStatus,
+            SortBy = request.SortBy,
+            SortDescending = request.SortDescending,
             Orders = orders
         });
     }

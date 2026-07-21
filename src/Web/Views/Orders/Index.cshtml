@@ -7,9 +7,12 @@
 <div class="container mt-4">
     <h3>@ViewData["Title"]</h3>
 
-    <form id="frmSearch" method="get" asp-action="Index" class="row g-2 mb-3">
+    <form id="frmSearch" method="post" asp-action="Index" class="row g-2 mb-3">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
         <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+        <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
 
         <div class="col-12 col-md-6">
             <label class="form-label text-muted">關鍵字</label>
@@ -52,33 +55,29 @@
         </div>
 
         <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary" onclick="toggleLoadingOverlay()">查詢</button>
+            <button type="submit" class="btn btn-primary">查詢</button>
             <a asp-action="Index" class="btn btn-secondary">取消</a>
         </div>
 
-        @if (Model.TotalCount == 0)
-        {
-            <partial name="_NoDataPartial" model="@(string.Empty)" />
-        }
-        else
-        {
-            <div class="text-muted mb-2">
-                顯示第 @Model.FirstItemIndex–@Model.LastItemIndex 筆，總計 @Model.TotalCount 筆
-            </div>
+    @if (Model.TotalCount == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="text-muted mb-2">
+            顯示第 @Model.FirstItemIndex–@Model.LastItemIndex 筆，總計 @Model.TotalCount 筆
+        </div>
 
-            <table class="table table-bordered">
+        <table class="table table-bordered orders-table">
                 <thead>
                     <tr>
-                        <th>訂單編號</th>
-                        <th>客戶</th>
-                        <th>負責員工</th>
-                        <th>訂單日期</th>
-                        <th>需求日期</th>
-                        <th>出貨狀態</th>
-                        <th>目的地</th>
-                        <th class="text-end">明細</th>
-                        <th class="text-end">金額</th>
-                        <th class="text-end">運費</th>
+                        <th><button type="button" class="js-order-sort" data-sort-by="Id">訂單編號 @GetSortIndicator(OrderSortField.Id)</button></th>
+                        <th><button type="button" class="js-order-sort" data-sort-by="CustomerName">客戶 @GetSortIndicator(OrderSortField.CustomerName)</button></th>
+                        <th><button type="button" class="js-order-sort" data-sort-by="OrderDate">訂單日期 @GetSortIndicator(OrderSortField.OrderDate)</button></th>
+                        <th><button type="button" class="js-order-sort" data-sort-by="ShippingStatus">出貨狀態 @GetSortIndicator(OrderSortField.ShippingStatus)</button></th>
+                        <th class="text-end"><button type="button" class="js-order-sort" data-sort-by="TotalAmount">金額 @GetSortIndicator(OrderSortField.TotalAmount)</button></th>
+                        <th class="text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,9 +89,7 @@
                                 @order.CustomerName
                                 <div class="small text-muted">@order.CustomerId</div>
                             </td>
-                            <td>@order.EmployeeName</td>
                             <td>@FormatDate(order.OrderDate)</td>
-                            <td>@FormatDate(order.RequiredDate)</td>
                             <td>
                                 <span class="badge @GetShippingStatusBadgeClass(order.ShippingStatus)">
                                     @GetShippingStatusText(order.ShippingStatus)
@@ -106,24 +103,79 @@
                                     <div class="small text-muted">@order.ShipperName</div>
                                 }
                             </td>
-                            <td>@JoinLocation(order.ShipCity, order.ShipCountry)</td>
-                            <td class="text-end">@order.LineCount</td>
                             <td class="text-end">@order.TotalAmount.ToString("C")</td>
-                            <td class="text-end">@order.Freight.ToString("C")</td>
+                            <td class="text-center text-nowrap">
+                                <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">檢視</a>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger js-open-delete-modal"
+                                        data-url="@Url.Action("DeleteConfirmation", "Orders", new { id = order.Id })">刪除</button>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
 
-            <partial name="_PaginationPartial" model="Model.Pagination" />
-        }
+        <partial name="_PaginationPartial" model="Model.Pagination" />
+    }
     </form>
 </div>
+
+<div id="delete-order-modal-host"></div>
 
 @section Scripts {
     <script src="~/js/pagination.js"></script>
     <script asp-add-nonce>
+        const ordersScrollPositionKey = 'orders-index-scroll-position';
+        window.saveOrdersScrollPosition = () =>
+            sessionStorage.setItem(ordersScrollPositionKey, window.scrollY.toString());
+
+        window.submitOrdersSearch = form => {
+            if (form.dataset.isSubmitting === 'true') {
+                return;
+            }
+
+            form.dataset.isSubmitting = 'true';
+            $('#loadingOverlay').removeClass('d-none');
+            requestAnimationFrame(() => window.setTimeout(() => form.submit(), 0));
+        };
+
+        const savedScrollPosition = sessionStorage.getItem(ordersScrollPositionKey);
+        if (savedScrollPosition !== null) {
+            sessionStorage.removeItem(ordersScrollPositionKey);
+            requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollPosition)));
+        }
+
         window.initPagination('#frmSearch');
+        document.querySelector('#frmSearch').addEventListener('submit', event => {
+            event.preventDefault();
+            window.submitOrdersSearch(event.currentTarget);
+        });
+        document.querySelectorAll('.js-order-sort').forEach(button => {
+            button.addEventListener('click', () => {
+                const form = document.querySelector('#frmSearch');
+                const sortBy = form.querySelector('input[name="sortBy"]');
+                const sortDescending = form.querySelector('input[name="sortDescending"]');
+                const sameField = sortBy.value === button.dataset.sortBy;
+                sortBy.value = button.dataset.sortBy;
+                sortDescending.value = sameField && sortDescending.value !== 'true' ? 'true' : 'false';
+                form.querySelector('input[name="pageNumber"]').value = '1';
+                window.saveOrdersScrollPosition();
+                window.submitOrdersSearch(form);
+            });
+        });
+        document.querySelectorAll('.js-open-delete-modal').forEach(button => {
+            button.addEventListener('click', async () => {
+                const response = await fetch(button.dataset.url, { credentials: 'same-origin' });
+                if (!response.ok) {
+                    toastr.error('無法載入訂單詳細資料。');
+                    return;
+                }
+
+                const host = document.querySelector('#delete-order-modal-host');
+                host.innerHTML = await response.text();
+                bootstrap.Modal.getOrCreateInstance(host.querySelector('.modal')).show();
+            });
+        });
     </script>
 }
 
@@ -131,8 +183,8 @@
     private static string FormatDate(DateTime? value)
         => value.HasValue ? value.Value.ToString("yyyy/MM/dd") : "-";
 
-    private static string JoinLocation(string city, string country)
-        => string.Join(" / ", new[] { city, country }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    private string GetSortIndicator(OrderSortField field)
+        => Model.SortBy != field ? string.Empty : Model.SortDescending ? "▼" : "▲";
 
     private static string GetShippingStatusText(OrderShippingStatus status)
         => status switch

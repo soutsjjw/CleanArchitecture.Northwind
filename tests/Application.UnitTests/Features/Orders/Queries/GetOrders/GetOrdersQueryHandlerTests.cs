@@ -81,6 +81,46 @@ public class GetOrdersQueryHandlerTests
         order.TotalAmount.ShouldBe(256.20m);
     }
 
+    [Test]
+    public async Task HandleShouldExcludeSoftDeletedOrders()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order { Id = 10248, Customer = new Customer { CompanyName = "Active" }, OrderDate = new DateTime(2026, 1, 10) },
+            new Order { Id = 10249, Customer = new Customer { CompanyName = "Deleted" }, OrderDate = new DateTime(2026, 1, 11), IsDelete = true }
+        }));
+        var handler = new GetOrdersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetOrdersQuery { PageNumber = 1, PageSize = 10 }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Orders.TotalCount.ShouldBe(1);
+        result.Data.Orders.Items.Single().Id.ShouldBe(10248);
+    }
+
+    [Test]
+    public async Task HandleShouldSortOrdersByCustomerName()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order { Id = 10248, Customer = new Customer { CompanyName = "Zebra" }, OrderDate = new DateTime(2026, 1, 10) },
+            new Order { Id = 10249, Customer = new Customer { CompanyName = "Alpha" }, OrderDate = new DateTime(2026, 1, 11) }
+        }));
+        var handler = new GetOrdersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetOrdersQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            SortBy = OrderSortField.CustomerName,
+            SortDescending = false
+        }, CancellationToken.None);
+
+        result.Data.Orders.Items.Select(x => x.Id).ShouldBe([10249, 10248]);
+    }
+
     private static DbSet<T> CreateDbSet<T>(IEnumerable<T> source)
         where T : class
     {

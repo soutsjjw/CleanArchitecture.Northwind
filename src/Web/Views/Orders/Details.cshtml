@@ -1,0 +1,36 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Orders.OrderDetailViewModel
+@{
+    ViewData["Title"] = $"訂單 #{Model.Id}";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        <a asp-action="Index" class="btn btn-secondary">返回清單</a>
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">客戶</dt><dd class="col-sm-9">@Model.CustomerName (@Model.CustomerId)</dd>
+        <dt class="col-sm-3">負責員工</dt><dd class="col-sm-9">@Model.EmployeeName</dd>
+        <dt class="col-sm-3">訂單日期</dt><dd class="col-sm-9">@FormatDate(Model.OrderDate)</dd>
+        <dt class="col-sm-3">需求日期</dt><dd class="col-sm-9">@FormatDate(Model.RequiredDate)</dd>
+        <dt class="col-sm-3">出貨日期／承運商</dt><dd class="col-sm-9">@FormatDate(Model.ShippedDate) / @Model.ShipperName</dd>
+        <dt class="col-sm-3">運費</dt><dd class="col-sm-9">@Model.Freight.ToString("C")</dd>
+        <dt class="col-sm-3">收貨資訊</dt><dd class="col-sm-9">@Model.ShipName<br />@Model.ShipAddress @Model.ShipCity @Model.ShipRegion @Model.ShipPostalCode @Model.ShipCountry</dd>
+    </dl>
+
+    <h5>訂單明細</h5>
+    <table class="table table-bordered">
+        <thead><tr><th>產品</th><th class="text-end">單價</th><th class="text-end">數量</th><th class="text-end">折扣</th><th class="text-end">小計</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr><td>@item.ProductName</td><td class="text-end">@item.UnitPrice.ToString("C")</td><td class="text-end">@item.Quantity</td><td class="text-end">@item.Discount.ToString("P0")</td><td class="text-end">@item.TotalAmount.ToString("C")</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    private static string FormatDate(DateTime? value) => value?.ToString("yyyy/MM/dd") ?? "-";
+}

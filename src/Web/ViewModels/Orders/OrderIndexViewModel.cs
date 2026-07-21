@@ -13,6 +13,10 @@ public class OrderIndexViewModel
 
     public OrderShippingStatus? ShippingStatus { get; init; }
 
+    public OrderSortField? SortBy { get; init; }
+
+    public bool SortDescending { get; init; }
+
     public IPaginatedList Pagination { get; init; } = default!;
 
     public int TotalCount { get; init; }
