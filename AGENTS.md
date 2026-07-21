@@ -768,3 +768,45 @@ Codex 不得新增或恢復：
 9. 不得為了快速完成破壞 Clean Architecture。
 10. 不確定時先搜尋既有慣例，再做最小且可維護的修改。
 11. 架構、流程、呼叫鏈與影響分析應優先使用 CodeGraph；已知檔案與小範圍任務不得為了形式強制使用。
+
+## 23. Skills 使用原則
+
+根據任務性質選擇 Skill，不得因已安裝 Skill 而強制套用完整流程。
+
+### 使用 grill-me
+
+符合以下任一條件時使用：
+
+- 需求、驗收標準或邊界條件不明確
+- 涉及新的系統架構、資料模型或跨專案設計
+- 存在兩個以上具有明顯取捨的方案
+- 使用者要求挑戰、檢驗或釐清方案
+
+使用 grill-me 時，應先檢查程式碼與現有文件。
+可以從 Repository 得到答案的問題，不得再次詢問使用者。
+
+### 使用 Superpowers Skills
+
+- 問題根因不明或曾經修正失敗：
+  使用 systematic-debugging。
+- 新增或修改具有明確可測行為的功能：
+  視風險使用 test-driven-development。
+- 完成實作並準備宣告完成：
+  使用 verification-before-completion。
+- 進行 Commit、Branch 或 Pull Request 審查：
+  使用 requesting-code-review。
+- 涉及多專案、多階段或高風險變更：
+  使用 writing-plans。
+
+### 不使用額外 Skill
+
+以下情況直接處理：
+
+- 單純文字或設定修改
+- 明確且局部的小型程式修改
+- 查詢程式碼位置或解釋現有行為
+- 已有完整實作步驟的簡單任務
+- Skill 流程成本明顯高於任務本身
+
+不得僅因 Skill 已安裝，就自動套用 brainstorming、
+subagent-driven-development 或完整 Superpowers 工作流程。
