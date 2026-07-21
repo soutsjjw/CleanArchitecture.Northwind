@@ -480,11 +480,12 @@ Mapping 必須尊重邊界。
 
 規則：
 
-1. 優先沿用專案既有 mapping 工具。
-2. 若專案使用 AutoMapper，遵守既有 Profile 與 projection 慣例。
-3. 不得為單一小需求引入新的 mapping 套件。
-4. 不得把 MVC ViewModel 放到 Application。
-5. 不得把 Application DTO 當作 Razor 表單模型，除非專案既有慣例已如此設計且沒有額外 UI 欄位需求。
+1. 專案既有 Mapster；新增大量同名欄位、巢狀物件或集合的轉換時，優先注入 `MapsterMapper.IMapper` 並使用 `Map<TDestination>()`。
+2. 單一至三個欄位、需要 UI 格式化、權限遮罩或業務判斷的轉換，可在 Controller 或 Handler 明確撰寫，不得將這類邏輯隱藏於 Mapster 組態。
+3. 複用的 Mapster 組態放在可同時看見來源與目標型別的最外層專案：Application 僅設定 Domain、DTO、Command 的映射；DTO 到 MVC ViewModel 的組態或呼叫放在 Web，Application 不得引用 Web。
+4. EF Core 查詢仍優先使用 Application 中可翻譯的 projection；只有確認 Mapster `ProjectToType` 可轉譯且不造成 N+1 時才使用它。
+5. 不得為單一小需求引入新的 mapping 套件，也不得把 MVC ViewModel 放到 Application。
+6. 不得把 Application DTO 當作 Razor 表單模型，除非專案既有慣例已如此設計且沒有額外 UI 欄位需求。
 
 ## 15. 安全規則
 
