@@ -105,10 +105,10 @@
                             </td>
                             <td class="text-end">@order.TotalAmount.ToString("C")</td>
                             <td class="text-center text-nowrap">
-                                <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">檢視</a>
+                                <a asp-action="Details" asp-route-id="@order.ProtectedId" class="btn btn-sm btn-outline-primary">檢視</a>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger js-open-delete-modal"
-                                        data-url="@Url.Action("DeleteConfirmation", "Orders", new { id = order.Id })">刪除</button>
+                                        data-url="@Url.Action("DeleteConfirmation", "Orders", new { id = order.ProtectedId })">刪除</button>
                             </td>
                         </tr>
                     }

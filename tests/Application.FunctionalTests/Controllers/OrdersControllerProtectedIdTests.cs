@@ -15,6 +15,19 @@ namespace CleanArchitecture.Northwind.Application.FunctionalTests.Controllers;
 public class OrdersControllerProtectedIdTests
 {
     [Test]
+    public void Order_Razor_views_transmit_protected_ids_while_displaying_the_original_id()
+    {
+        var indexView = File.ReadAllText(GetWebViewPath("Index.cshtml"));
+        var deleteConfirmationView = File.ReadAllText(GetWebViewPath("_DeleteConfirmationModal.cshtml"));
+
+        indexView.ShouldContain("asp-route-id=\"@order.ProtectedId\"");
+        indexView.ShouldContain("new { id = order.ProtectedId }");
+        indexView.ShouldContain("<td>@order.Id</td>");
+        deleteConfirmationView.ShouldContain("name=\"id\" value=\"@Model.ProtectedId\"");
+        deleteConfirmationView.ShouldContain("刪除訂單 #@Model.Id");
+    }
+
+    [Test]
     public async Task Details_with_valid_protected_order_id_sends_detail_query_with_unprotected_integer_id()
     {
         var mediator = new Mock<IMediator>();
@@ -52,14 +65,24 @@ public class OrdersControllerProtectedIdTests
         dataProtectionService
             .Setup(service => service.Unprotect("protected-order-43"))
             .Returns("43");
+        dataProtectionService
+            .Setup(service => service.Protect("43"))
+            .Returns("protected-order-43");
 
         var controller = CreateController(mediator.Object, dataProtectionService.Object);
 
-        await controller.DeleteConfirmation("protected-order-43");
+        var result = await controller.DeleteConfirmation("protected-order-43");
+
+        var partialView = result.ShouldBeOfType<PartialViewResult>();
+        partialView.ViewName.ShouldBe("_DeleteConfirmationModal");
+        var model = partialView.Model.ShouldBeOfType<OrderDetailViewModel>();
+        model.Id.ShouldBe(43);
+        model.ProtectedId.ShouldBe("protected-order-43");
 
         mediator.Verify(sender => sender.Send(
             It.Is<GetOrderDetailQuery>(query => query.Id == 43),
             It.IsAny<CancellationToken>()), Times.Once);
+        dataProtectionService.Verify(service => service.Protect("43"), Times.Once);
     }
 
     [TestCase("tampered")]
@@ -117,5 +140,21 @@ public class OrdersControllerProtectedIdTests
                 }
             }
         };
+    }
+
+    private static string GetWebViewPath(string fileName)
+        => Path.Combine(GetRepositoryRoot(), "src", "Web", "Views", "Orders", fileName);
+
+    private static string GetRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "CleanArchitecture.Northwind.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName
+            ?? throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 }
