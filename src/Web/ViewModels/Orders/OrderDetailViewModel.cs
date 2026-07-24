@@ -3,6 +3,7 @@ namespace CleanArchitecture.Northwind.Web.ViewModels.Orders;
 public class OrderDetailViewModel
 {
     public int Id { get; init; }
+    public string ProtectedId { get; init; } = string.Empty;
     public string? CustomerId { get; init; }
     public string CustomerName { get; init; } = string.Empty;
     public string EmployeeName { get; init; } = string.Empty;

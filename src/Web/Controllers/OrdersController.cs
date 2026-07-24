@@ -1,3 +1,5 @@
+using System.Globalization;
+using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Orders.Commands.DeleteOrder;
 using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrderDetail;
 using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders;
@@ -14,11 +16,16 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 public class OrdersController : BaseController<OrdersController>
 {
     private readonly IMapper _mapper;
+    private readonly IDataProtectionService _dataProtectionService;
 
-    public OrdersController(IMapper mapper, ILogger<OrdersController> logger)
+    public OrdersController(
+        IMapper mapper,
+        IDataProtectionService dataProtectionService,
+        ILogger<OrdersController> logger)
         : base(logger)
     {
         _mapper = mapper;
+        _dataProtectionService = dataProtectionService;
     }
 
     [HttpGet]
@@ -64,9 +71,14 @@ public class OrdersController : BaseController<OrdersController>
 
     [HttpGet]
     [Authorize(Policy = Policies.Orders_Read)]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(string id)
     {
-        var result = await Mediator.Send(new GetOrderDetailQuery { Id = id });
+        if (!TryUnprotectOrderId(id, out var orderId))
+        {
+            return RedirectToAction(nameof(Index)).WithError(this, "訂單識別碼無效。");
+        }
+
+        var result = await Mediator.Send(new GetOrderDetailQuery { Id = orderId });
         if (!result.Succeeded)
         {
             return RedirectToAction(nameof(Index)).WithError(this, result.Errors.ToList());
@@ -77,9 +89,14 @@ public class OrdersController : BaseController<OrdersController>
 
     [HttpGet]
     [Authorize(Policy = Policies.Orders_Delete)]
-    public async Task<IActionResult> DeleteConfirmation(int id)
+    public async Task<IActionResult> DeleteConfirmation(string id)
     {
-        var result = await Mediator.Send(new GetOrderDetailQuery { Id = id });
+        if (!TryUnprotectOrderId(id, out var orderId))
+        {
+            return NotFound();
+        }
+
+        var result = await Mediator.Send(new GetOrderDetailQuery { Id = orderId });
         if (!result.Succeeded)
         {
             return NotFound();
@@ -91,9 +108,14 @@ public class OrdersController : BaseController<OrdersController>
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = Policies.Orders_Delete)]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Delete(string id)
     {
-        var result = await Mediator.Send(new DeleteOrderCommand { Id = id });
+        if (!TryUnprotectOrderId(id, out var orderId))
+        {
+            return RedirectToAction(nameof(Index)).WithError(this, "訂單識別碼無效。");
+        }
+
+        var result = await Mediator.Send(new DeleteOrderCommand { Id = orderId });
         var redirect = RedirectToAction(nameof(Index));
 
         return result.Succeeded
@@ -103,7 +125,7 @@ public class OrdersController : BaseController<OrdersController>
 
     private OrderIndexViewModel MapToViewModel(OrdersDto dto)
     {
-        return _mapper.Map<OrderIndexViewModel>(new
+        var viewModel = _mapper.Map<OrderIndexViewModel>(new
         {
             dto.Keyword,
             dto.OrderedFrom,
@@ -117,8 +139,91 @@ public class OrdersController : BaseController<OrdersController>
             LastItemIndex = dto.Orders.LastItemIndex,
             Items = dto.Orders.Items
         });
+
+        return new OrderIndexViewModel
+        {
+            Keyword = viewModel.Keyword,
+            OrderedFrom = viewModel.OrderedFrom,
+            OrderedTo = viewModel.OrderedTo,
+            ShippingStatus = viewModel.ShippingStatus,
+            SortBy = viewModel.SortBy,
+            SortDescending = viewModel.SortDescending,
+            Pagination = viewModel.Pagination,
+            TotalCount = viewModel.TotalCount,
+            FirstItemIndex = viewModel.FirstItemIndex,
+            LastItemIndex = viewModel.LastItemIndex,
+            Items = viewModel.Items.Select(item => new OrderItemViewModel
+            {
+                Id = item.Id,
+                ProtectedId = ProtectOrderId(item.Id),
+                CustomerId = item.CustomerId,
+                CustomerName = item.CustomerName,
+                EmployeeName = item.EmployeeName,
+                OrderDate = item.OrderDate,
+                RequiredDate = item.RequiredDate,
+                ShippedDate = item.ShippedDate,
+                ShipperName = item.ShipperName,
+                Freight = item.Freight,
+                ShipCity = item.ShipCity,
+                ShipCountry = item.ShipCountry,
+                LineCount = item.LineCount,
+                TotalAmount = item.TotalAmount,
+                ShippingStatus = item.ShippingStatus
+            }).ToList()
+        };
     }
 
     private OrderDetailViewModel MapToDetailViewModel(OrderDetailDto dto)
-        => _mapper.Map<OrderDetailViewModel>(dto);
+    {
+        var viewModel = _mapper.Map<OrderDetailViewModel>(dto);
+
+        return new OrderDetailViewModel
+        {
+            Id = viewModel.Id,
+            ProtectedId = ProtectOrderId(viewModel.Id),
+            CustomerId = viewModel.CustomerId,
+            CustomerName = viewModel.CustomerName,
+            EmployeeName = viewModel.EmployeeName,
+            OrderDate = viewModel.OrderDate,
+            RequiredDate = viewModel.RequiredDate,
+            ShippedDate = viewModel.ShippedDate,
+            ShipperName = viewModel.ShipperName,
+            Freight = viewModel.Freight,
+            ShipName = viewModel.ShipName,
+            ShipAddress = viewModel.ShipAddress,
+            ShipCity = viewModel.ShipCity,
+            ShipRegion = viewModel.ShipRegion,
+            ShipPostalCode = viewModel.ShipPostalCode,
+            ShipCountry = viewModel.ShipCountry,
+            Items = viewModel.Items.Select(item => new OrderLineItemViewModel
+            {
+                ProductName = item.ProductName,
+                UnitPrice = item.UnitPrice,
+                Quantity = item.Quantity,
+                Discount = item.Discount,
+                TotalAmount = item.TotalAmount
+            }).ToList()
+        };
+    }
+
+    private bool TryUnprotectOrderId(string id, out int orderId)
+    {
+        orderId = default;
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return false;
+        }
+
+        var unprotectedId = _dataProtectionService.Unprotect(id);
+
+        return int.TryParse(
+            unprotectedId,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out orderId);
+    }
+
+    private string ProtectOrderId(int orderId)
+        => _dataProtectionService.Protect(orderId.ToString(CultureInfo.InvariantCulture));
 }

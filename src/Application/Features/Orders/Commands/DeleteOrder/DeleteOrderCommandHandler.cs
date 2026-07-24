@@ -16,6 +16,6 @@ public class DeleteOrderCommandHandler(IApplicationDbContext context) : IRequest
         order.IsDelete = true;
         await context.SaveChangesAsync(cancellationToken);
 
-        return Result.Success();
+        return await Result.SuccessAsync();
     }
 }

@@ -490,3 +490,6 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+# Superpowers local runtime and visual companion state
+.superpowers/
