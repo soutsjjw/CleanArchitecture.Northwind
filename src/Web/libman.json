@@ -115,6 +115,14 @@
         "webfonts/fa-v4compatibility.ttf",
         "webfonts/fa-v4compatibility.woff2"
       ]
+    },
+    {
+      "provider": "cdnjs",
+      "library": "Chart.js@4.5.0",
+      "destination": "wwwroot/lib/chart.js/",
+      "files": [
+        "chart.umd.min.js"
+      ]
     }
   ]
 }
