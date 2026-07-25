@@ -26,6 +26,10 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Picture)
                .IsRequired(false);
 
+        builder.Property(c => c.IsActive)
+               .HasDefaultValue(true)
+               .IsRequired();
+
         // 4. 關聯設定：Categories 1 - * Products
         builder.HasMany(c => c.Products)
                .WithOne(p => p.Category)

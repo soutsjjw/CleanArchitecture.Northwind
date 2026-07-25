@@ -72,6 +72,10 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
                .HasColumnType("ntext")
                .IsRequired(false);
 
+        builder.Property(s => s.IsActive)
+               .HasDefaultValue(true)
+               .IsRequired();
+
         // 關聯設定：Suppliers 1 - * Products
         builder.HasMany(s => s.Products)
                .WithOne(p => p.Supplier)

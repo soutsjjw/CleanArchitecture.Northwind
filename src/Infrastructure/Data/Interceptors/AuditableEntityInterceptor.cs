@@ -37,21 +37,26 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
     {
         if (context == null) return;
 
-        foreach (var entry in context.ChangeTracker.Entries<BaseAuditableEntity>())
+        foreach (var entry in context.ChangeTracker.Entries()
+                     .Where(entry => entry.Entity is BaseAuditableEntity || IsGenericAuditableEntity(entry.Entity.GetType())))
         {
             if (entry.State is EntityState.Added or EntityState.Modified || entry.HasChangedOwnedEntities())
             {
                 var utcNow = _dateTime.GetUtcNow();
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedBy = _user.Id;
-                    entry.Entity.Created = utcNow;
+                    entry.CurrentValues[nameof(BaseAuditableEntity.CreatedBy)] = _user.Id;
+                    entry.CurrentValues[nameof(BaseAuditableEntity.Created)] = utcNow;
                 }
-                entry.Entity.LastModifiedBy = _user.Id;
-                entry.Entity.LastModified = utcNow;
+                entry.CurrentValues[nameof(BaseAuditableEntity.LastModifiedBy)] = _user.Id;
+                entry.CurrentValues[nameof(BaseAuditableEntity.LastModified)] = utcNow;
             }
         }
     }
+
+    private static bool IsGenericAuditableEntity(Type entityType) =>
+        entityType.BaseType is { IsGenericType: true } baseType &&
+        baseType.GetGenericTypeDefinition() == typeof(BaseAuditableEntity<>);
 }
 
 public static class Extensions
