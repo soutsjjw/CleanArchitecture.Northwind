@@ -55,5 +55,7 @@ public interface IApplicationDbContext
 
     void PrepareInventoryUpdate(Product product, byte[] rowVersion);
 
+    void CleanupFailedInventoryUpdate(Product product, InventoryTransaction transaction);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

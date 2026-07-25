@@ -68,6 +68,21 @@ public class ApplicationDbContext : IdentityDbContext<
         Entry(product).Property(x => x.UnitsInStock).IsModified = true;
     }
 
+    public void CleanupFailedInventoryUpdate(Product product, InventoryTransaction transaction)
+    {
+        var transactionEntry = Entry(transaction);
+        if (transactionEntry.State != EntityState.Detached)
+        {
+            transactionEntry.State = EntityState.Detached;
+        }
+
+        var productEntry = Entry(product);
+        product.UnitsInStock = transaction.QuantityBefore;
+        productEntry.State = EntityState.Unchanged;
+        productEntry.Property(x => x.RowVersion).OriginalValue =
+            productEntry.Property(x => x.RowVersion).CurrentValue;
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

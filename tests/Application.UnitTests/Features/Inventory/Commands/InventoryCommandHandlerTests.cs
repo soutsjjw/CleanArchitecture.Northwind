@@ -289,8 +289,13 @@ public class InventoryCommandHandlerTests
         result.Succeeded.ShouldBeFalse();
         result.Errors.ShouldContain("庫存已被其他使用者更新");
         product.UnitsInStock.ShouldBe((short)8);
-        fixture.Transactions.Verify(
-            x => x.Remove(It.IsAny<InventoryTransaction>()),
+        fixture.Context.Verify(
+            x => x.CleanupFailedInventoryUpdate(
+                product,
+                It.Is<InventoryTransaction>(transaction =>
+                    transaction.ProductId == product.Id &&
+                    transaction.QuantityBefore == 8 &&
+                    transaction.QuantityAfter == 11)),
             Times.Once);
     }
 
@@ -364,6 +369,13 @@ public class InventoryCommandHandlerTests
         var context = new Mock<IApplicationDbContext>();
         context.Setup(x => x.Products).Returns(products.Object);
         context.Setup(x => x.InventoryTransactions).Returns(transactions.Object);
+        context
+            .Setup(x => x.CleanupFailedInventoryUpdate(
+                It.IsAny<Product>(),
+                It.IsAny<InventoryTransaction>()))
+            .Callback<Product, InventoryTransaction>(
+                (failedProduct, transaction) =>
+                    failedProduct.UnitsInStock = transaction.QuantityBefore);
         products
             .Setup(x => x.FindAsync(new object[] { product.Id }, It.IsAny<CancellationToken>()))
             .ReturnsAsync(product);

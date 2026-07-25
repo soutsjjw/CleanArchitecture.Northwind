@@ -107,8 +107,7 @@ internal static class InventoryCommandExecutor
         }
         catch (DbUpdateConcurrencyException)
         {
-            product.UnitsInStock = quantityBefore;
-            context.InventoryTransactions.Remove(transaction);
+            context.CleanupFailedInventoryUpdate(product, transaction);
             return Result<InventoryCommandResult>.Failure("庫存已被其他使用者更新");
         }
 

@@ -1,5 +1,6 @@
 using CleanArchitecture.Northwind.Domain.Entities;
 using CleanArchitecture.Northwind.Domain.Entities.Identity;
+using CleanArchitecture.Northwind.Domain.Enums;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +94,45 @@ public class InventoryModelTests
             .Single(property => property.Metadata.Name == nameof(ApplicationUserProfile.Created) &&
                                 property.Metadata.ClrType == typeof(DateTime?))
             .CurrentValue.ShouldBe(timestamp.UtcDateTime);
+    }
+
+    [Test]
+    public void CleanupFailedInventoryUpdateShouldClearForcedProductUpdateAndPendingHistory()
+    {
+        using var context = CreateContext();
+        var persistedVersion = new byte[] { 4, 5, 6 };
+        var requestedVersion = new byte[] { 1, 2, 3 };
+        var product = new Product
+        {
+            Id = 42,
+            ProductName = "測試商品",
+            UnitsInStock = 8,
+            RowVersion = persistedVersion
+        };
+        var transaction = new InventoryTransaction
+        {
+            ProductId = product.Id,
+            TransactionType = InventoryTransactionType.Stocktake,
+            QuantityBefore = 8,
+            QuantityDelta = 0,
+            QuantityAfter = 8,
+            Reason = "零差異盤點"
+        };
+
+        context.Attach(product);
+        context.InventoryTransactions.Add(transaction);
+        context.PrepareInventoryUpdate(product, requestedVersion);
+
+        var productEntry = context.Entry(product);
+        productEntry.Property(x => x.RowVersion).OriginalValue.ShouldBe(requestedVersion);
+        productEntry.Property(x => x.UnitsInStock).IsModified.ShouldBeTrue();
+
+        context.CleanupFailedInventoryUpdate(product, transaction);
+
+        productEntry.State.ShouldBe(EntityState.Unchanged);
+        productEntry.Property(x => x.UnitsInStock).IsModified.ShouldBeFalse();
+        context.Entry(transaction).State.ShouldBe(EntityState.Detached);
+        context.ChangeTracker.HasChanges().ShouldBeFalse();
     }
 
     private static ApplicationDbContext CreateContext() =>
