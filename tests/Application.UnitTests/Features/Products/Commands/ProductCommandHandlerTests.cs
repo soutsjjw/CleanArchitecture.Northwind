@@ -3,6 +3,8 @@ using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Products.Commands.CreateProduct;
 using CleanArchitecture.Northwind.Application.Features.Products.Commands.DeleteProduct;
+using CleanArchitecture.Northwind.Application.Features.Products.Commands.SetProductDiscontinued;
+using CleanArchitecture.Northwind.Application.Features.Products.Commands.UpdateProduct;
 using CleanArchitecture.Northwind.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -14,6 +16,40 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Products.Co
 
 public class ProductCommandHandlerTests
 {
+    [Test]
+    public async Task DeleteProductShouldRejectInvalidIdBeforeQuerying()
+    {
+        var fixture = CreateFixture([], []);
+        var handler = new DeleteProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new DeleteProductCommand { Id = 0 },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task SetProductDiscontinuedShouldRejectInvalidIdBeforeQuerying()
+    {
+        var fixture = CreateFixture([], []);
+        var handler = new SetProductDiscontinuedCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new SetProductDiscontinuedCommand { Id = -1, Discontinued = true },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     [Test]
     public async Task DeleteProductShouldRejectWhenInventoryHistoryExists()
     {
@@ -32,6 +68,75 @@ public class ProductCommandHandlerTests
         fixture.Context.Verify(
             context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Test]
+    public async Task DeleteProductShouldRejectWhenOrderHistoryExists()
+    {
+        var product = CreateProduct();
+        var fixture = CreateFixture(
+            [product],
+            [],
+            orderDetails: [new OrderDetail { OrderId = 7, ProductId = product.Id }]);
+        var handler = new DeleteProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new DeleteProductCommand { Id = product.Id },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(409);
+        product.IsDelete.ShouldBeFalse();
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task DeleteProductShouldSoftDeleteWithoutClearingReferences()
+    {
+        var product = CreateProduct();
+        product.CategoryId = 3;
+        product.SupplierId = 5;
+        var fixture = CreateFixture([product], []);
+        var handler = new DeleteProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new DeleteProductCommand { Id = product.Id },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        product.IsDelete.ShouldBeTrue();
+        product.Discontinued.ShouldBeTrue();
+        product.CategoryId.ShouldBe(3);
+        product.SupplierId.ShouldBe(5);
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task SetProductDiscontinuedShouldPersistRequestedState(bool discontinued)
+    {
+        var product = CreateProduct();
+        product.Discontinued = !discontinued;
+        var fixture = CreateFixture([product], []);
+        var handler = new SetProductDiscontinuedCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new SetProductDiscontinuedCommand
+            {
+                Id = product.Id,
+                Discontinued = discontinued
+            },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        product.Discontinued.ShouldBe(discontinued);
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [TestCase(false, true)]
@@ -73,6 +178,122 @@ public class ProductCommandHandlerTests
             Times.Never);
     }
 
+    [TestCase(false, true)]
+    [TestCase(true, false)]
+    public async Task UpdateProductShouldRejectInactiveCategoryOrSupplier(
+        bool categoryIsActive,
+        bool supplierIsActive)
+    {
+        var product = CreateProduct();
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = categoryIsActive
+        };
+        var supplier = new Supplier
+        {
+            Id = 5,
+            CompanyName = "供應商",
+            IsActive = supplierIsActive
+        };
+        var fixture = CreateFixture([product], [], [category], [supplier]);
+        var handler = new UpdateProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            ValidUpdate(product.Id, category.Id, supplier.Id),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+        product.CategoryId.ShouldNotBe(category.Id);
+        product.SupplierId.ShouldNotBe(supplier.Id);
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task UpdateProductShouldPreserveInventoryAndExistingPicture()
+    {
+        var product = CreateProduct();
+        product.UnitsInStock = 17;
+        product.UnitsOnOrder = 4;
+        product.Picture = [1, 2, 3];
+        product.PictureContentType = "image/png";
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = true
+        };
+        var supplier = new Supplier
+        {
+            Id = 5,
+            CompanyName = "供應商",
+            IsActive = true
+        };
+        var fixture = CreateFixture([product], [], [category], [supplier]);
+        var handler = new UpdateProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            ValidUpdate(product.Id, category.Id, supplier.Id),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        product.UnitsInStock.ShouldBe((short)17);
+        product.UnitsOnOrder.ShouldBe((short)4);
+        product.Picture.ShouldBe([1, 2, 3]);
+        product.PictureContentType.ShouldBe("image/png");
+    }
+
+    [Test]
+    public async Task UpdateProductShouldRemovePictureWhenRequested()
+    {
+        var product = CreateProduct();
+        product.Picture = [1, 2, 3];
+        product.PictureContentType = "image/png";
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = true
+        };
+        var supplier = new Supplier
+        {
+            Id = 5,
+            CompanyName = "供應商",
+            IsActive = true
+        };
+        var fixture = CreateFixture([product], [], [category], [supplier]);
+        var handler = new UpdateProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            ValidUpdate(product.Id, category.Id, supplier.Id) with
+            {
+                RemovePicture = true
+            },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        product.Picture.ShouldBeNull();
+        product.PictureContentType.ShouldBeNull();
+    }
+
+    private static UpdateProductCommand ValidUpdate(
+        int productId,
+        int categoryId,
+        int supplierId)
+        => new()
+        {
+            Id = productId,
+            ProductName = "更新商品",
+            CategoryId = categoryId,
+            SupplierId = supplierId,
+            UnitPrice = 20,
+            ReorderLevel = 3
+        };
+
     private static Product CreateProduct()
         => new()
         {
@@ -85,16 +306,18 @@ public class ProductCommandHandlerTests
         IReadOnlyList<Product> products,
         IReadOnlyList<InventoryTransaction> inventoryTransactions,
         IReadOnlyList<Category>? categories = null,
-        IReadOnlyList<Supplier>? suppliers = null)
+        IReadOnlyList<Supplier>? suppliers = null,
+        IReadOnlyList<OrderDetail>? orderDetails = null)
     {
         categories ??= [];
         suppliers ??= [];
+        orderDetails ??= [];
 
         var productSet = CreateDbSet(products);
         var inventoryTransactionSet = CreateDbSet(inventoryTransactions);
         var categorySet = CreateDbSet(categories);
         var supplierSet = CreateDbSet(suppliers);
-        var orderDetailSet = CreateDbSet(Array.Empty<OrderDetail>());
+        var orderDetailSet = CreateDbSet(orderDetails);
         var context = new Mock<IApplicationDbContext>();
 
         context.Setup(x => x.Products).Returns(productSet.Object);

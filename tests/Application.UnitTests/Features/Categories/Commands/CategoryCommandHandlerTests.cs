@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Categories.Commands.DeleteCategory;
+using CleanArchitecture.Northwind.Application.Features.Categories.Commands.SetCategoryActive;
 using CleanArchitecture.Northwind.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
@@ -13,6 +14,40 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Categories.
 
 public class CategoryCommandHandlerTests
 {
+    [Test]
+    public async Task DeleteCategoryShouldRejectInvalidIdBeforeQuerying()
+    {
+        var fixture = CreateFixture([]);
+        var handler = new DeleteCategoryCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new DeleteCategoryCommand { Id = 0 },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+        fixture.Context.Verify(
+            value => value.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    public async Task SetCategoryActiveShouldRejectInvalidIdBeforeQuerying()
+    {
+        var fixture = CreateFixture([]);
+        var handler = new SetCategoryActiveCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new SetCategoryActiveCommand { Id = -1, IsActive = true },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+        fixture.Context.Verify(
+            value => value.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     [Test]
     public async Task DeleteCategoryShouldRejectWhenProductsExist()
     {
@@ -50,6 +85,79 @@ public class CategoryCommandHandlerTests
         context.Verify(
             value => value.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task SetCategoryActiveShouldPersistRequestedState(bool isActive)
+    {
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = !isActive
+        };
+        var fixture = CreateFixture([category]);
+        var handler = new SetCategoryActiveCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new SetCategoryActiveCommand
+            {
+                Id = category.Id,
+                IsActive = isActive
+            },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        category.IsActive.ShouldBe(isActive);
+        fixture.Context.Verify(
+            value => value.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task DeleteCategoryShouldSoftDeleteWhenUnused()
+    {
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = true
+        };
+        var fixture = CreateFixture([category]);
+        var handler = new DeleteCategoryCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new DeleteCategoryCommand { Id = category.Id },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        category.IsDelete.ShouldBeTrue();
+        category.IsActive.ShouldBeFalse();
+        fixture.Context.Verify(
+            value => value.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    private static CategoryFixture CreateFixture(
+        IReadOnlyList<Category> categories,
+        IReadOnlyList<Product>? products = null)
+    {
+        products ??= [];
+        var categorySet = CreateDbSet(categories);
+        var productSet = CreateDbSet(products);
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Categories).Returns(categorySet.Object);
+        context.Setup(x => x.Products).Returns(productSet.Object);
+        categorySet
+            .Setup(x => x.FindAsync(
+                It.IsAny<object[]>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((object[] ids, CancellationToken _) =>
+                new ValueTask<Category?>(
+                    categories.SingleOrDefault(category => category.Id == (int)ids[0])));
+
+        return new CategoryFixture(context);
     }
 
     private static Mock<DbSet<T>> CreateDbSet<T>(IEnumerable<T> source)
@@ -127,4 +235,6 @@ public class CategoryCommandHandlerTests
         public ValueTask<bool> MoveNextAsync()
             => new(inner.MoveNext());
     }
+
+    private sealed record CategoryFixture(Mock<IApplicationDbContext> Context);
 }

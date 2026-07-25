@@ -28,6 +28,11 @@ public sealed class SetCategoryActiveCommandHandler(IApplicationDbContext contex
         SetCategoryActiveCommand request,
         CancellationToken cancellationToken)
     {
+        if (request.Id <= 0)
+        {
+            return Result.Failure("分類編號無效。", 400);
+        }
+
         var category = await context.Categories.FindAsync([request.Id], cancellationToken);
         if (category is null || category.IsDelete)
         {

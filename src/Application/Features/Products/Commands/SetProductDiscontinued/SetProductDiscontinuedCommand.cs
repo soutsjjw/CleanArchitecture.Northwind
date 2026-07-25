@@ -28,6 +28,11 @@ public sealed class SetProductDiscontinuedCommandHandler(IApplicationDbContext c
         SetProductDiscontinuedCommand request,
         CancellationToken cancellationToken)
     {
+        if (request.Id <= 0)
+        {
+            return Result.Failure("商品編號無效。", 400);
+        }
+
         var product = await context.Products.FindAsync([request.Id], cancellationToken);
         if (product is null || product.IsDelete)
         {
