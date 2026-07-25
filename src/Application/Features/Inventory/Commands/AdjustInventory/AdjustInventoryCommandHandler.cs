@@ -12,6 +12,12 @@ public sealed class AdjustInventoryCommandHandler(IApplicationDbContext context)
         AdjustInventoryCommand request,
         CancellationToken cancellationToken)
     {
+        if (request.QuantityDelta == 0)
+        {
+            return Task.FromResult(
+                Result<InventoryCommandResult>.Failure("庫存調整數量不可為 0。"));
+        }
+
         return InventoryCommandExecutor.Execute(
             context,
             request.ProductId,
@@ -91,9 +97,9 @@ internal static class InventoryCommandExecutor
             Reason = trimmedReason
         };
 
-        context.SetOriginalRowVersion(product, rowVersion.ToArray());
-        context.InventoryTransactions.Add(transaction);
         product.UnitsInStock = quantityAfter;
+        context.PrepareInventoryUpdate(product, rowVersion.ToArray());
+        context.InventoryTransactions.Add(transaction);
 
         try
         {

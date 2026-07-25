@@ -132,6 +132,29 @@ public class InventoryCommandHandlerTests
     }
 
     [Test]
+    public async Task AdjustShouldRejectZeroDeltaWithoutSaving()
+    {
+        var product = CreateProduct(8);
+        var fixture = CreateFixture(product);
+        var handler = new AdjustInventoryCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new AdjustInventoryCommand(product.Id, 0, "沒有異動", CurrentVersion),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        fixture.Context.Verify(
+            x => x.PrepareInventoryUpdate(It.IsAny<Product>(), It.IsAny<byte[]>()),
+            Times.Never);
+        fixture.Transactions.Verify(
+            x => x.Add(It.IsAny<InventoryTransaction>()),
+            Times.Never);
+        fixture.Context.Verify(
+            x => x.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
     public async Task AdjustShouldWriteManualAdjustmentAndReturnLatestState()
     {
         var product = CreateProduct(8);
@@ -152,7 +175,7 @@ public class InventoryCommandHandlerTests
         result.Data.RowVersion.ShouldBe(latestVersion);
         product.UnitsInStock.ShouldBe((short)11);
         fixture.Context.Verify(
-            x => x.SetOriginalRowVersion(product, It.Is<byte[]>(version => version.SequenceEqual(CurrentVersion))),
+            x => x.PrepareInventoryUpdate(product, It.Is<byte[]>(version => version.SequenceEqual(CurrentVersion))),
             Times.Once);
         fixture.Transactions.Verify(
             x => x.Add(It.Is<InventoryTransaction>(transaction =>
@@ -195,6 +218,34 @@ public class InventoryCommandHandlerTests
                 transaction.QuantityDelta == 3 &&
                 transaction.QuantityAfter == 11 &&
                 transaction.Reason == "循環盤點")),
+            Times.Once);
+        fixture.Context.Verify(
+            x => x.SaveChangesAsync(CancellationToken.None),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task StocktakeShouldPrepareProductUpdateWhenActualEqualsCurrent()
+    {
+        var product = CreateProduct(8);
+        var fixture = CreateFixture(product);
+        var handler = new StocktakeCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            new StocktakeCommand(product.Id, 8, "零差異盤點", CurrentVersion),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        fixture.Context.Verify(
+            x => x.PrepareInventoryUpdate(
+                product,
+                It.Is<byte[]>(version => version.SequenceEqual(CurrentVersion))),
+            Times.Once);
+        fixture.Transactions.Verify(
+            x => x.Add(It.Is<InventoryTransaction>(transaction =>
+                transaction.QuantityBefore == 8 &&
+                transaction.QuantityDelta == 0 &&
+                transaction.QuantityAfter == 8)),
             Times.Once);
         fixture.Context.Verify(
             x => x.SaveChangesAsync(CancellationToken.None),
@@ -259,6 +310,23 @@ public class InventoryCommandHandlerTests
         result.Errors.Select(error => error.PropertyName).ShouldContain(nameof(command.ProductId));
         result.Errors.Select(error => error.PropertyName).ShouldContain(nameof(command.Reason));
         result.Errors.Select(error => error.PropertyName).ShouldContain(nameof(command.RowVersion));
+    }
+
+    [Test]
+    public void AdjustValidatorShouldRejectZeroDelta()
+    {
+        var validator = new AdjustInventoryCommandValidator();
+        var command = new AdjustInventoryCommand(
+            1,
+            0,
+            "沒有異動",
+            CurrentVersion);
+
+        var result = validator.Validate(command);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.Select(error => error.PropertyName)
+            .ShouldContain(nameof(command.QuantityDelta));
     }
 
     [Test]

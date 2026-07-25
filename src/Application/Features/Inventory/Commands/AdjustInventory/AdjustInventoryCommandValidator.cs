@@ -8,6 +8,10 @@ public sealed class AdjustInventoryCommandValidator : AbstractValidator<AdjustIn
             .GreaterThan(0)
             .WithMessage("商品編號必須大於 0。");
 
+        RuleFor(x => x.QuantityDelta)
+            .NotEqual((short)0)
+            .WithMessage("庫存調整數量不可為 0。");
+
         RuleFor(x => x.Reason)
             .Must(reason => !string.IsNullOrWhiteSpace(reason))
             .WithMessage("調整原因不可為空。")

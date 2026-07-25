@@ -62,9 +62,10 @@ public class ApplicationDbContext : IdentityDbContext<
 
     #endregion
 
-    public void SetOriginalRowVersion(Product product, byte[] rowVersion)
+    public void PrepareInventoryUpdate(Product product, byte[] rowVersion)
     {
         Entry(product).Property(x => x.RowVersion).OriginalValue = rowVersion;
+        Entry(product).Property(x => x.UnitsInStock).IsModified = true;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
