@@ -59,6 +59,12 @@ public class Product : BaseAuditableEntity<int>
     [Column("Discontinued")]
     public bool Discontinued { get; set; }
 
+    public byte[] RowVersion { get; set; } = null!;
+
+    public byte[]? Picture { get; set; }
+
+    public string? PictureContentType { get; set; }
+
     /// <summary>一個產品可出現在多筆訂單明細</summary>
     public ICollection<OrderDetail> OrderDetails { get; private set; }
         = new List<OrderDetail>();

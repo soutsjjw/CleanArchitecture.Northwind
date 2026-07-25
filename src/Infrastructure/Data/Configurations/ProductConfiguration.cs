@@ -61,6 +61,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Discontinued)
                .IsRequired();
 
+        builder.Property(p => p.RowVersion)
+               .IsRowVersion();
+
         // OrderDetails relation
         builder.HasMany(p => p.OrderDetails)
                .WithOne(od => od.Product)

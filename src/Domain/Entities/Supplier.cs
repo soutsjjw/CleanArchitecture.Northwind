@@ -69,6 +69,8 @@ public class Supplier : BaseAuditableEntity<int>
     [Column("HomePage", TypeName = "ntext")]
     public string? HomePage { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     /// <summary>反向導航：一個 Supplier 可對應多筆 Products</summary>
     public ICollection<Product> Products { get; private set; } = new List<Product>();
 }

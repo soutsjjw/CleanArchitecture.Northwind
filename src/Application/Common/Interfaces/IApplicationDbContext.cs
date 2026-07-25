@@ -41,6 +41,8 @@ public interface IApplicationDbContext
 
     DbSet<Product> Products { get; }
 
+    DbSet<InventoryTransaction> InventoryTransactions { get; }
+
     DbSet<Region> Regions { get; }
 
     DbSet<Shipper> Shippers { get; }

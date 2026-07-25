@@ -30,6 +30,8 @@ public class Category : BaseEntity
     /// </summary>
     public byte[]? Picture { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     /// <summary>
     /// 反向導航：一個 Category 對應多個 Product
     /// </summary>

@@ -50,6 +50,8 @@ public class ApplicationDbContext : IdentityDbContext<
 
     public DbSet<Product> Products => Set<Product>();
 
+    public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+
     public DbSet<Region> Regions => Set<Region>();
 
     public DbSet<Shipper> Shippers => Set<Shipper>();
