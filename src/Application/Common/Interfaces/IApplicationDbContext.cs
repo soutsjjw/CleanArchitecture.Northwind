@@ -53,5 +53,7 @@ public interface IApplicationDbContext
 
     #endregion
 
+    void SetOriginalRowVersion(Product product, byte[] rowVersion);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

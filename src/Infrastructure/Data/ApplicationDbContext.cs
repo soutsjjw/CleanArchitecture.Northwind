@@ -62,6 +62,11 @@ public class ApplicationDbContext : IdentityDbContext<
 
     #endregion
 
+    public void SetOriginalRowVersion(Product product, byte[] rowVersion)
+    {
+        Entry(product).Property(x => x.RowVersion).OriginalValue = rowVersion;
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
