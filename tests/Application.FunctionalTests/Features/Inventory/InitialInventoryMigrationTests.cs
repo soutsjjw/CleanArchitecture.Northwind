@@ -26,6 +26,7 @@ public class InitialInventoryMigrationTests
         {
             await CreateDatabaseAsync(connectionString);
             int productId;
+            int nullStockProductId;
 
             await using (var context = CreateContext(connectionString))
             {
@@ -43,6 +44,13 @@ public class InitialInventoryMigrationTests
                         SELECT CAST(SCOPE_IDENTITY() AS int);
                         """;
                     productId = Convert.ToInt32(await command.ExecuteScalarAsync());
+
+                    command.CommandText = """
+                        INSERT INTO [Products] ([ProductName], [UnitsInStock], [Discontinued], [IsDelete], [Created], [CreatedBy])
+                        VALUES (N'Product without stock', NULL, 0, 0, SYSUTCDATETIME(), N'test:setup');
+                        SELECT CAST(SCOPE_IDENTITY() AS int);
+                        """;
+                    nullStockProductId = Convert.ToInt32(await command.ExecuteScalarAsync());
                 }
                 await context.Database.CloseConnectionAsync();
 
@@ -60,8 +68,15 @@ public class InitialInventoryMigrationTests
                 transaction.QuantityDelta.ShouldBe((short)0);
                 transaction.CreatedBy.ShouldBe("system:initial-balance");
 
+                var nullStockTransaction = await context.InventoryTransactions.SingleAsync(x => x.ProductId == nullStockProductId);
+                nullStockTransaction.TransactionType.ShouldBe(InventoryTransactionType.OpeningBalance);
+                nullStockTransaction.QuantityBefore.ShouldBe((short)0);
+                nullStockTransaction.QuantityAfter.ShouldBe((short)0);
+                nullStockTransaction.QuantityDelta.ShouldBe((short)0);
+
                 await context.Database.MigrateAsync();
                 (await context.InventoryTransactions.CountAsync(x => x.ProductId == product.Id)).ShouldBe(1);
+                (await context.InventoryTransactions.CountAsync(x => x.ProductId == nullStockProductId)).ShouldBe(1);
             }
         }
         finally
