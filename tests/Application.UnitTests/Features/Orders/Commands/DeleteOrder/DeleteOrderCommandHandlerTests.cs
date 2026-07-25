@@ -11,6 +11,24 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Orders.Comm
 public class DeleteOrderCommandHandlerTests
 {
     [Test]
+    public async Task HandleShouldRejectAlreadyDeletedOrder()
+    {
+        var order = new Order { Id = 10248, IsDelete = true };
+        var orders = new Mock<DbSet<Order>>();
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(orders.Object);
+        orders.Setup(x => x.FindAsync(new object[] { order.Id }, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(order);
+
+        var handler = new DeleteOrderCommandHandler(context.Object);
+
+        var result = await handler.Handle(new DeleteOrderCommand { Id = order.Id }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        context.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
     public async Task HandleShouldMarkOrderAsDeleted()
     {
         var order = new Order { Id = 10248 };

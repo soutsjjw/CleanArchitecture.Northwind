@@ -8,6 +8,10 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.Controllers;
@@ -122,10 +126,15 @@ public class OrdersControllerProtectedIdTests
                 Id = ((OrderDetailDto)source).Id
             });
 
-        var requestServices = new Mock<IServiceProvider>();
-        requestServices
-            .Setup(services => services.GetService(typeof(IMediator)))
-            .Returns(mediator);
+        var services = new ServiceCollection();
+        services.AddControllersWithViews();
+        services.AddSingleton(mediator);
+        var requestServices = services.BuildServiceProvider();
+
+        var httpContext = new DefaultHttpContext
+        {
+            RequestServices = requestServices
+        };
 
         return new OrdersController(
             mapper.Object,
@@ -134,11 +143,11 @@ public class OrdersControllerProtectedIdTests
         {
             ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext
-                {
-                    RequestServices = requestServices.Object
-                }
-            }
+                HttpContext = httpContext,
+                RouteData = new RouteData(),
+                ActionDescriptor = new ControllerActionDescriptor()
+            },
+            TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>())
         };
     }
 

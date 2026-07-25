@@ -17,10 +17,7 @@ public static class SecurityHeadersExtensions
             var nonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
             context.Items[CspNonceItemKey] = nonce;
 
-            // 在「送出前」最後一刻補上（確保例外/重導之後也會帶到）
-            context.Response.OnStarting(() =>
-            {
-                var n = context.Items[CspNonceItemKey] as string ?? nonce;
+            var n = context.Items[CspNonceItemKey] as string ?? nonce;
 
                 var scriptSrc = string.Join(' ', new[]
                 {
@@ -80,9 +77,6 @@ public static class SecurityHeadersExtensions
                 header["X-Content-Type-Options"] = "nosniff";
                 //（選配）h["Referrer-Policy"] = "strict-origin-when-cross-origin";
                 //（選配）h["Permissions-Policy"] = "geolocation=()"; // 依實際需要收斂
-
-                return Task.CompletedTask;
-            });
 
             return next();
         });

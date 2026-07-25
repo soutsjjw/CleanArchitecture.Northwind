@@ -47,6 +47,7 @@ public class SecurityHeadersExtensionsTests
         context.Response.Body = new MemoryStream();
 
         await app.Build().Invoke(context);
+        await context.Response.CompleteAsync();
 
         return context.Response.Headers.ContentSecurityPolicy.ToString();
     }

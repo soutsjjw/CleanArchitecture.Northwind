@@ -15,9 +15,27 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
     public async Task<Result<OrdersDto>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
         var today = DateTime.Today;
-        var query = _context.Orders
+        var ordersQuery = _context.Orders
             .AsNoTracking()
-            .Where(order => !order.IsDelete)
+            .Where(order => !order.IsDelete);
+
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            var keyword = request.Keyword.Trim().ToLower();
+            ordersQuery = ordersQuery.Where(order =>
+                order.Id.ToString().Contains(keyword) ||
+                (order.CustomerId != null && order.CustomerId.ToLower().Contains(keyword)) ||
+                (order.Customer != null && order.Customer.CompanyName.ToLower().Contains(keyword)) ||
+                (order.Employee != null && (order.Employee.FirstName + " " + order.Employee.LastName).ToLower().Contains(keyword)) ||
+                (order.Shipper != null && order.Shipper.CompanyName.ToLower().Contains(keyword)) ||
+                (order.ShipCity != null && order.ShipCity.ToLower().Contains(keyword)) ||
+                (order.ShipCountry != null && order.ShipCountry.ToLower().Contains(keyword)) ||
+                order.OrderDetails.Any(detail =>
+                    detail.ProductId.ToString().Contains(keyword) ||
+                    (detail.Product != null && detail.Product.ProductName.ToLower().Contains(keyword))));
+        }
+
+        var query = ordersQuery
             .Select(order => new OrderItemDto
             {
                 Id = order.Id,
@@ -40,19 +58,6 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
                         ? OrderShippingStatus.Overdue
                         : OrderShippingStatus.Unshipped
             });
-
-        if (!string.IsNullOrWhiteSpace(request.Keyword))
-        {
-            var keyword = request.Keyword.Trim().ToLower();
-            query = query.Where(order =>
-                order.Id.ToString().Contains(keyword) ||
-                (order.CustomerId != null && order.CustomerId.ToLower().Contains(keyword)) ||
-                order.CustomerName.ToLower().Contains(keyword) ||
-                order.EmployeeName.ToLower().Contains(keyword) ||
-                order.ShipperName.ToLower().Contains(keyword) ||
-                order.ShipCity.ToLower().Contains(keyword) ||
-                order.ShipCountry.ToLower().Contains(keyword));
-        }
 
         if (request.OrderedFrom.HasValue)
         {

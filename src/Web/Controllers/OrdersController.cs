@@ -37,12 +37,12 @@ public class OrdersController : BaseController<OrdersController>
     [ValidateAntiForgeryToken]
     [Authorize(Policy = Policies.Orders_Read)]
     public Task<IActionResult> Index(
-        string? keyword,
-        DateTime? orderedFrom,
-        DateTime? orderedTo,
-        OrderShippingStatus? shippingStatus,
-        OrderSortField? sortBy,
-        bool sortDescending,
+        string? keyword = null,
+        DateTime? orderedFrom = null,
+        DateTime? orderedTo = null,
+        OrderShippingStatus? shippingStatus = null,
+        OrderSortField? sortBy = null,
+        bool sortDescending = false,
         int pageNumber = 1,
         int pageSize = 10)
         => GetIndexAsync(new GetOrdersQuery
@@ -71,7 +71,16 @@ public class OrdersController : BaseController<OrdersController>
 
     [HttpGet]
     [Authorize(Policy = Policies.Orders_Read)]
-    public async Task<IActionResult> Details(string id)
+    public async Task<IActionResult> Details(
+        string id,
+        string? keyword = null,
+        DateTime? orderedFrom = null,
+        DateTime? orderedTo = null,
+        OrderShippingStatus? shippingStatus = null,
+        OrderSortField? sortBy = null,
+        bool sortDescending = false,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
         if (!TryUnprotectOrderId(id, out var orderId))
         {
@@ -84,7 +93,17 @@ public class OrdersController : BaseController<OrdersController>
             return RedirectToAction(nameof(Index)).WithError(this, result.Errors.ToList());
         }
 
-        return View(MapToDetailViewModel(result.Data));
+        return View(MapToDetailViewModel(result.Data, new GetOrdersQuery
+        {
+            Keyword = keyword,
+            OrderedFrom = orderedFrom,
+            OrderedTo = orderedTo,
+            ShippingStatus = shippingStatus,
+            SortBy = sortBy,
+            SortDescending = sortDescending,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        }));
     }
 
     [HttpGet]
@@ -173,7 +192,7 @@ public class OrdersController : BaseController<OrdersController>
         };
     }
 
-    private OrderDetailViewModel MapToDetailViewModel(OrderDetailDto dto)
+    private OrderDetailViewModel MapToDetailViewModel(OrderDetailDto dto, GetOrdersQuery? listQuery = null)
     {
         var viewModel = _mapper.Map<OrderDetailViewModel>(dto);
 
@@ -195,6 +214,14 @@ public class OrdersController : BaseController<OrdersController>
             ShipRegion = viewModel.ShipRegion,
             ShipPostalCode = viewModel.ShipPostalCode,
             ShipCountry = viewModel.ShipCountry,
+            Keyword = listQuery?.Keyword,
+            OrderedFrom = listQuery?.OrderedFrom,
+            OrderedTo = listQuery?.OrderedTo,
+            ShippingStatus = listQuery?.ShippingStatus,
+            SortBy = listQuery?.SortBy,
+            SortDescending = listQuery?.SortDescending ?? false,
+            PageNumber = listQuery?.PageNumber ?? 1,
+            PageSize = listQuery?.PageSize ?? 10,
             Items = viewModel.Items.Select(item => new OrderLineItemViewModel
             {
                 ProductName = item.ProductName,

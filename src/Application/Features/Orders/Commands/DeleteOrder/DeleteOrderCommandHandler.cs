@@ -8,7 +8,7 @@ public class DeleteOrderCommandHandler(IApplicationDbContext context) : IRequest
     public async Task<Result> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
         var order = await context.Orders.FindAsync([request.Id], cancellationToken);
-        if (order is null)
+        if (order is null || order.IsDelete)
         {
             return await Result.FailureAsync("找不到訂單。");
         }

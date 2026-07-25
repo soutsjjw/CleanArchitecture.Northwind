@@ -14,6 +14,71 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Orders.Quer
 public class GetOrdersQueryHandlerTests
 {
     [Test]
+    public async Task HandleShouldFindOrderByProductName()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order
+            {
+                Id = 10248,
+                OrderDate = new DateTime(2026, 1, 10),
+                OrderDetails =
+                {
+                    new OrderDetail
+                    {
+                        OrderId = 10248,
+                        ProductId = 11,
+                        Product = new Product { ProductName = "Chai" },
+                        UnitPrice = 18m,
+                        Quantity = 1
+                    }
+                }
+            }
+        }));
+        var handler = new GetOrdersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetOrdersQuery
+        {
+            Keyword = "chai",
+            PageNumber = 1,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Orders.Items.Select(order => order.Id).ShouldBe([10248]);
+    }
+
+    [Test]
+    public async Task HandleShouldFindOrderByProductId()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order
+            {
+                Id = 10248,
+                OrderDate = new DateTime(2026, 1, 10),
+                OrderDetails =
+                {
+                    new OrderDetail { OrderId = 10248, ProductId = 11, UnitPrice = 18m, Quantity = 1 }
+                }
+            }
+        }));
+        var handler = new GetOrdersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetOrdersQuery
+        {
+            Keyword = "11",
+            PageNumber = 1,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Orders.Items.Select(order => order.Id).ShouldBe([10248]);
+    }
+
+    [Test]
     public async Task HandleShouldFilterUnshippedOrdersByKeywordAndReturnProjectedTotals()
     {
         var context = new Mock<IApplicationDbContext>();

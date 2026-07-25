@@ -6,7 +6,7 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>@ViewData["Title"]</h3>
-        <a asp-action="Index" class="btn btn-secondary">返回清單</a>
+        <a asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-orderedFrom="@Model.OrderedFrom" asp-route-orderedTo="@Model.OrderedTo" asp-route-shippingStatus="@Model.ShippingStatus" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-secondary">返回清單</a>
     </div>
 
     <dl class="row">

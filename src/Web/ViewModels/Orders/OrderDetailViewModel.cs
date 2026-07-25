@@ -1,3 +1,5 @@
+using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders;
+
 namespace CleanArchitecture.Northwind.Web.ViewModels.Orders;
 
 public class OrderDetailViewModel
@@ -19,6 +21,14 @@ public class OrderDetailViewModel
     public string ShipPostalCode { get; init; } = string.Empty;
     public string ShipCountry { get; init; } = string.Empty;
     public IReadOnlyList<OrderLineItemViewModel> Items { get; init; } = Array.Empty<OrderLineItemViewModel>();
+    public string? Keyword { get; init; }
+    public DateTime? OrderedFrom { get; init; }
+    public DateTime? OrderedTo { get; init; }
+    public OrderShippingStatus? ShippingStatus { get; init; }
+    public OrderSortField? SortBy { get; init; }
+    public bool SortDescending { get; init; }
+    public int PageNumber { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
 }
 
 public class OrderLineItemViewModel
