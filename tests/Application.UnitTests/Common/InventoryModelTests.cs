@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Domain.Entities;
+using CleanArchitecture.Northwind.Domain.Entities.Identity;
 using CleanArchitecture.Northwind.Infrastructure.Data;
 using CleanArchitecture.Northwind.Infrastructure.Data.Interceptors;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,31 @@ public class InventoryModelTests
 
         transaction.Created.ShouldBe(timestamp);
         transaction.CreatedBy.ShouldBe("inventory-user");
+    }
+
+    [Test]
+    public void UpdateEntitiesShouldSetDateTimeAuditFieldsForApplicationUserProfile()
+    {
+        var timestamp = new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero);
+        var interceptor = new AuditableEntityInterceptor(new TestUser("profile-user"), new FixedTimeProvider(timestamp));
+        using var context = CreateContext();
+        var profile = new ApplicationUserProfile
+        {
+            UserId = "profile-user"
+        };
+
+        var profileEntry = context.Add(profile);
+
+        interceptor.UpdateEntities(context);
+        profile.Created.ShouldBe(timestamp.UtcDateTime);
+        profile.CreatedBy.ShouldBe("profile-user");
+        profile.LastModified.ShouldBe(timestamp.UtcDateTime);
+        profile.LastModifiedBy.ShouldBe("profile-user");
+
+        profileEntry.Properties
+            .Single(property => property.Metadata.Name == nameof(ApplicationUserProfile.Created) &&
+                                property.Metadata.ClrType == typeof(DateTime?))
+            .CurrentValue.ShouldBe(timestamp.UtcDateTime);
     }
 
     private static ApplicationDbContext CreateContext() =>
