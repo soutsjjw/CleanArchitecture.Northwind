@@ -493,3 +493,4 @@ $RECYCLE.BIN/
 
 # Superpowers local runtime and visual companion state
 .superpowers/
+.worktrees/
