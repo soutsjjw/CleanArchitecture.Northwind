@@ -17,7 +17,7 @@
             <a asp-action="Index" class="btn btn-secondary">返回清單</a>
             @if (canEdit.Succeeded)
             {
-                <a asp-action="Edit" asp-route-id="@Model.ProtectedId" class="btn btn-primary">編輯</a>
+                <a asp-action="Edit" asp-route-id="@Model.EditProtectedId" class="btn btn-primary">編輯</a>
             }
         </div>
     </div>
@@ -26,7 +26,7 @@
         @if (Model.HasPicture)
         {
             <div class="col-12 col-lg-3 mb-3">
-                <img src="@Url.Action("Image", new { id = Model.ProtectedId })"
+                <img src="@Url.Action("Image", new { id = Model.ImageProtectedId })"
                      alt="@Model.ProductName" class="img-fluid rounded border" />
             </div>
         }
@@ -48,16 +48,17 @@
     <div class="d-flex flex-wrap gap-2 mb-4">
         @if (canChangeInventory.Succeeded)
         {
-            <a asp-action="AdjustInventory" asp-route-id="@Model.ProtectedId"
+            <a asp-action="AdjustInventory" asp-route-id="@Model.AdjustInventoryProtectedId"
                class="btn btn-outline-primary">手動調整庫存</a>
-            <a asp-action="Stocktake" asp-route-id="@Model.ProtectedId"
+            <a asp-action="Stocktake" asp-route-id="@Model.StocktakeProtectedId"
                class="btn btn-outline-primary">盤點</a>
         }
         @if (canEdit.Succeeded)
         {
             <form asp-action="SetDiscontinued" method="post">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <input type="hidden" name="id"
+                       value="@Model.SetDiscontinuedProtectedId" />
                 <input type="hidden" name="discontinued"
                        value="@((!Model.Discontinued).ToString().ToLowerInvariant())" />
                 <button type="submit" class="btn btn-outline-warning">
@@ -70,7 +71,7 @@
             <form asp-action="Delete" method="post"
                   onsubmit="return confirm('確定刪除此商品？若已有歷程，系統會拒絕刪除。');">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <input type="hidden" name="id" value="@Model.DeleteProtectedId" />
                 <button type="submit" class="btn btn-outline-danger">刪除商品</button>
             </form>
         }
@@ -117,7 +118,7 @@
         @if (Model.InventoryPagination is not null)
         {
             <form id="inventoryHistoryForm" method="get" asp-action="Details">
-                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <input type="hidden" name="id" value="@Model.DetailsProtectedId" />
                 <input type="hidden" name="pageNumber"
                        value="@Model.InventoryPagination.PageNumber" />
                 <partial name="_PaginationPartial" model="Model.InventoryPagination" />

@@ -95,7 +95,7 @@
                             <td>
                                 @if (product.HasPicture)
                                 {
-                                    <img src="@Url.Action("Image", new { id = product.ProtectedId })"
+                                    <img src="@Url.Action("Image", new { id = product.ImageProtectedId })"
                                          alt="@product.ProductName" width="48" height="48"
                                          class="me-2 object-fit-cover rounded" />
                                 }
@@ -115,15 +115,16 @@
                                 </span>
                             </td>
                             <td class="text-center text-nowrap">
-                                <a asp-action="Details" asp-route-id="@product.ProtectedId"
+                                <a asp-action="Details" asp-route-id="@product.DetailsProtectedId"
                                    class="btn btn-sm btn-outline-primary">檢視</a>
                                 @if (canEdit.Succeeded)
                                 {
-                                    <a asp-action="Edit" asp-route-id="@product.ProtectedId"
+                                    <a asp-action="Edit" asp-route-id="@product.EditProtectedId"
                                        class="btn btn-sm btn-outline-secondary">編輯</a>
                                     <form asp-action="SetDiscontinued" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@product.ProtectedId" />
+                                        <input type="hidden" name="id"
+                                               value="@product.SetDiscontinuedProtectedId" />
                                         <input type="hidden" name="discontinued"
                                                value="@((!product.Discontinued).ToString().ToLowerInvariant())" />
                                         <button type="submit" class="btn btn-sm btn-outline-warning">
@@ -136,7 +137,8 @@
                                     <form asp-action="Delete" method="post" class="d-inline"
                                           onsubmit="return confirm('確定刪除此商品？');">
                                         @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@product.ProtectedId" />
+                                        <input type="hidden" name="id"
+                                               value="@product.DeleteProtectedId" />
                                         <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
                                     </form>
                                 }

@@ -7,6 +7,8 @@ public sealed class StocktakeViewModel
     [Required]
     public string ProtectedId { get; set; } = string.Empty;
 
+    public string DetailsProtectedId { get; set; } = string.Empty;
+
     public string ProductName { get; set; } = string.Empty;
 
     public short UnitsInStock { get; set; }

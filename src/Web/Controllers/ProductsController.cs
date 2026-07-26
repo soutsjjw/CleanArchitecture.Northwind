@@ -1,5 +1,5 @@
 using System.Globalization;
-using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using System.Security.Cryptography;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Inventory.Commands.AdjustInventory;
 using CleanArchitecture.Northwind.Application.Features.Inventory.Commands.Stocktake;
@@ -16,6 +16,7 @@ using CleanArchitecture.Northwind.Web.Extensions;
 using CleanArchitecture.Northwind.Web.Services;
 using CleanArchitecture.Northwind.Web.ViewModels.Products;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Northwind.Web.Controllers;
@@ -23,8 +24,26 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 [Authorize]
 public sealed class ProductsController(
     ISender sender,
-    IDataProtectionService dataProtectionService) : Controller
+    IDataProtectionProvider dataProtectionProvider,
+    IAuthorizationService authorizationService) : Controller
 {
+    private readonly IDataProtector _detailsIdProtector =
+        dataProtectionProvider.CreateProtector("Products.Details.ItemId.v1");
+    private readonly IDataProtector _imageIdProtector =
+        dataProtectionProvider.CreateProtector("Products.Image.ItemId.v1");
+    private readonly IDataProtector _editIdProtector =
+        dataProtectionProvider.CreateProtector("Products.Edit.ItemId.v1");
+    private readonly IDataProtector _deleteIdProtector =
+        dataProtectionProvider.CreateProtector("Products.Delete.ItemId.v1");
+    private readonly IDataProtector _setDiscontinuedIdProtector =
+        dataProtectionProvider.CreateProtector(
+            "Products.SetDiscontinued.ItemId.v1");
+    private readonly IDataProtector _adjustInventoryIdProtector =
+        dataProtectionProvider.CreateProtector(
+            "Products.AdjustInventory.ItemId.v1");
+    private readonly IDataProtector _stocktakeIdProtector =
+        dataProtectionProvider.CreateProtector("Products.Stocktake.ItemId.v1");
+
     [HttpGet]
     [Authorize(Policy = Policies.Products_Read)]
     public async Task<IActionResult> Index(
@@ -37,6 +56,11 @@ public sealed class ProductsController(
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanReadSuppliersAsync())
+        {
+            return Forbid();
+        }
+
         var productsResult = await sender.Send(new GetProductsQuery
         {
             Keyword = keyword,
@@ -85,7 +109,7 @@ public sealed class ProductsController(
         int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var productId))
+        if (!TryUnprotectId(_detailsIdProtector, id, out var productId))
         {
             return NotFound();
         }
@@ -118,7 +142,16 @@ public sealed class ProductsController(
         return View(new ProductDetailViewModel
         {
             Id = detail.Id,
-            ProtectedId = ProtectId(detail.Id),
+            DetailsProtectedId = ProtectId(_detailsIdProtector, detail.Id),
+            ImageProtectedId = ProtectId(_imageIdProtector, detail.Id),
+            EditProtectedId = ProtectId(_editIdProtector, detail.Id),
+            DeleteProtectedId = ProtectId(_deleteIdProtector, detail.Id),
+            SetDiscontinuedProtectedId =
+                ProtectId(_setDiscontinuedIdProtector, detail.Id),
+            AdjustInventoryProtectedId =
+                ProtectId(_adjustInventoryIdProtector, detail.Id),
+            StocktakeProtectedId =
+                ProtectId(_stocktakeIdProtector, detail.Id),
             ProductName = detail.ProductName,
             CategoryName = detail.CategoryName,
             SupplierName = detail.SupplierName,
@@ -153,7 +186,7 @@ public sealed class ProductsController(
         string id,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var productId))
+        if (!TryUnprotectId(_imageIdProtector, id, out var productId))
         {
             return NotFound();
         }
@@ -178,6 +211,11 @@ public sealed class ProductsController(
     public async Task<IActionResult> Create(
         CancellationToken cancellationToken = default)
     {
+        if (!await CanReadSuppliersAsync())
+        {
+            return Forbid();
+        }
+
         var model = new ProductEditViewModel();
         await LoadProductOptionsAsync(model, cancellationToken);
         return View(model);
@@ -191,6 +229,11 @@ public sealed class ProductsController(
         ProductEditViewModel model,
         CancellationToken cancellationToken = default)
     {
+        if (!await CanReadSuppliersAsync())
+        {
+            return Forbid();
+        }
+
         var image = ValidateOptionalImage(model.Picture);
         if (!ModelState.IsValid)
         {
@@ -217,7 +260,9 @@ public sealed class ProductsController(
             return View(model);
         }
 
-        return RedirectToAction(nameof(Details), new { id = ProtectId(result.Data) })
+        return RedirectToAction(
+                nameof(Details),
+                new { id = ProtectId(_detailsIdProtector, result.Data) })
             .WithSuccess(this, "商品已新增。");
     }
 
@@ -227,7 +272,12 @@ public sealed class ProductsController(
         string id,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var productId))
+        if (!await CanReadSuppliersAsync())
+        {
+            return Forbid();
+        }
+
+        if (!TryUnprotectId(_editIdProtector, id, out var productId))
         {
             return NotFound();
         }
@@ -243,7 +293,7 @@ public sealed class ProductsController(
         var detail = result.Data;
         var model = new ProductEditViewModel
         {
-            ProtectedId = ProtectId(detail.Id),
+            ProtectedId = ProtectId(_editIdProtector, detail.Id),
             ProductName = detail.ProductName,
             CategoryId = detail.CategoryId,
             SupplierId = detail.SupplierId,
@@ -264,7 +314,15 @@ public sealed class ProductsController(
         ProductEditViewModel model,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(model.ProtectedId, out var productId))
+        if (!await CanReadSuppliersAsync())
+        {
+            return Forbid();
+        }
+
+        if (!TryUnprotectId(
+                _editIdProtector,
+                model.ProtectedId,
+                out var productId))
         {
             return NotFound();
         }
@@ -304,7 +362,9 @@ public sealed class ProductsController(
             return View(model);
         }
 
-        return RedirectToAction(nameof(Details), new { id = ProtectId(productId) })
+        return RedirectToAction(
+                nameof(Details),
+                new { id = ProtectId(_detailsIdProtector, productId) })
             .WithSuccess(this, "商品已更新。");
     }
 
@@ -315,7 +375,7 @@ public sealed class ProductsController(
         string id,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var productId))
+        if (!TryUnprotectId(_deleteIdProtector, id, out var productId))
         {
             return NotFound();
         }
@@ -337,7 +397,10 @@ public sealed class ProductsController(
         bool discontinued,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var productId))
+        if (!TryUnprotectId(
+                _setDiscontinuedIdProtector,
+                id,
+                out var productId))
         {
             return NotFound();
         }
@@ -347,7 +410,9 @@ public sealed class ProductsController(
             Id = productId,
             Discontinued = discontinued
         }, cancellationToken);
-        var redirect = RedirectToAction(nameof(Details), new { id });
+        var redirect = RedirectToAction(
+            nameof(Details),
+            new { id = ProtectId(_detailsIdProtector, productId) });
         return result.Succeeded
             ? redirect.WithSuccess(this, discontinued ? "商品已停用。" : "商品已恢復啟用。")
             : redirect.WithError(this, result.Errors.ToList());
@@ -367,7 +432,10 @@ public sealed class ProductsController(
         InventoryAdjustmentViewModel model,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(model.ProtectedId, out var productId))
+        if (!TryUnprotectId(
+                _adjustInventoryIdProtector,
+                model.ProtectedId,
+                out var productId))
         {
             return NotFound();
         }
@@ -395,7 +463,9 @@ public sealed class ProductsController(
             return View(model);
         }
 
-        return RedirectToAction(nameof(Details), new { id = model.ProtectedId })
+        return RedirectToAction(
+                nameof(Details),
+                new { id = ProtectId(_detailsIdProtector, productId) })
             .WithSuccess(this, "庫存已調整。");
     }
 
@@ -413,7 +483,10 @@ public sealed class ProductsController(
         StocktakeViewModel model,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(model.ProtectedId, out var productId))
+        if (!TryUnprotectId(
+                _stocktakeIdProtector,
+                model.ProtectedId,
+                out var productId))
         {
             return NotFound();
         }
@@ -441,7 +514,9 @@ public sealed class ProductsController(
             return View(model);
         }
 
-        return RedirectToAction(nameof(Details), new { id = model.ProtectedId })
+        return RedirectToAction(
+                nameof(Details),
+                new { id = ProtectId(_detailsIdProtector, productId) })
             .WithSuccess(this, "盤點已完成。");
     }
 
@@ -450,7 +525,10 @@ public sealed class ProductsController(
         bool stocktake,
         CancellationToken cancellationToken)
     {
-        if (!TryUnprotectId(id, out var productId))
+        var formProtector = stocktake
+            ? _stocktakeIdProtector
+            : _adjustInventoryIdProtector;
+        if (!TryUnprotectId(formProtector, id, out var productId))
         {
             return NotFound();
         }
@@ -468,7 +546,9 @@ public sealed class ProductsController(
         {
             return View(nameof(Stocktake), new StocktakeViewModel
             {
-                ProtectedId = ProtectId(detail.Id),
+                ProtectedId = ProtectId(_stocktakeIdProtector, detail.Id),
+                DetailsProtectedId =
+                    ProtectId(_detailsIdProtector, detail.Id),
                 ProductName = detail.ProductName,
                 UnitsInStock = detail.UnitsInStock,
                 ActualQuantity = detail.UnitsInStock,
@@ -478,7 +558,10 @@ public sealed class ProductsController(
 
         return View(nameof(AdjustInventory), new InventoryAdjustmentViewModel
         {
-            ProtectedId = ProtectId(detail.Id),
+            ProtectedId =
+                ProtectId(_adjustInventoryIdProtector, detail.Id),
+            DetailsProtectedId =
+                ProtectId(_detailsIdProtector, detail.Id),
             ProductName = detail.ProductName,
             UnitsInStock = detail.UnitsInStock,
             RowVersion = Convert.ToBase64String(detail.RowVersion)
@@ -541,6 +624,8 @@ public sealed class ProductsController(
 
         model.ProductName = result.Data.ProductName;
         model.UnitsInStock = result.Data.UnitsInStock;
+        model.DetailsProtectedId =
+            ProtectId(_detailsIdProtector, productId);
         ModelState.Remove(nameof(model.RowVersion));
         model.RowVersion = Convert.ToBase64String(result.Data.RowVersion);
     }
@@ -560,6 +645,8 @@ public sealed class ProductsController(
 
         model.ProductName = result.Data.ProductName;
         model.UnitsInStock = result.Data.UnitsInStock;
+        model.DetailsProtectedId =
+            ProtectId(_detailsIdProtector, productId);
         ModelState.Remove(nameof(model.RowVersion));
         model.RowVersion = Convert.ToBase64String(result.Data.RowVersion);
     }
@@ -583,7 +670,15 @@ public sealed class ProductsController(
         }
     }
 
-    private bool TryUnprotectId(string? protectedId, out int id)
+    private async Task<bool> CanReadSuppliersAsync()
+        => (await authorizationService.AuthorizeAsync(
+            User,
+            Policies.Suppliers_Read)).Succeeded;
+
+    private static bool TryUnprotectId(
+        IDataProtector protector,
+        string? protectedId,
+        out int id)
     {
         id = default;
         if (string.IsNullOrWhiteSpace(protectedId))
@@ -591,17 +686,24 @@ public sealed class ProductsController(
             return false;
         }
 
-        var value = dataProtectionService.Unprotect(protectedId);
-        return int.TryParse(
-            value,
-            NumberStyles.None,
-            CultureInfo.InvariantCulture,
-            out id)
-            && id > 0;
+        try
+        {
+            var value = protector.Unprotect(protectedId);
+            return int.TryParse(
+                value,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out id)
+                && id > 0;
+        }
+        catch (CryptographicException)
+        {
+            return false;
+        }
     }
 
-    private string ProtectId(int id)
-        => dataProtectionService.Protect(
+    private static string ProtectId(IDataProtector protector, int id)
+        => protector.Protect(
             id.ToString(CultureInfo.InvariantCulture));
 
     private static bool TryDecodeRowVersion(
@@ -629,7 +731,16 @@ public sealed class ProductsController(
         => new()
         {
             Id = product.Id,
-            ProtectedId = ProtectId(product.Id),
+            DetailsProtectedId =
+                ProtectId(_detailsIdProtector, product.Id),
+            ImageProtectedId =
+                ProtectId(_imageIdProtector, product.Id),
+            EditProtectedId =
+                ProtectId(_editIdProtector, product.Id),
+            DeleteProtectedId =
+                ProtectId(_deleteIdProtector, product.Id),
+            SetDiscontinuedProtectedId =
+                ProtectId(_setDiscontinuedIdProtector, product.Id),
             ProductName = product.ProductName,
             CategoryName = product.CategoryName,
             SupplierName = product.SupplierName,

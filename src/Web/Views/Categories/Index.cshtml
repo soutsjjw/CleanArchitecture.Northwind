@@ -65,11 +65,12 @@
                             <td class="text-center text-nowrap">
                                 @if (canEdit.Succeeded)
                                 {
-                                    <a asp-action="Edit" asp-route-id="@category.ProtectedId"
+                                    <a asp-action="Edit" asp-route-id="@category.EditProtectedId"
                                        class="btn btn-sm btn-outline-secondary">編輯</a>
                                     <form asp-action="SetActive" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@category.ProtectedId" />
+                                        <input type="hidden" name="id"
+                                               value="@category.SetActiveProtectedId" />
                                         <input type="hidden" name="isActive"
                                                value="@((!category.IsActive).ToString().ToLowerInvariant())" />
                                         <button type="submit" class="btn btn-sm btn-outline-warning">
@@ -82,7 +83,8 @@
                                     <form asp-action="Delete" method="post" class="d-inline"
                                           onsubmit="return confirm('確定刪除此分類？若已有商品使用，系統會拒絕刪除。');">
                                         @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@category.ProtectedId" />
+                                        <input type="hidden" name="id"
+                                               value="@category.DeleteProtectedId" />
                                         <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
                                     </form>
                                 }

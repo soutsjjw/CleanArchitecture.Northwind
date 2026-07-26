@@ -27,14 +27,14 @@ public abstract class Policies
 
     // Categories
     public const string Categories = "Categories::";
-    public const string Categories_Read = "Categories:Read";
+    public const string Categories_Read = "Categories:Read:";
     public const string Categories_Create = "Categories:Create:";
     public const string Categories_Update = "Categories:Update:";
     public const string Categories_Delete = "Categories:Delete:";
 
     // Suppliers
     public const string Suppliers = "Suppliers::";
-    public const string Suppliers_Read = "Suppliers:Read";
+    public const string Suppliers_Read = "Suppliers:Read:";
     public const string Suppliers_Create = "Suppliers:Create:";
     public const string Suppliers_Update = "Suppliers:Update:";
     public const string Suppliers_Delete = "Suppliers:Delete:";

@@ -1,5 +1,5 @@
 using System.Globalization;
-using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using System.Security.Cryptography;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Categories.Commands.CreateCategory;
 using CleanArchitecture.Northwind.Application.Features.Categories.Commands.DeleteCategory;
@@ -11,6 +11,7 @@ using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Web.Extensions;
 using CleanArchitecture.Northwind.Web.ViewModels.Categories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Northwind.Web.Controllers;
@@ -18,8 +19,16 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 [Authorize]
 public sealed class CategoriesController(
     ISender sender,
-    IDataProtectionService dataProtectionService) : Controller
+    IDataProtectionProvider dataProtectionProvider) : Controller
 {
+    private readonly IDataProtector _editIdProtector =
+        dataProtectionProvider.CreateProtector("Categories.Edit.ItemId.v1");
+    private readonly IDataProtector _deleteIdProtector =
+        dataProtectionProvider.CreateProtector("Categories.Delete.ItemId.v1");
+    private readonly IDataProtector _setActiveIdProtector =
+        dataProtectionProvider.CreateProtector(
+            "Categories.SetActive.ItemId.v1");
+
     [HttpGet]
     [Authorize(Policy = Policies.Categories_Read)]
     public async Task<IActionResult> Index(
@@ -51,7 +60,12 @@ public sealed class CategoriesController(
             Items = page.Items.Select(category => new CategoryListItemViewModel
             {
                 Id = category.Id,
-                ProtectedId = ProtectId(category.Id),
+                EditProtectedId =
+                    ProtectId(_editIdProtector, category.Id),
+                DeleteProtectedId =
+                    ProtectId(_deleteIdProtector, category.Id),
+                SetActiveProtectedId =
+                    ProtectId(_setActiveIdProtector, category.Id),
                 CategoryName = category.CategoryName,
                 Description = category.Description,
                 IsActive = category.IsActive,
@@ -98,7 +112,7 @@ public sealed class CategoriesController(
         string id,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var categoryId))
+        if (!TryUnprotectId(_editIdProtector, id, out var categoryId))
         {
             return NotFound();
         }
@@ -113,7 +127,7 @@ public sealed class CategoriesController(
 
         return View(new CategoryEditViewModel
         {
-            ProtectedId = ProtectId(result.Data.Id),
+            ProtectedId = ProtectId(_editIdProtector, result.Data.Id),
             CategoryName = result.Data.CategoryName,
             Description = result.Data.Description,
             IsActive = result.Data.IsActive,
@@ -128,7 +142,10 @@ public sealed class CategoriesController(
         CategoryEditViewModel model,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(model.ProtectedId, out var categoryId))
+        if (!TryUnprotectId(
+                _editIdProtector,
+                model.ProtectedId,
+                out var categoryId))
         {
             return NotFound();
         }
@@ -161,7 +178,7 @@ public sealed class CategoriesController(
         string id,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var categoryId))
+        if (!TryUnprotectId(_deleteIdProtector, id, out var categoryId))
         {
             return NotFound();
         }
@@ -183,7 +200,10 @@ public sealed class CategoriesController(
         bool isActive,
         CancellationToken cancellationToken = default)
     {
-        if (!TryUnprotectId(id, out var categoryId))
+        if (!TryUnprotectId(
+                _setActiveIdProtector,
+                id,
+                out var categoryId))
         {
             return NotFound();
         }
@@ -218,7 +238,10 @@ public sealed class CategoriesController(
         }
     }
 
-    private bool TryUnprotectId(string? protectedId, out int id)
+    private static bool TryUnprotectId(
+        IDataProtector protector,
+        string? protectedId,
+        out int id)
     {
         id = default;
         if (string.IsNullOrWhiteSpace(protectedId))
@@ -226,16 +249,23 @@ public sealed class CategoriesController(
             return false;
         }
 
-        var value = dataProtectionService.Unprotect(protectedId);
-        return int.TryParse(
-            value,
-            NumberStyles.None,
-            CultureInfo.InvariantCulture,
-            out id)
-            && id > 0;
+        try
+        {
+            var value = protector.Unprotect(protectedId);
+            return int.TryParse(
+                value,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out id)
+                && id > 0;
+        }
+        catch (CryptographicException)
+        {
+            return false;
+        }
     }
 
-    private string ProtectId(int id)
-        => dataProtectionService.Protect(
+    private static string ProtectId(IDataProtector protector, int id)
+        => protector.Protect(
             id.ToString(CultureInfo.InvariantCulture));
 }

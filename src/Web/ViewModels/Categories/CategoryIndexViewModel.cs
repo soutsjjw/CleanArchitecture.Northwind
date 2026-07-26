@@ -17,7 +17,11 @@ public sealed class CategoryListItemViewModel
 {
     public int Id { get; init; }
 
-    public string ProtectedId { get; init; } = string.Empty;
+    public string EditProtectedId { get; init; } = string.Empty;
+
+    public string DeleteProtectedId { get; init; } = string.Empty;
+
+    public string SetActiveProtectedId { get; init; } = string.Empty;
 
     public string CategoryName { get; init; } = string.Empty;
 

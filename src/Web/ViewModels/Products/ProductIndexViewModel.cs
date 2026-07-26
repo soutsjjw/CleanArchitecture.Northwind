@@ -27,7 +27,15 @@ public sealed class ProductListItemViewModel
 {
     public int Id { get; init; }
 
-    public string ProtectedId { get; init; } = string.Empty;
+    public string DetailsProtectedId { get; init; } = string.Empty;
+
+    public string ImageProtectedId { get; init; } = string.Empty;
+
+    public string EditProtectedId { get; init; } = string.Empty;
+
+    public string DeleteProtectedId { get; init; } = string.Empty;
+
+    public string SetDiscontinuedProtectedId { get; init; } = string.Empty;
 
     public string ProductName { get; init; } = string.Empty;
 

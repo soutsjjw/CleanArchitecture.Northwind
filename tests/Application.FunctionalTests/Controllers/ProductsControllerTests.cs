@@ -49,8 +49,15 @@ public class ProductsControllerTests
         productForm.ShouldContain("asp-for=\"ProtectedId\"");
         productForm.ShouldContain("asp-for=\"Picture\"");
         productForm.ShouldContain("multipart/form-data");
-        index.ShouldContain("asp-route-id=\"@product.ProtectedId\"");
-        details.ShouldContain("asp-route-id=\"@Model.ProtectedId\"");
+        index.ShouldContain("asp-route-id=\"@product.DetailsProtectedId\"");
+        index.ShouldContain("asp-route-id=\"@product.EditProtectedId\"");
+        index.ShouldContain("value=\"@product.DeleteProtectedId\"");
+        details.ShouldContain("asp-route-id=\"@Model.EditProtectedId\"");
+        details.ShouldContain("asp-route-id=\"@Model.AdjustInventoryProtectedId\"");
+        details.ShouldContain("asp-route-id=\"@Model.StocktakeProtectedId\"");
+        details.ShouldContain("value=\"@Model.DeleteProtectedId\"");
+        adjust.ShouldContain("asp-route-id=\"@Model.DetailsProtectedId\"");
+        stocktake.ShouldContain("asp-route-id=\"@Model.DetailsProtectedId\"");
         adjust.ShouldContain("asp-for=\"RowVersion\"");
         stocktake.ShouldContain("asp-for=\"RowVersion\"");
     }

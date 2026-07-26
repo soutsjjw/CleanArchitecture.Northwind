@@ -26,7 +26,9 @@ public class CategoriesControllerTests
         var index = File.ReadAllText(GetWebViewPath("Index.cshtml"));
         var form = File.ReadAllText(GetWebViewPath("_CategoryForm.cshtml"));
 
-        index.ShouldContain("asp-route-id=\"@category.ProtectedId\"");
+        index.ShouldContain("asp-route-id=\"@category.EditProtectedId\"");
+        index.ShouldContain("value=\"@category.SetActiveProtectedId\"");
+        index.ShouldContain("value=\"@category.DeleteProtectedId\"");
         form.ShouldContain("asp-for=\"ProtectedId\"");
         form.ShouldNotContain("name=\"Id\"");
     }
