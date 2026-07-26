@@ -1,0 +1,150 @@
+@inject IAuthorizationService AuthorizationService
+@using CleanArchitecture.Northwind.Domain.Constants
+@using CleanArchitecture.Northwind.Domain.Enums
+@using Microsoft.AspNetCore.Authorization
+@model CleanArchitecture.Northwind.Web.ViewModels.Products.ProductDetailViewModel
+@{
+    ViewData["Title"] = Model.ProductName;
+    var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Update);
+    var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Delete);
+    var canChangeInventory = await AuthorizationService.AuthorizeAsync(User, "Inventory:Create:");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary">返回清單</a>
+            @if (canEdit.Succeeded)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.ProtectedId" class="btn btn-primary">編輯</a>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        @if (Model.HasPicture)
+        {
+            <div class="col-12 col-lg-3 mb-3">
+                <img src="@Url.Action("Image", new { id = Model.ProtectedId })"
+                     alt="@Model.ProductName" class="img-fluid rounded border" />
+            </div>
+        }
+        <div class="col">
+            <dl class="row">
+                <dt class="col-sm-4">分類</dt><dd class="col-sm-8">@Model.CategoryName</dd>
+                <dt class="col-sm-4">供應商</dt><dd class="col-sm-8">@Model.SupplierName</dd>
+                <dt class="col-sm-4">包裝量</dt><dd class="col-sm-8">@(Model.QuantityPerUnit ?? "-")</dd>
+                <dt class="col-sm-4">單價</dt><dd class="col-sm-8">@Model.UnitPrice.ToString("C")</dd>
+                <dt class="col-sm-4">目前庫存</dt><dd class="col-sm-8">@Model.UnitsInStock</dd>
+                <dt class="col-sm-4">採購中</dt><dd class="col-sm-8">@Model.UnitsOnOrder</dd>
+                <dt class="col-sm-4">再訂購水準</dt><dd class="col-sm-8">@Model.ReorderLevel</dd>
+                <dt class="col-sm-4">狀態</dt>
+                <dd class="col-sm-8">@(Model.Discontinued ? "停用" : "啟用")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        @if (canChangeInventory.Succeeded)
+        {
+            <a asp-action="AdjustInventory" asp-route-id="@Model.ProtectedId"
+               class="btn btn-outline-primary">手動調整庫存</a>
+            <a asp-action="Stocktake" asp-route-id="@Model.ProtectedId"
+               class="btn btn-outline-primary">盤點</a>
+        }
+        @if (canEdit.Succeeded)
+        {
+            <form asp-action="SetDiscontinued" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <input type="hidden" name="discontinued"
+                       value="@((!Model.Discontinued).ToString().ToLowerInvariant())" />
+                <button type="submit" class="btn btn-outline-warning">
+                    @(Model.Discontinued ? "恢復啟用" : "停用商品")
+                </button>
+            </form>
+        }
+        @if (canDelete.Succeeded)
+        {
+            <form asp-action="Delete" method="post"
+                  onsubmit="return confirm('確定刪除此商品？若已有歷程，系統會拒絕刪除。');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <button type="submit" class="btn btn-outline-danger">刪除商品</button>
+            </form>
+        }
+    </div>
+
+    <h5>庫存異動歷程</h5>
+    @if (Model.InventoryTransactions.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>類型</th>
+                        <th class="text-end">異動前</th>
+                        <th class="text-end">異動</th>
+                        <th class="text-end">異動後</th>
+                        <th>原因</th>
+                        <th>操作者</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var transaction in Model.InventoryTransactions)
+                {
+                    <tr>
+                        <td>@transaction.Created.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</td>
+                        <td>@GetTransactionTypeText(transaction.TransactionType)</td>
+                        <td class="text-end">@transaction.QuantityBefore</td>
+                        <td class="text-end @(transaction.QuantityDelta < 0 ? "text-danger" : "text-success")">
+                            @(transaction.QuantityDelta > 0 ? "+" : "")@transaction.QuantityDelta
+                        </td>
+                        <td class="text-end">@transaction.QuantityAfter</td>
+                        <td>@transaction.Reason</td>
+                        <td>@transaction.CreatedBy</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.InventoryPagination is not null)
+        {
+            <form id="inventoryHistoryForm" method="get" asp-action="Details">
+                <input type="hidden" name="id" value="@Model.ProtectedId" />
+                <input type="hidden" name="pageNumber"
+                       value="@Model.InventoryPagination.PageNumber" />
+                <partial name="_PaginationPartial" model="Model.InventoryPagination" />
+            </form>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        const inventoryForm = document.querySelector('#inventoryHistoryForm');
+        if (inventoryForm) {
+            window.saveOrdersScrollPosition = window.saveOrdersScrollPosition ?? (() => {});
+            window.submitOrdersSearch = window.submitOrdersSearch ?? (form => form.submit());
+            window.initPagination('#inventoryHistoryForm');
+        }
+    </script>
+}
+
+@functions {
+    private static string GetTransactionTypeText(InventoryTransactionType type)
+        => type switch
+        {
+            InventoryTransactionType.OpeningBalance => "期初庫存",
+            InventoryTransactionType.ManualAdjustment => "手動調整",
+            InventoryTransactionType.Stocktake => "盤點",
+            _ => type.ToString()
+        };
+}

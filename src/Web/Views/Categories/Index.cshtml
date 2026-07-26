@@ -1,0 +1,111 @@
+@inject IAuthorizationService AuthorizationService
+@using CleanArchitecture.Northwind.Domain.Constants
+@using Microsoft.AspNetCore.Authorization
+@model CleanArchitecture.Northwind.Web.ViewModels.Categories.CategoryIndexViewModel
+@{
+    ViewData["Title"] = "商品分類";
+    var canCreate = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Create);
+    var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Update);
+    var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Delete);
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        @if (canCreate.Succeeded)
+        {
+            <a asp-action="Create" class="btn btn-primary">新增分類</a>
+        }
+    </div>
+
+    <form id="categorySearchForm" asp-action="Index" method="get" class="row g-2">
+        <div class="col-12 col-md-6">
+            <label for="keyword" class="form-label">關鍵字</label>
+            <input id="keyword" name="keyword" value="@Model.Keyword" class="form-control" />
+        </div>
+        <div class="col-12 col-md-3">
+            <label for="isActive" class="form-label">狀態</label>
+            <select id="isActive" name="isActive" class="form-select">
+                <option value="">全部</option>
+                <option value="true" selected="@(Model.IsActive == true)">啟用</option>
+                <option value="false" selected="@(Model.IsActive == false)">停用</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">查詢</button>
+            <a asp-action="Index" class="btn btn-secondary">清除</a>
+        </div>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="table-responsive mt-3">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>分類名稱</th>
+                            <th>說明</th>
+                            <th class="text-end">商品數</th>
+                            <th>狀態</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var category in Model.Items)
+                    {
+                        <tr>
+                            <td>@category.CategoryName</td>
+                            <td>@category.Description</td>
+                            <td class="text-end">@category.ProductCount</td>
+                            <td>@(category.IsActive ? "啟用" : "停用")</td>
+                            <td class="text-center text-nowrap">
+                                @if (canEdit.Succeeded)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@category.ProtectedId"
+                                       class="btn btn-sm btn-outline-secondary">編輯</a>
+                                    <form asp-action="SetActive" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@category.ProtectedId" />
+                                        <input type="hidden" name="isActive"
+                                               value="@((!category.IsActive).ToString().ToLowerInvariant())" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                            @(category.IsActive ? "停用" : "恢復")
+                                        </button>
+                                    </form>
+                                }
+                                @if (canDelete.Succeeded)
+                                {
+                                    <form asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('確定刪除此分類？若已有商品使用，系統會拒絕刪除。');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@category.ProtectedId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+        </div>
+        <form id="categoryPaginationForm" asp-action="Index" method="get">
+            <input type="hidden" name="keyword" value="@Model.Keyword" />
+            <input type="hidden" name="isActive" value="@Model.IsActive" />
+            <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        window.saveOrdersScrollPosition = window.saveOrdersScrollPosition ?? (() => {});
+        window.submitOrdersSearch = window.submitOrdersSearch ?? (form => form.submit());
+        window.initPagination('#categoryPaginationForm');
+    </script>
+}

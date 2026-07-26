@@ -1,0 +1,18 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Categories.CategoryEditViewModel
+@{
+    ViewData["Title"] = "編輯分類";
+    ViewData["FormAction"] = "Edit";
+}
+
+<div class="container mt-4">
+    <h3 class="mb-3">@ViewData["Title"]</h3>
+    @if (!Model.IsActive)
+    {
+        <div class="alert alert-warning">此分類目前已停用，既有商品仍保留關聯。</div>
+    }
+    <partial name="_CategoryForm" model="Model" view-data="ViewData" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

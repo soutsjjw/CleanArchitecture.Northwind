@@ -68,6 +68,33 @@ public static class ProductImageValidator
         return true;
     }
 
+    public static bool TryValidateStored(
+        byte[]? content,
+        string? contentType,
+        out ValidatedProductImage? image)
+    {
+        image = null;
+        if (content is null
+            || content.Length == 0
+            || content.Length > MaxFileSize
+            || string.IsNullOrWhiteSpace(contentType)
+            || !ContentType.TryParse(contentType, out var parsedContentType))
+        {
+            return false;
+        }
+
+        var normalizedContentType = parsedContentType.MimeType.ToLowerInvariant();
+        var format = Formats.FirstOrDefault(candidate =>
+            candidate.ContentType == normalizedContentType);
+        if (format is null || !format.HasValidSignature(content))
+        {
+            return false;
+        }
+
+        image = new ValidatedProductImage(content, format.ContentType);
+        return true;
+    }
+
     private static ProductImageFormat? FindFormat(
         string fileName,
         string contentType)

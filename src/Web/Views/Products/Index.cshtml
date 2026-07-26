@@ -1,0 +1,168 @@
+@inject IAuthorizationService AuthorizationService
+@using CleanArchitecture.Northwind.Domain.Constants
+@using Microsoft.AspNetCore.Authorization
+@model CleanArchitecture.Northwind.Web.ViewModels.Products.ProductIndexViewModel
+@{
+    ViewData["Title"] = "商品管理";
+    var canCreate = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Create);
+    var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Update);
+    var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Delete);
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        @if (canCreate.Succeeded)
+        {
+            <a asp-action="Create" class="btn btn-primary">新增商品</a>
+        }
+    </div>
+
+    <form id="productSearchForm" method="get" asp-action="Index" class="row g-2 mb-3">
+        <div class="col-12 col-lg-4">
+            <label class="form-label" for="keyword">關鍵字</label>
+            <input id="keyword" name="keyword" value="@Model.Keyword" class="form-control"
+                   placeholder="商品、分類或供應商" />
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+            <label class="form-label" for="categoryId">分類</label>
+            <select id="categoryId" name="categoryId" class="form-select">
+                <option value="">全部</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">
+                        @category.Name
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+            <label class="form-label" for="supplierId">供應商</label>
+            <select id="supplierId" name="supplierId" class="form-select">
+                <option value="">全部</option>
+                @foreach (var supplier in Model.Suppliers)
+                {
+                    <option value="@supplier.Id" selected="@(Model.SupplierId == supplier.Id)">
+                        @supplier.Name
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+            <label class="form-label" for="discontinued">狀態</label>
+            <select id="discontinued" name="discontinued" class="form-select">
+                <option value="">全部</option>
+                <option value="false" selected="@(Model.Discontinued == false)">啟用</option>
+                <option value="true" selected="@(Model.Discontinued == true)">停用</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input id="lowStockOnly" name="lowStockOnly" value="true"
+                       checked="@Model.LowStockOnly" type="checkbox" class="form-check-input" />
+                <label for="lowStockOnly" class="form-check-label">只看低庫存</label>
+            </div>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">查詢</button>
+            <a asp-action="Index" class="btn btn-secondary">清除</a>
+        </div>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="table-responsive mt-3">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>商品</th>
+                            <th>分類</th>
+                            <th>供應商</th>
+                            <th class="text-end">單價</th>
+                            <th class="text-end">庫存／再訂購</th>
+                            <th>狀態</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var product in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                @if (product.HasPicture)
+                                {
+                                    <img src="@Url.Action("Image", new { id = product.ProtectedId })"
+                                         alt="@product.ProductName" width="48" height="48"
+                                         class="me-2 object-fit-cover rounded" />
+                                }
+                                @product.ProductName
+                            </td>
+                            <td>@product.CategoryName</td>
+                            <td>@product.SupplierName</td>
+                            <td class="text-end">@product.UnitPrice.ToString("C")</td>
+                            <td class="text-end">
+                                <span class="@(product.UnitsInStock <= product.ReorderLevel ? "text-danger fw-bold" : "")">
+                                    @product.UnitsInStock / @product.ReorderLevel
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(product.Discontinued ? "text-bg-secondary" : "text-bg-success")">
+                                    @(product.Discontinued ? "停用" : "啟用")
+                                </span>
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <a asp-action="Details" asp-route-id="@product.ProtectedId"
+                                   class="btn btn-sm btn-outline-primary">檢視</a>
+                                @if (canEdit.Succeeded)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@product.ProtectedId"
+                                       class="btn btn-sm btn-outline-secondary">編輯</a>
+                                    <form asp-action="SetDiscontinued" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@product.ProtectedId" />
+                                        <input type="hidden" name="discontinued"
+                                               value="@((!product.Discontinued).ToString().ToLowerInvariant())" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                            @(product.Discontinued ? "恢復" : "停用")
+                                        </button>
+                                    </form>
+                                }
+                                @if (canDelete.Succeeded)
+                                {
+                                    <form asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('確定刪除此商品？');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@product.ProtectedId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+        </div>
+        <form id="productPaginationForm" method="get" asp-action="Index">
+            <input type="hidden" name="keyword" value="@Model.Keyword" />
+            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+            <input type="hidden" name="supplierId" value="@Model.SupplierId" />
+            <input type="hidden" name="discontinued" value="@Model.Discontinued" />
+            <input type="hidden" name="lowStockOnly" value="@Model.LowStockOnly" />
+            <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        window.saveOrdersScrollPosition = window.saveOrdersScrollPosition ?? (() => {});
+        window.submitOrdersSearch = window.submitOrdersSearch ?? (form => form.submit());
+        window.initPagination('#productPaginationForm');
+    </script>
+}

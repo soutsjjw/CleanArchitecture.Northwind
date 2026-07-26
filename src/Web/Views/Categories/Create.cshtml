@@ -1,0 +1,14 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Categories.CategoryEditViewModel
+@{
+    ViewData["Title"] = "新增分類";
+    ViewData["FormAction"] = "Create";
+}
+
+<div class="container mt-4">
+    <h3 class="mb-3">@ViewData["Title"]</h3>
+    <partial name="_CategoryForm" model="Model" view-data="ViewData" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

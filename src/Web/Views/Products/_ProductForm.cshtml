@@ -1,0 +1,74 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Products.ProductEditViewModel
+@{
+    var action = ViewData["FormAction"]?.ToString() ?? "Create";
+}
+
+<form asp-action="@action" method="post" enctype="multipart/form-data" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input asp-for="ProtectedId" type="hidden" />
+    <input asp-for="HasPicture" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-12 col-md-6">
+        <label asp-for="ProductName" class="form-label">商品名稱</label>
+        <input asp-for="ProductName" class="form-control" />
+        <span asp-validation-for="ProductName" class="text-danger"></span>
+    </div>
+    <div class="col-12 col-md-3">
+        <label asp-for="CategoryId" class="form-label">分類</label>
+        <select asp-for="CategoryId" class="form-select">
+            <option value="">請選擇</option>
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id">@category.Name</option>
+            }
+        </select>
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    </div>
+    <div class="col-12 col-md-3">
+        <label asp-for="SupplierId" class="form-label">供應商</label>
+        <select asp-for="SupplierId" class="form-select">
+            <option value="">請選擇</option>
+            @foreach (var supplier in Model.Suppliers)
+            {
+                <option value="@supplier.Id">@supplier.Name</option>
+            }
+        </select>
+        <span asp-validation-for="SupplierId" class="text-danger"></span>
+    </div>
+    <div class="col-12 col-md-4">
+        <label asp-for="QuantityPerUnit" class="form-label">包裝量</label>
+        <input asp-for="QuantityPerUnit" class="form-control" />
+        <span asp-validation-for="QuantityPerUnit" class="text-danger"></span>
+    </div>
+    <div class="col-12 col-md-4">
+        <label asp-for="UnitPrice" class="form-label">單價</label>
+        <input asp-for="UnitPrice" class="form-control" />
+        <span asp-validation-for="UnitPrice" class="text-danger"></span>
+    </div>
+    <div class="col-12 col-md-4">
+        <label asp-for="ReorderLevel" class="form-label">再訂購水準</label>
+        <input asp-for="ReorderLevel" class="form-control" />
+        <span asp-validation-for="ReorderLevel" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Picture" class="form-label">商品圖片</label>
+        <input asp-for="Picture" type="file" class="form-control"
+               accept="image/jpeg,image/png,image/webp" />
+        <div class="form-text">支援 JPEG、PNG、WebP，檔案上限 2 MiB；系統會以 MimeKit 與檔案內容共同驗證。</div>
+        <span asp-validation-for="Picture" class="text-danger"></span>
+    </div>
+    @if (Model.HasPicture)
+    {
+        <div class="col-12">
+            <div class="form-check">
+                <input asp-for="RemovePicture" class="form-check-input" />
+                <label asp-for="RemovePicture" class="form-check-label">移除目前圖片</label>
+            </div>
+        </div>
+    }
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">儲存</button>
+        <a asp-action="Index" class="btn btn-secondary">取消</a>
+    </div>
+</form>

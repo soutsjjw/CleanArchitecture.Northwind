@@ -1,0 +1,14 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Products.ProductEditViewModel
+@{
+    ViewData["Title"] = "編輯商品";
+    ViewData["FormAction"] = "Edit";
+}
+
+<div class="container mt-4">
+    <h3 class="mb-3">@ViewData["Title"]</h3>
+    <partial name="_ProductForm" model="Model" view-data="ViewData" />
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

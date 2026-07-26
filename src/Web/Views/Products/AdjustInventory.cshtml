@@ -1,0 +1,34 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Products.InventoryAdjustmentViewModel
+@{
+    ViewData["Title"] = "手動調整庫存";
+}
+
+<div class="container mt-4">
+    <h3>@ViewData["Title"]</h3>
+    <p class="text-muted">@Model.ProductName，目前庫存：@Model.UnitsInStock</p>
+    <form asp-action="AdjustInventory" method="post" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input asp-for="ProtectedId" type="hidden" />
+        <input asp-for="RowVersion" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="col-12 col-md-4">
+            <label asp-for="QuantityDelta" class="form-label">異動數量</label>
+            <input asp-for="QuantityDelta" class="form-control" />
+            <div class="form-text">增加請輸入正數，減少請輸入負數。</div>
+            <span asp-validation-for="QuantityDelta" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Reason" class="form-label">原因</label>
+            <textarea asp-for="Reason" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Reason" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">確認調整</button>
+            <a asp-action="Details" asp-route-id="@Model.ProtectedId" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

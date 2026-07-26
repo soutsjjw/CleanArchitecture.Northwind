@@ -96,6 +96,28 @@ public class ProductImageValidatorTests
         error.ShouldNotBeNullOrWhiteSpace();
     }
 
+    [Test]
+    public void TryValidateStored_accepts_only_allowed_content_types_with_matching_signatures()
+    {
+        var png = CreateImageBytes(ImageKind.Png);
+
+        ProductImageValidator.TryValidateStored(
+                png,
+                "image/png",
+                out var validImage)
+            .ShouldBeTrue();
+        validImage.ShouldNotBeNull();
+        validImage.Content.ShouldBe(png);
+        validImage.ContentType.ShouldBe("image/png");
+
+        ProductImageValidator.TryValidateStored(
+                png,
+                "image/jpeg",
+                out var mismatchedImage)
+            .ShouldBeFalse();
+        mismatchedImage.ShouldBeNull();
+    }
+
     private static FormFile CreateFile(
         byte[] bytes,
         string fileName,
