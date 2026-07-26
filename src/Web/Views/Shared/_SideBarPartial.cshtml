@@ -7,6 +7,7 @@
     var canViewOrders = await AuthorizationService.AuthorizeAsync(User, Policies.Orders);
     var canViewProducts = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Read);
     var canViewCategories = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Read);
+    var canViewSuppliers = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Read);
 }
 <nav id="sidebar" class="active">
     <div class="sidebar-header">
@@ -47,7 +48,7 @@
                 <a asp-action="Index" asp-controller="Orders" onclick="toggleLoadingOverlay();"><i class="fas fa-file-alt"></i>訂單</a>
             </li>
         }
-        @if (canViewProducts.Succeeded)
+        @if (canViewProducts.Succeeded && canViewSuppliers.Succeeded)
         {
             <li>
                 <a asp-action="Index" asp-controller="Products" onclick="toggleLoadingOverlay();"><i class="fas fa-box"></i>商品</a>

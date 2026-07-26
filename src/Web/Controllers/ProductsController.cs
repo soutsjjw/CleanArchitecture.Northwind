@@ -102,7 +102,7 @@ public sealed class ProductsController(
 
     [HttpGet]
     [Authorize(Policy = Policies.Products_Read)]
-    [Authorize(Policy = "Inventory:Read:")]
+    [Authorize(Policy = Policies.Inventory_Read)]
     public async Task<IActionResult> Details(
         string id,
         int pageNumber = 1,
@@ -419,7 +419,7 @@ public sealed class ProductsController(
     }
 
     [HttpGet]
-    [Authorize(Policy = "Inventory:Create:")]
+    [Authorize(Policy = Policies.Inventory_Create)]
     public Task<IActionResult> AdjustInventory(
         string id,
         CancellationToken cancellationToken = default)
@@ -427,7 +427,7 @@ public sealed class ProductsController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "Inventory:Create:")]
+    [Authorize(Policy = Policies.Inventory_Create)]
     public async Task<IActionResult> AdjustInventory(
         InventoryAdjustmentViewModel model,
         CancellationToken cancellationToken = default)
@@ -470,7 +470,7 @@ public sealed class ProductsController(
     }
 
     [HttpGet]
-    [Authorize(Policy = "Inventory:Create:")]
+    [Authorize(Policy = Policies.Inventory_Create)]
     public Task<IActionResult> Stocktake(
         string id,
         CancellationToken cancellationToken = default)
@@ -478,7 +478,7 @@ public sealed class ProductsController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Policy = "Inventory:Create:")]
+    [Authorize(Policy = Policies.Inventory_Create)]
     public async Task<IActionResult> Stocktake(
         StocktakeViewModel model,
         CancellationToken cancellationToken = default)

@@ -7,7 +7,7 @@
     ViewData["Title"] = Model.ProductName;
     var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Update);
     var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Delete);
-    var canChangeInventory = await AuthorizationService.AuthorizeAsync(User, "Inventory:Create:");
+    var canChangeInventory = await AuthorizationService.AuthorizeAsync(User, Policies.Inventory_Create);
 }
 
 <div class="container mt-4">

@@ -72,6 +72,28 @@ public class InventoryModelTests
     }
 
     [Test]
+    public void UpdateEntitiesShouldPreserveProvidedAuditIdentityWithoutCurrentUser()
+    {
+        var timestamp =
+            new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero);
+        var interceptor = new AuditableEntityInterceptor(
+            new TestUser(null),
+            new FixedTimeProvider(timestamp));
+        using var context = CreateContext();
+        var customer = new Customer
+        {
+            Id = "SEED1",
+            CompanyName = "Seed customer",
+            CreatedBy = "seed-admin"
+        };
+
+        context.Add(customer);
+        interceptor.UpdateEntities(context);
+
+        customer.CreatedBy.ShouldBe("seed-admin");
+    }
+
+    [Test]
     public void UpdateEntitiesShouldSetDateTimeAuditFieldsForApplicationUserProfile()
     {
         var timestamp = new DateTimeOffset(2026, 7, 25, 12, 0, 0, TimeSpan.Zero);
@@ -140,7 +162,7 @@ public class InventoryModelTests
             .UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=InventoryModelTests;Integrated Security=True;TrustServerCertificate=True")
             .Options);
 
-    private sealed class TestUser(string id) : Application.Common.Interfaces.IUser
+    private sealed class TestUser(string? id) : Application.Common.Interfaces.IUser
     {
         public string? Id => id;
 

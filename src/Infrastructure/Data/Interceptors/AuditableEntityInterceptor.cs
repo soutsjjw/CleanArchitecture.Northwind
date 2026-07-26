@@ -43,24 +43,37 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             if (entry.State is EntityState.Added or EntityState.Modified || entry.HasChangedOwnedEntities())
             {
                 var utcNow = _dateTime.GetUtcNow();
+                var currentUserId = _user.Id;
                 if (entry.Entity is IAuditableEntity auditableEntity)
                 {
                     if (entry.State == EntityState.Added)
                     {
-                        auditableEntity.CreatedBy = _user.Id;
+                        if (!string.IsNullOrWhiteSpace(currentUserId))
+                        {
+                            auditableEntity.CreatedBy = currentUserId;
+                        }
                         auditableEntity.Created = utcNow.UtcDateTime;
                     }
-                    auditableEntity.LastModifiedBy = _user.Id;
+                    if (!string.IsNullOrWhiteSpace(currentUserId))
+                    {
+                        auditableEntity.LastModifiedBy = currentUserId;
+                    }
                     auditableEntity.LastModified = utcNow.UtcDateTime;
                     continue;
                 }
 
                 if (entry.State == EntityState.Added)
                 {
-                    entry.CurrentValues[nameof(BaseAuditableEntity.CreatedBy)] = _user.Id;
+                    if (!string.IsNullOrWhiteSpace(currentUserId))
+                    {
+                        entry.CurrentValues[nameof(BaseAuditableEntity.CreatedBy)] = currentUserId;
+                    }
                     entry.CurrentValues[nameof(BaseAuditableEntity.Created)] = utcNow;
                 }
-                entry.CurrentValues[nameof(BaseAuditableEntity.LastModifiedBy)] = _user.Id;
+                if (!string.IsNullOrWhiteSpace(currentUserId))
+                {
+                    entry.CurrentValues[nameof(BaseAuditableEntity.LastModifiedBy)] = currentUserId;
+                }
                 entry.CurrentValues[nameof(BaseAuditableEntity.LastModified)] = utcNow;
             }
         }

@@ -39,6 +39,10 @@ public abstract class Policies
     public const string Suppliers_Update = "Suppliers:Update:";
     public const string Suppliers_Delete = "Suppliers:Delete:";
 
+    // Inventory
+    public const string Inventory_Read = "Inventory:Read:";
+    public const string Inventory_Create = "Inventory:Create:";
+
     // Employees
     public const string Employees = "Employees::";
     public const string Employees_Read = "Employees:Read";

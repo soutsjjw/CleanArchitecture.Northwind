@@ -17,8 +17,8 @@ public class ProductsControllerTests
         AssertActionPolicy(nameof(ProductsController.Edit), Policies.Products_Update);
         AssertActionPolicy(nameof(ProductsController.Delete), Policies.Products_Delete);
         AssertActionPolicy(nameof(ProductsController.SetDiscontinued), Policies.Products_Update);
-        AssertActionPolicy(nameof(ProductsController.AdjustInventory), "Inventory:Create:");
-        AssertActionPolicy(nameof(ProductsController.Stocktake), "Inventory:Create:");
+        AssertActionPolicy(nameof(ProductsController.AdjustInventory), Policies.Inventory_Create);
+        AssertActionPolicy(nameof(ProductsController.Stocktake), Policies.Inventory_Create);
     }
 
     [Test]
@@ -34,7 +34,7 @@ public class ProductsControllerTests
 
         details.GetCustomAttributes<AuthorizeAttribute>()
             .Select(attribute => attribute.Policy)
-            .ShouldContain("Inventory:Read:");
+            .ShouldContain(Policies.Inventory_Read);
     }
 
     [Test]
