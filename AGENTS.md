@@ -58,7 +58,7 @@ Codex 回覆必須使用繁體中文。
 
 ## 3. 專案結構
 
-預期主要結構：
+目前主要結構：
 
 ```text
 CONTEXT.md
@@ -93,6 +93,8 @@ tests/
 
 ## 4. 分層責任與依賴方向
 
+本節是分層責任、允許依賴與禁止依賴的唯一規範來源；後續章節只補充該層的實作特例。
+
 ### 4.1 分層責任
 
 | 專案 | 角色 | 可放內容 | 禁止內容 |
@@ -125,206 +127,34 @@ tests/
 | Controller -> Infrastructure 實作 | 業務流程應透過 Application；僅 composition root 可註冊實作 |
 | View -> Domain Entity | View 必須使用 ViewModel |
 
-## 5. MVC 架構規則
+### 4.4 各層實作規則
 
-### 5.1 Controller
+**Web／MVC**
 
-Controller 只負責：
+- Controller 接收 HTTP 輸入、處理 ModelState 與導航，將 ViewModel 映射為 Command／Query，透過 `ISender` 呼叫 Application，再將 DTO 映射為 ViewModel。
+- Controller 不得使用 Service Locator 處理業務流程，且必須傳遞 `CancellationToken`。
+- ViewModel 僅用於顯示與 UI 驗證，不得包含業務規則或包裝 EF Core tracking entity；Application DTO 不得依賴 MVC。
+- View 只負責顯示、表單輸入、基本 UI 判斷、Tag Helper 與 ModelState 錯誤呈現，不得查詢或修改資料。
+- Cookie 驗證的瀏覽器狀態變更 Request 必須使用 Anti-Forgery；Bearer Token API、Webhook 與第三方 callback 依其驗證模型處理。
 
-- 接收 Route、QueryString、Form 或 Body。
-- 處理 ModelState 與 MVC 導航。
-- 將 ViewModel 映射為 Command 或 Query。
-- 使用 `ISender` 呼叫 Application。
-- 將 Application DTO 映射為 ViewModel。
-- 回傳 View、Redirect、Json、File 或適當 Status Code。
+**Application 與 Domain**
 
-Controller 不得：
+- Application 是 Use Case 中心；不得出現 `Controller`、`IActionResult`、`ViewResult`、`HttpContext`、`TempData`、Razor、HTML、DbContext 實作或外部 API SDK 實作。
+- Domain 錯誤使用穩定代碼或語意型例外，不直接寫入中文 UI 訊息。
 
-- 寫商業規則或 Use Case 流程。
-- 直接注入或操作 `DbContext`。
-- 直接呼叫 Infrastructure 實作。
-- 將 Domain Entity 傳給 View。
-- 使用 Service Locator 處理業務流程。
-- 無故捨棄 `CancellationToken`。
+**Infrastructure 與 EF Core**
 
-簡化範例：
+- 查詢優先 projection；read-only 查詢優先 `AsNoTracking()`；避免 N+1、過早 `.ToList()` 與迴圈逐筆查詢。
+- Raw SQL 必須參數化；非同步查詢、儲存與外部呼叫必須傳遞 `CancellationToken`。
+- Migration 僅在任務明確要求或模型變更必要時新增。
 
-```csharp
-var result = await sender.Send(query, cancellationToken);
-return View(MapToViewModel(result));
-```
+**Web composition root 與 DI**
 
-實際寫法應優先遵循 Repository 內既有 Controller 慣例。
+- Application 與 Infrastructure 分別提供 DI 註冊擴充方法，僅由 Web composition root 組合；Options 在此綁定，Secret 不得硬編碼。
+- Controller 優先注入 `ISender` 或 Web concern service，不得手動建立 Infrastructure 實作。
+- Health Check、Telemetry 與路由設定沿用既有架構；MVC 使用 `AddControllersWithViews()` 與既有 Controller route，API Controller 存在時可同時 `MapControllers()`。
 
-### 5.2 ViewModel、DTO 與 Entity
-
-| 類型 | 放置位置 | 用途 |
-| --- | --- | --- |
-| MVC ViewModel | `src/Web/Models`、`src/Web/ViewModels` 或 Area 內對應目錄 | View 專用資料形狀與 UI 驗證 |
-| Application DTO | `src/Application/**` | Use Case 輸入與輸出 |
-| Domain Entity | `src/Domain/**` | 領域狀態與行為，不得直接交給 View |
-
-規則：
-
-1. ViewModel 可包含顯示欄位與 UI 驗證屬性，但不可取代 Application 驗證。
-2. ViewModel 不得包含業務規則或包裝 EF Core tracking entity。
-3. Application DTO 不得依賴 MVC，也不應直接作為 Razor 表單模型，除非專案既有慣例如此且沒有 UI 專用需求。
-4. Controller 與 View 間需要保護的欄位依第 12.1 節處理。
-
-### 5.3 Razor View
-
-View 只能負責顯示、表單輸入、基本 UI 條件判斷、Tag Helper 與 ModelState 錯誤呈現。
-
-View 不得查詢資料庫、呼叫 Application 或 Infrastructure、寫商業規則或修改資料。
-
-所有使用 Cookie 驗證、由瀏覽器發出的狀態變更 MVC Request，必須使用 Anti-Forgery。Bearer Token API、Webhook 或第三方 callback 應依其驗證模型處理，不得為了形式強制套用 MVC Anti-Forgery。
-
-## 6. CQRS、MediatR 與驗證
-
-### 6.1 Command 與 Query
-
-- Command 用於改變狀態，常用命名為 `CreateXxxCommand`、`UpdateXxxCommand`、`DeleteXxxCommand`、`ChangeXxxStatusCommand`。
-- Query 用於讀取資料且不得修改狀態，常用命名為 `GetXxxsQuery`、`GetXxxDetailQuery`、`GetXxxOptionsQuery`、`SearchXxxsQuery`。
-
-### 6.2 Handler
-
-1. Handler 放在 `Application` 並協調 Use Case。
-2. Handler 可呼叫 Application 定義的抽象，不得依賴 Infrastructure 實作。
-3. Handler 不得知道 MVC、Controller、ViewModel、TempData、HTML 或 Razor。
-4. Handler 不得直接讀取 `HttpContext`；目前使用者資訊應透過 Application 抽象，例如 `IUser` 或既有介面。
-5. 非同步 Handler、資料存取與外部服務呼叫應一路傳遞 `CancellationToken`。
-
-### 6.3 Validator
-
-| 驗證類型 | 放置位置 |
-| --- | --- |
-| Use Case 輸入規則 | `Application` Validator |
-| UI 顯示格式或必填提示 | MVC ViewModel |
-| 不變的業務規則 | `Domain` |
-
-不可只在 MVC ViewModel 驗證業務規則；Application 必須保護 Use Case 邊界。
-
-## 7. 各層特殊規則
-
-### 7.1 Application
-
-Application 是 Use Case 中心，不是 MVC 輔助層。
-
-不得出現 `Controller`、`IActionResult`、`ViewResult`、`HttpContext`、`TempData`、Razor、HTML、DbContext 實作或外部 API SDK 實作。
-
-### 7.2 Domain
-
-Domain 可包含 Entity、Value Object、Domain Event、Enumeration 與維持狀態一致性的 Domain Method。
-
-不得包含 EF Core attribute、MVC attribute、JSON 傳輸設定、資料庫欄位格式、Application DTO、Infrastructure Service 或 UI 顯示文字。
-
-Domain 錯誤應使用穩定代碼或語意型例外，不要直接寫入中文 UI 訊息。
-
-### 7.3 Infrastructure 與 EF Core
-
-Infrastructure 負責 EF Core DbContext、Entity Configuration、Identity、Repository、Email、File Storage 與第三方 API 實作。
-
-EF Core 規則：
-
-1. 不得將 `DbContext` 暴露給 `Web`。
-2. 查詢優先 projection；read-only 查詢優先 `AsNoTracking()`。
-3. 避免 N+1、過早 `.ToList()` 與迴圈逐筆查詢。
-4. Raw SQL 必須參數化。
-5. 非同步查詢與儲存應傳遞 `CancellationToken`。
-6. Migration 只有在任務明確要求或模型變更必要時才新增。
-
-## 8. Web DI 與 Program.cs
-
-MVC Web 應依既有架構使用：
-
-```csharp
-builder.Services.AddControllersWithViews();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-```
-
-若仍有 API Controller，可同時使用：
-
-```csharp
-app.MapControllers();
-```
-
-DI 規則：
-
-| 項目 | 規則 |
-| --- | --- |
-| Application 註冊 | 由 Application 提供擴充方法 |
-| Infrastructure 註冊 | 由 Infrastructure 提供擴充方法，僅在 Web composition root 呼叫 |
-| Controller | 優先注入 `ISender` 或 Web concern service，不得注入 Infrastructure 實作處理業務 |
-| Options | 在 composition root 綁定 |
-| Secret | 不得硬編碼 |
-| Health Check | 依既有架構在 Web 或 Infrastructure 註冊 |
-| Telemetry | 優先沿用既有 logging、metrics 與 OpenTelemetry 設定 |
-
-不得在 Controller 中手動建立 Infrastructure 實作。
-
-## 9. 資料流
-
-### 9.1 Command 流程
-
-```text
-Browser
-  -> Web Controller / ViewModel
-  -> ISender.Send(Command)
-  -> Application Command Handler
-  -> Domain Entity / Value Object / Domain Rule
-  -> Application Interface
-  -> Infrastructure EF Core / External Service
-  -> Database / External System
-  -> Result
-  -> Redirect / View
-```
-
-### 9.2 Query 流程
-
-Query 不一定需要載入 Domain Entity；應優先使用可翻譯的 projection：
-
-```text
-Browser
-  -> Web Controller
-  -> ISender.Send(Query)
-  -> Application Query Handler
-  -> Application Data Abstraction
-  -> Infrastructure / EF Core Projection
-  -> Application DTO
-  -> Web ViewModel
-  -> Razor View
-```
-
-禁止資料流：
-
-```text
-Controller -> DbContext -> Database
-Controller -> Infrastructure Implementation
-View -> Domain Entity
-Application -> Web
-Application -> Infrastructure
-Domain -> Infrastructure
-Domain -> Web
-```
-
-## 10. 常見需求放置位置
-
-| 需求 | 正確位置 | 說明 |
-| --- | --- | --- |
-| MVC 頁面 | `Web/Controllers`、`Web/Views`、`Web/ViewModels` | 只處理 UI |
-| 查詢功能 | Application Query + Handler | Controller 呼叫 Query |
-| 寫入功能 | Application Command + Handler + Validator | Controller 呼叫 Command |
-| 核心業務 Entity | `Domain` | 核心業務概念與行為 |
-| EF Core 設定 | `Infrastructure` | DbContext 與 Entity Configuration |
-| Email 或檔案儲存 | Application 介面、Infrastructure 實作 | Web 不直接呼叫實作 |
-| UI 文字 | `Web` | 不進 Domain 或 Application |
-| Health Check | `Web` 或 `Infrastructure` | 遵循既有註冊方式 |
-| 測試資源 | 實際存在且責任相符的測試專案 | 優先沿用既有 fixture，不得虛構專案 |
-
-## 11. Mapping 規則
+### 4.5 Mapping 規則
 
 | From | To | 位置 |
 | --- | --- | --- |
@@ -334,15 +164,57 @@ Domain -> Web
 | EF Core Projection | Application DTO | Application Query 或 Infrastructure 實作 |
 | Domain Entity | MVC ViewModel | 不得直接 mapping，應經 Application DTO |
 
-規則：
-
-1. 專案既有 Mapster；大量同名欄位、巢狀物件或集合轉換時，優先使用既有 `MapsterMapper.IMapper`。
-2. 少量欄位、UI 格式化、遮罩或明確判斷，可在 Web 或 Handler 顯式撰寫，不得把重要行為隱藏於 mapping 組態。
+1. 大量同名欄位、巢狀物件或集合轉換時，優先使用既有 `MapsterMapper.IMapper`。
+2. 少量欄位、UI 格式化、遮罩或明確判斷，可在 Web 或 Handler 顯式撰寫。
 3. Application 只設定 Domain、DTO、Command 等可見型別的映射；DTO 到 MVC ViewModel 的組態放在 Web。
-4. EF Core 查詢優先使用可翻譯 projection；只有確認 `ProjectToType` 可轉譯且不造成 N+1 時才使用。
+4. EF Core 查詢只有在 `ProjectToType` 可正確轉譯且不造成 N+1 時才使用。
 5. 不得為單一需求引入新的 mapping 套件。
 
-## 12. 安全規則
+### 4.6 典型資料流
+
+Command：`Browser -> Web Controller／ViewModel -> ISender.Send(Command) -> Application Handler -> Domain -> Application Interface -> Infrastructure -> Database／External System -> Redirect／View`。
+
+Query：`Browser -> Web Controller -> ISender.Send(Query) -> Application Handler -> Application Data Abstraction -> Infrastructure Projection -> Application DTO -> Web ViewModel -> Razor View`。Query 不一定需要載入 Domain Entity，應優先使用可翻譯 projection。
+
+### 4.7 常見需求放置位置
+
+| 需求 | 正確位置 |
+| --- | --- |
+| MVC 頁面、UI 文字 | `Web/Controllers`、`Web/Views`、`Web/ViewModels` |
+| 查詢功能 | Application Query + Handler |
+| 寫入功能 | Application Command + Handler + Validator |
+| 核心業務 Entity | `Domain` |
+| EF Core 設定 | `Infrastructure` |
+| Email 或檔案儲存 | Application 介面、Infrastructure 實作 |
+| Health Check | `Web` 或 `Infrastructure` |
+| 測試資源 | 實際存在且責任相符的測試專案 |
+
+## 5. CQRS、MediatR 與驗證
+
+### 5.1 Command 與 Query
+
+- Command 用於改變狀態，常用命名為 `CreateXxxCommand`、`UpdateXxxCommand`、`DeleteXxxCommand`、`ChangeXxxStatusCommand`。
+- Query 用於讀取資料且不得修改狀態，常用命名為 `GetXxxsQuery`、`GetXxxDetailQuery`、`GetXxxOptionsQuery`、`SearchXxxsQuery`。
+
+### 5.2 Handler
+
+1. Handler 放在 `Application` 並協調 Use Case。
+2. Handler 可呼叫 Application 定義的抽象，不得依賴 Infrastructure 實作。
+3. Handler 不得知道 MVC、Controller、ViewModel、TempData、HTML 或 Razor。
+4. Handler 不得直接讀取 `HttpContext`；目前使用者資訊應透過 Application 抽象，例如 `IUser` 或既有介面。
+5. 非同步 Handler、資料存取與外部服務呼叫應一路傳遞 `CancellationToken`。
+
+### 5.3 Validator
+
+| 驗證類型 | 放置位置 |
+| --- | --- |
+| Use Case 輸入規則 | `Application` Validator |
+| UI 顯示格式或必填提示 | MVC ViewModel |
+| 不變的業務規則 | `Domain` |
+
+不可只在 MVC ViewModel 驗證業務規則；Application 必須保護 Use Case 邊界。
+
+## 6. 安全規則
 
 | 風險 | 規則 |
 | --- | --- |
@@ -357,68 +229,18 @@ Domain -> Web
 | Redirect | 避免 open redirect；外部 URL 必須驗證 |
 | ModelState | 驗證失敗必須以既有 UI 流程安全回應 |
 
-### 12.1 Controller 與 View 間的敏感資料保護
+### 6.1 Controller 與 View 間的敏感資料保護
 
-Controller 與 View 之間透過 Route、QueryString、Form、Hidden Field、ViewModel 或 UI 專用 DTO 傳遞資料時，若專案需求不允許直接暴露，或需要防止客戶端竄改與跨功能重用，應使用 ASP.NET Core Data Protection 的 `IDataProtector` 或專案既有封裝進行保護與還原。
+僅在內部識別值、可被竄改而改變操作的值，或需限定 purpose／有效期限時保護；不要因欄位名為 `Id` 就一律保護。受保護字串仍可能出現在 HTML、URL、Log 或 Proxy，並不取代授權。
 
-不得僅因欄位名稱為 `Id` 就一律保護。公開識別碼、公開 slug 或即使被看見也沒有安全影響的值，可在完成授權與輸入驗證的前提下維持原始格式。
+1. **邊界**：Data Protection 屬於 Web concern。Controller 將必要原始值保護後放入 ViewModel；接收時先還原、驗證，再建立只含業務型別的 Command 或 Query。`Application` 與 `Domain` 不得依賴 `IDataProtector` 或受保護字串格式。
+2. **實作**：purpose 必須穩定且限縮功能範圍，例如 `TodoItems.Edit.ItemId.v1`；ViewModel 使用 `ProtectedId` 等欄位名；只保護必要欄位。多處共用時在 Web 建立封裝。
+3. **失敗與安全**：還原失敗、空值、格式錯誤或竄改時中止操作且不洩漏例外。仍須執行授權、資源擁有權、Anti-Forgery 與業務驗證。高敏感資料避免 URL；時效連結使用 time-limited protector，一次性操作另加伺服器端重放防護。
+4. **部署與測試**：Production 持久化並共用 key ring 與 Application Name。至少驗證合法 round-trip、竄改或錯誤 purpose、還原失敗不送出 Command／Query、未授權拒絕，以及適用時的逾期與重放。
 
-常見適用情境：
+## 7. 測試與驗證
 
-- 不應直接暴露的內部識別值。
-- 可能被竄改而改變查詢、更新、刪除或流程狀態的值。
-- 需要限制在特定功能、特定 purpose 或有效期限內使用的值。
-
-重要語意：受保護字串仍可能出現在 HTML、URL、瀏覽器開發工具、Log 或 Proxy 紀錄中。Data Protection 提供內容的保密性與完整性，不代表資料不可見，也不能取代授權。
-
-分層與資料流：
-
-1. Data Protection 屬於 Web concern；`Application` 與 `Domain` 不得依賴 `Microsoft.AspNetCore.DataProtection`、`IDataProtector` 或受保護字串格式。
-2. Controller 將 Application DTO 映射為 ViewModel 時，先把需要保護的原始值轉為受保護字串。
-3. Controller 接收受保護值後，必須先還原與驗證，再建立 Command 或 Query。
-4. Application Command、Query 與 DTO 只接收還原後的業務型別，例如 `int`、`Guid` 或 Value Object。
-5. 多個 Controller 共用相同邏輯時，應在 `Web` 建立明確封裝，例如 `IViewDataProtector`，避免重複 purpose 與錯誤處理。
-
-實作規則：
-
-1. 每個功能使用穩定且有範圍的 purpose，例如 `TodoItems.Edit.ItemId.v1`，不得全系統共用過度寬泛的 purpose。
-2. ViewModel 使用 `ProtectedId`、`ProtectedUserId` 等可辨識欄位名稱。
-3. 只保護必要欄位，不得將整個 ViewModel 或 Application DTO 序列化後整包保護。
-4. 還原失敗、值為空、格式錯誤或遭竄改時，視為無效輸入並中止後續操作；不得顯示加解密例外細節。
-5. 有效期限連結應使用 time-limited Data Protector 或既有時效 token 機制。
-6. 一次性操作除有效期限外，還必須使用伺服器端狀態、nonce 或使用紀錄防止重放。
-7. 高敏感資料即使已受保護，也應避免放在 URL；優先使用 POST 或伺服器端狀態。
-8. Production 必須持久化 key ring；多執行個體部署時共用 key ring 並使用一致的 Application Name，不得硬編碼金鑰。
-
-安全邊界：
-
-- 還原成功後仍必須檢查 `[Authorize]`、Policy、目前使用者及資源擁有權。
-- Data Protection 不取代 Anti-Forgery。
-- Data Protection 不取代型別、範圍、存在性與業務規則驗證。
-
-建議資料流：
-
-```text
-Application DTO.Id
-  -> Web Controller Protect
-  -> MVC ViewModel.ProtectedId
-  -> Razor View / Form / Route
-  -> Web Controller Unprotect
-  -> 驗證型別、授權與資源存在性
-  -> Application Command 或 Query.Id
-```
-
-最低測試：
-
-1. 合法值 Protect 後可 Unprotect，結果一致。
-2. 字串遭竄改、截斷或使用錯誤 purpose 時必須失敗。
-3. 還原失敗時不得執行後續 Command、Query、更新或刪除。
-4. 還原成功但使用者沒有資源權限時仍必須拒絕。
-5. 有效期限與一次性流程應驗證逾期及重放情境。
-
-## 13. 測試與驗證
-
-### 13.1 測試放置
+### 7.1 測試放置
 
 | 測試類型 | 專案 |
 | --- | --- |
@@ -428,7 +250,7 @@ Application DTO.Id
 | Infrastructure 實作 | `tests/Infrastructure.IntegrationTests` |
 | MVC Controller、路由或 View 行為 | 使用 Repository 內實際存在且責任最接近的測試專案 |
 
-### 13.2 驗證範圍
+### 7.2 驗證範圍
 
 | 變更類型 | 最低建議驗證 |
 | --- | --- |
@@ -453,11 +275,11 @@ dotnet test tests/Infrastructure.IntegrationTests
 
 若必要驗證無法執行，回覆中必須列出未執行命令、原因、未驗證風險與可手動執行的命令。
 
-## 14. CodeGraph 使用規則
+## 8. CodeGraph 使用規則
 
 CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探索與影響分析工具，不取代實際讀檔、Git、建置或測試。
 
-### 14.1 優先使用時機
+### 8.1 優先使用時機
 
 | 場景 | 目的 |
 | --- | --- |
@@ -478,7 +300,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 4. 索引過期時先更新或說明限制。
 5. 只有實際呼叫 CodeGraph 才可聲稱已使用。
 
-### 14.2 通常不需要使用的場景
+### 8.2 通常不需要使用的場景
 
 - 使用者已指定明確檔案與修改位置。
 - README、Markdown、註解或文字修正。
@@ -489,30 +311,30 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 - 單一方法內部或局部靜態資源調整。
 - Git 狀態、diff、commit 範圍與變更清單。
 
-### 14.3 不可用或資料不足時
+### 8.3 不可用或資料不足時
 
 1. 簡要說明原因。
 2. 改用 `rg`、Git、檔案搜尋與直接讀檔完成可安全處理的工作。
 3. 不得因 CodeGraph 不可用而停止整個任務。
 4. 不得假裝已使用或虛構符號、檔案與呼叫關係。
 
-## 15. Codex 實作 SOP
+## 9. Codex 實作 SOP
 
 1. 先讀取使用者指定檔案，以及與任務直接相關的實作、參照與測試。
 2. 若任務涉及 Northwind 業務概念、命名或領域邊界，先讀取 `CONTEXT.md`；若涉及既有架構選擇，先讀取 `docs/adr/` 中相關 ADR。
-3. 依第 14 節判斷是否需要 CodeGraph；只有跨層、呼叫鏈、公開介面或影響分析時才優先使用。
+3. 依第 8 節判斷是否需要 CodeGraph；只有跨層、呼叫鏈、公開介面或影響分析時才優先使用。
 4. 檢查既有命名、資料夾、實作與測試風格，避免建立平行模式。
 5. 判斷功能屬於 Domain、Application、Infrastructure、Web、Shared 或測試專案。
 6. 只修改任務涉及的層；不得為了流程完整而建立不需要的檔案。
 7. 補上與變更風險相稱的測試。
-8. 依第 13 節執行最小且足以證明結果的驗證。
+8. 依第 7 節執行最小且足以證明結果的驗證。
 9. 精簡回報變更、實際驗證與必要風險。
 
 若程式碼、使用者說法、`CONTEXT.md` 或 ADR 互相矛盾，必須先指出衝突並確認哪一項是新的來源事實，不得默默選擇其中一方。
 
 建議實作順序：Domain 規則 → Application Use Case → Infrastructure 實作 → Web UI；只執行任務實際涉及的步驟。
 
-## 16. 禁止修改區域與產生檔案
+## 10. 禁止修改區域與產生檔案
 
 除非任務明確要求，不得修改：
 
@@ -528,7 +350,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 
 不得直接修改 `bin/`、`obj/`、測試結果、編譯輸出、產生的 OpenAPI client 或其他工具自動產生檔案；應修改其來源、模板或產生設定後重新產生。
 
-### 16.1 Git 忽略與提交檢查
+### 10.1 Git 忽略與提交檢查
 
 `.gitignore` 只會排除尚未追蹤的檔案；不會自動停止追蹤已暫存或已提交的檔案。
 
@@ -537,9 +359,9 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 3. 若發現已追蹤的檔案後來被加入 `.gitignore`，必須先以 `git rm --cached -- <path>` 停止追蹤（保留本機檔案），再建立移除追蹤的提交。
 4. 若確有必要版本控制被忽略路徑中的特定檔案，必須取得使用者明確要求、以最小範圍設定例外規則，並在提交回報中說明原因。
 
-## 17. 任務完成回覆
+## 11. 任務完成回覆
 
-### 17.1 小型或局部任務
+### 11.1 小型或局部任務
 
 只需回報：
 
@@ -549,7 +371,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 
 不存在的項目不得輸出空標題。
 
-### 17.2 跨檔案、跨層或 Pull Request
+### 11.2 跨檔案、跨層或 Pull Request
 
 依實際內容使用下列區段，未涉及者省略：
 
@@ -575,7 +397,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 只列出尚未驗證、可能影響或必要補測項目。
 ```
 
-## 18. Skills、領域文件與輸出模式
+## 12. Skills、領域文件與輸出模式
 
 本節是對已安裝 Skills 自動觸發規則的專案級覆寫。使用者要求、安全規則與本文件優先於 Skill。
 
@@ -585,6 +407,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 
 | Skill | 啟用條件 | 不應自動啟用的情況 |
 | --- | --- | --- |
+| `grill-me` | 使用者明確輸入 `/grill-me`、`$grill-me`，或明確要求逐題盤問、壓力測試計畫或設計，但未要求同步維護領域文件 | 一般需求略有不明確、存在多個方案、純程式碼說明或已確認可直接執行的局部任務 |
 | `grill-with-docs` | 使用者明確輸入 `/grill-with-docs`、`$grill-with-docs`，或明確要求針對計畫逐題盤問、壓力測試並同步維護領域文件 | 一般需求略有不明確、存在多個方案、純程式碼說明或已確認可直接執行的局部任務 |
 | `systematic-debugging` | 根因不明、修正曾失敗、測試反覆失敗或現象與預期不一致 | 已有明確根因的局部修正 |
 | `test-driven-development` | 新增或修改明確可測且具中高風險的行為 | 文件、設定文字或極小型低風險修改 |
@@ -593,7 +416,11 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 | `writing-plans` | 多專案、多階段、公開介面、schema 或高風險變更 | 已有完整步驟的簡單任務 |
 | `i-have-adhd` | 使用者明確輸入 `$i-have-adhd`，或明確要求後續回答保持簡短、行動導向 | 不得設為所有 Session 的全域預設 |
 
-### 18.1 `grill-with-docs` 執行規則
+### 12.1 `grill-me` 執行規則
+
+`grill-me` 僅用於釐清及壓力測試計畫或設計；除非使用者另行要求，不得更新 `CONTEXT.md`、建立 ADR 或開始實作。
+
+### 12.2 `grill-with-docs` 執行規則
 
 啟用後必須遵守：
 
@@ -602,11 +429,11 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 3. 每個問題必須附上 Codex 的建議答案與理由，不得只把決策負擔丟給使用者。
 4. 使用具體情境與邊界案例壓力測試設計，並檢查使用者描述是否與程式碼、詞彙表或既有 ADR 衝突。
 5. 領域詞彙一旦確認，立即更新 `CONTEXT.md`，不得等到整場盤問結束後才批次補寫。
-6. 只有符合第 18.3 節門檻的決策才建立 ADR，不得為每個技術選擇建立文件。
+6. 只有符合第 12.4 節門檻的決策才建立 ADR，不得為每個技術選擇建立文件。
 7. 直到使用者明確確認「已達成共同理解」前，不得開始實作、修改程式碼、建立 Migration 或改動設定。
 8. Grilling 結束後先整理共同理解、更新的領域詞彙與 ADR；只有使用者另行要求實作時，才進入計畫與實作流程。
 
-### 18.2 `CONTEXT.md` 規則
+### 12.3 `CONTEXT.md` 規則
 
 本 Repository 採單一 Context，領域詞彙表位於根目錄 `CONTEXT.md`。
 
@@ -625,7 +452,7 @@ CodeGraph 用於理解跨檔案、跨類別與跨分層關係。它是架構探�
 - 功能規格、驗收條件、待辦事項、會議筆記或設計草稿。
 - 架構決策與取捨理由；這些內容應放在 ADR。
 
-### 18.3 ADR 規則
+### 12.4 ADR 規則
 
 ADR 的 canonical 位置為 `docs/adr/`，檔名使用依序編號：
 
@@ -642,7 +469,7 @@ docs/adr/0002-another-decision.md
 
 ADR 應以短篇幅記錄決策、背景與原因；只有真正增加理解時才加入狀態、替代方案或後果。決策改變時新增 ADR 並標記取代關係，不得直接改寫歷史原因，使舊決策看起來從未存在。
 
-### 18.4 其他 Skill 與輸出模式
+### 12.5 其他 Skill 與輸出模式
 
 啟用 `i-have-adhd` 時，先提供答案或下一步、避免重複與岔題；但不得省略安全風險、架構違規、測試失敗、未驗證事項或破壞性操作警告。輸入 `stop adhd mode` 或 `normal mode` 後停止套用。
 
