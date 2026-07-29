@@ -2,6 +2,7 @@ using System.Collections;
 using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Products.Queries.GetProductFormOptions;
+using CleanArchitecture.Northwind.Application.Features.Products.Queries.GetPublicProducts;
 using CleanArchitecture.Northwind.Application.Features.Products.Queries.GetProducts;
 using CleanArchitecture.Northwind.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,54 @@ public class ProductQueryHandlerTests
         result.Data.TotalCount.ShouldBe(2);
         result.Data.PageNumber.ShouldBe(2);
         result.Data.Items.Select(item => item.ProductName).ShouldBe(["B 商品"]);
+    }
+
+    [Test]
+    public async Task PublicProductCatalogShouldReturnOnlyActiveProductsAndCategories()
+    {
+        var activeCategory = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = true
+        };
+        var inactiveCategory = new Category
+        {
+            Id = 4,
+            CategoryName = "停用分類",
+            IsActive = false
+        };
+        var supplier = new Supplier
+        {
+            Id = 5,
+            CompanyName = "供應商",
+            IsActive = true
+        };
+        var products = new[]
+        {
+            Product(1, "可公開商品", activeCategory, supplier, stock: 10, reorderLevel: 2),
+            Product(2, "停售商品", activeCategory, supplier, stock: 10, reorderLevel: 2, discontinued: true),
+            Product(3, "刪除商品", activeCategory, supplier, stock: 10, reorderLevel: 2, isDelete: true),
+            Product(4, "其他分類商品", inactiveCategory, supplier, stock: 10, reorderLevel: 2)
+        };
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(value => value.Products).Returns(CreateDbSet(products).Object);
+        context.Setup(value => value.Categories)
+            .Returns(CreateDbSet(new[] { activeCategory, inactiveCategory }).Object);
+        var handler = new GetPublicProductsQueryHandler(context.Object);
+
+        var result = await handler.Handle(
+            new GetPublicProductsQuery
+            {
+                Keyword = "公開",
+                CategoryId = activeCategory.Id,
+                PageSize = 12
+            },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Products.Items.Select(item => item.ProductName).ShouldBe(["可公開商品"]);
+        result.Data.Categories.ShouldBe([new PublicProductCategoryDto(activeCategory.Id, "飲料")]);
     }
 
     private static Product Product(

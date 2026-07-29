@@ -1,27 +1,96 @@
-@using System.Text.Json
-@model CleanArchitecture.Northwind.Web.ViewModels.Home.OperationsDashboardViewModel
+@model CleanArchitecture.Northwind.Web.ViewModels.Home.PublicProductCatalogViewModel
 @{
-    ViewData["Title"] = "營運儀表板";
-    var dashboardJson = JsonSerializer.Serialize(Model, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+    ViewData["Title"] = "商品展示";
 }
 
-<div class="container-fluid" id="operations-dashboard" data-dashboard-url="@Url.Action("DashboardData", "Home")">
-    <div class="page-title"><h3>營運儀表板</h3><i class="fa-solid fa-chart-line"></i></div>
-    <div class="row g-3 mb-4">
-        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>今日訂單</small><h3 data-dashboard="todayOrderCount">@Model.TodayOrderCount</h3></div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>今日營收</small><h3 data-dashboard="todayRevenue">@Model.TodayRevenue.ToString("N2")</h3></div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>本月訂單</small><h3 data-dashboard="monthlyOrderCount">@Model.MonthlyOrderCount</h3></div></div></div>
-        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>本月營收</small><h3 data-dashboard="monthlyRevenue">@Model.MonthlyRevenue.ToString("N2")</h3></div></div></div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
     </div>
-    <div class="row g-3">
-        <div class="col-lg-4"><div class="card"><div class="card-header">本月出貨狀態</div><div class="card-body dashboard-chart"><canvas id="shipping-status-chart" aria-label="本月出貨狀態圖表"></canvas></div></div></div>
-        <div class="col-lg-4"><div class="card"><div class="card-header">低庫存商品</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>商品</th><th>庫存</th><th>補貨水準</th></tr></thead><tbody data-dashboard-table="lowStockProducts"></tbody></table></div></div></div>
-        <div class="col-lg-4"><div class="card"><div class="card-header">Top 客戶</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>客戶</th><th>訂單</th><th>營收</th></tr></thead><tbody data-dashboard-table="topCustomers"></tbody></table></div></div></div>
-    </div>
+
+    <form id="publicProductSearchForm" method="post" asp-action="Index" class="row g-2 mb-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="keyword">搜尋商品</label>
+            <input id="keyword" name="keyword" value="@Model.Keyword" class="form-control" placeholder="商品名稱或分類" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="categoryId">分類</label>
+            <select id="categoryId" name="categoryId" class="form-select">
+                <option value="">全部分類</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">@category.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">搜尋</button>
+        </div>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var product in Model.Items)
+            {
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <article class="card h-100 shadow-sm">
+                        @if (product.HasPicture)
+                        {
+                            <img src="@Url.Action("ProductImage", new { id = product.Id })" class="card-img-top object-fit-cover" style="height: 220px;" alt="@product.ProductName" />
+                        }
+                        else
+                        {
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 220px;" aria-label="商品暫無圖片">
+                                <i class="fas fa-box-open fa-3x text-secondary" aria-hidden="true"></i>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <div class="text-muted small mb-1">@product.CategoryName</div>
+                            <h4 class="h5 card-title">@product.ProductName</h4>
+                            <p class="card-text mb-0 fw-semibold">@product.UnitPrice.ToString("C")</p>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+
+        <form id="publicProductPaginationForm" method="post" asp-action="Index" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="keyword" value="@Model.Keyword" />
+            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+            <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        </form>
+}
 </div>
-<script id="operations-dashboard-data" type="application/json">@Html.Raw(dashboardJson)</script>
 
 @section Scripts {
-    <script src="~/lib/chart.js/chart.umd.min.js"></script>
-    <script src="~/js/home-dashboard.js"></script>
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        window.saveOrdersScrollPosition = window.saveOrdersScrollPosition ?? (() => {});
+        window.submitOrdersSearch = form => {
+            if (form.dataset.isSubmitting === 'true') {
+                return;
+            }
+
+            form.dataset.isSubmitting = 'true';
+            $('#loadingOverlay').removeClass('d-none');
+            requestAnimationFrame(() => window.setTimeout(() => form.submit(), 0));
+        };
+
+        const publicProductSearchForm = document.querySelector('#publicProductSearchForm');
+        publicProductSearchForm.addEventListener('submit', event => {
+            event.preventDefault();
+            window.submitOrdersSearch(event.currentTarget);
+        });
+
+        window.initPagination('#publicProductPaginationForm');
+    </script>
 }

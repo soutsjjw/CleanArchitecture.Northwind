@@ -8,6 +8,8 @@
     var canViewProducts = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Read);
     var canViewCategories = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Read);
     var canViewSuppliers = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Read);
+    var canViewDashboard = (await AuthorizationService.AuthorizeAsync(User, "Orders:Read:All")).Succeeded
+        && (await AuthorizationService.AuthorizeAsync(User, "Products:Read:All")).Succeeded;
 }
 <nav id="sidebar" class="active">
     <div class="sidebar-header">
@@ -17,6 +19,12 @@
         <li>
             <a asp-action="Index" asp-controller="Home" onclick="toggleLoadingOverlay();"><i class="fa fa-home"></i>首頁</a>
         </li>
+        @if (canViewDashboard)
+        {
+            <li>
+                <a asp-action="Dashboard" asp-controller="Home" onclick="toggleLoadingOverlay();"><i class="fa-solid fa-chart-line"></i>營運儀表板</a>
+            </li>
+        }
         @if (auth)
         {
             <li>

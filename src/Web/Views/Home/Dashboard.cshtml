@@ -1,0 +1,27 @@
+@using System.Text.Json
+@model CleanArchitecture.Northwind.Web.ViewModels.Home.OperationsDashboardViewModel
+@{
+    ViewData["Title"] = "營運儀表板";
+    var dashboardJson = JsonSerializer.Serialize(Model, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+}
+
+<div class="container-fluid" id="operations-dashboard" data-dashboard-url="@Url.Action("DashboardData", "Home")">
+    <div class="page-title"><h3>營運儀表板</h3><i class="fa-solid fa-chart-line"></i></div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>今日訂單</small><h3 data-dashboard="todayOrderCount">@Model.TodayOrderCount</h3></div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>今日營收</small><h3 data-dashboard="todayRevenue">@Model.TodayRevenue.ToString("N2")</h3></div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>本月訂單</small><h3 data-dashboard="monthlyOrderCount">@Model.MonthlyOrderCount</h3></div></div></div>
+        <div class="col-md-6 col-xl-3"><div class="card dashboard-card"><div class="card-body"><small>本月營收</small><h3 data-dashboard="monthlyRevenue">@Model.MonthlyRevenue.ToString("N2")</h3></div></div></div>
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-4"><div class="card"><div class="card-header">本月出貨狀態</div><div class="card-body dashboard-chart"><canvas id="shipping-status-chart" aria-label="本月出貨狀態圖表"></canvas></div></div></div>
+        <div class="col-lg-4"><div class="card"><div class="card-header">低庫存商品</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>商品</th><th>庫存</th><th>補貨水準</th></tr></thead><tbody data-dashboard-table="lowStockProducts"></tbody></table></div></div></div>
+        <div class="col-lg-4"><div class="card"><div class="card-header">Top 客戶</div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>客戶</th><th>訂單</th><th>營收</th></tr></thead><tbody data-dashboard-table="topCustomers"></tbody></table></div></div></div>
+    </div>
+</div>
+<script id="operations-dashboard-data" type="application/json">@Html.Raw(dashboardJson)</script>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script src="~/js/home-dashboard.js"></script>
+}
