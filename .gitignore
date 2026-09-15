@@ -494,3 +494,5 @@ $RECYCLE.BIN/
 # Superpowers local runtime and visual companion state
 .superpowers/
 .worktrees/
+# Added by code-review-graph
+.code-review-graph/
