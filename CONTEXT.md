@@ -24,6 +24,10 @@ _Avoid_: User、Staff Account
 向 Northwind 購買 Product 並建立 Sales Order 的個人或組織。
 _Avoid_: User、Account、Client、Buyer
 
+**Customer Address Region**:
+Customer 聯絡地址中的行政區、州或省等次級地理資訊；它不是由 Territory 組成的營運 Region。
+_Avoid_: Region（未指明地址或營運語境時）
+
 **Supplier**:
 向 Northwind 提供 Product 的外部組織。
 _Avoid_: Vendor、Provider
@@ -80,7 +84,7 @@ _Avoid_: Customer Address、Billing Address
 
 **Region**:
 由多個 Territory 組成的高階營運地理範圍。
-_Avoid_: Area、Zone
+_Avoid_: Area、Zone、Customer Address Region
 
 **Territory**:
 隸屬於一個 Region，並可指派給 Employee 的營運區域。

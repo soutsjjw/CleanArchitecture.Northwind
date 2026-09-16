@@ -61,6 +61,7 @@
                         <th><button type="button" class="js-customer-sort" data-sort-by="Country">國家 @GetSortIndicator(CustomerSortField.Country)</button></th>
                         <th><button type="button" class="js-customer-sort" data-sort-by="City">城市 @GetSortIndicator(CustomerSortField.City)</button></th>
                         <th><button type="button" class="js-customer-sort" data-sort-by="Phone">電話 @GetSortIndicator(CustomerSortField.Phone)</button></th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +73,7 @@
                             <td>@DisplayValue(customer.Country)</td>
                             <td>@DisplayValue(customer.City)</td>
                             <td>@DisplayValue(customer.Phone)</td>
+                            <td><a asp-action="Details" asp-route-id="@customer.DetailsProtectedId" asp-route-keyword="@Model.Keyword" asp-route-country="@Model.Country" asp-route-city="@Model.City" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-primary">檢視</a></td>
                         </tr>
                     }
                 </tbody>

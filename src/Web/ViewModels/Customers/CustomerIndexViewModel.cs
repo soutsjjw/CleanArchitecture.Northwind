@@ -24,6 +24,7 @@ public sealed class CustomerIndexViewModel
 
 public sealed class CustomerListItemViewModel
 {
+    public string DetailsProtectedId { get; init; } = string.Empty;
     public string CompanyName { get; init; } = string.Empty;
     public string ContactName { get; init; } = string.Empty;
     public string Country { get; init; } = string.Empty;
