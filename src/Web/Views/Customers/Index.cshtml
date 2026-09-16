@@ -1,0 +1,142 @@
+@using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomers
+@model CleanArchitecture.Northwind.Web.ViewModels.Customers.CustomerIndexViewModel
+@{
+    ViewData["Title"] = "客戶管理";
+}
+
+<div class="container mt-4">
+    <h3>@ViewData["Title"]</h3>
+
+    <form id="frmCustomerSearch" method="post" asp-action="Index" class="row g-2 mb-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+        <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+        <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
+
+        <div class="col-12 col-md-4">
+            <label class="form-label text-muted" for="keyword">關鍵字</label>
+            <input id="keyword" name="keyword" class="form-control" value="@Model.Keyword" placeholder="公司名稱、聯絡人、國家、城市、電話" />
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label text-muted" for="country">國家</label>
+            <select id="country" name="country" class="form-select">
+                <option value="">全部</option>
+                @foreach (var country in Model.Countries)
+                {
+                    <option value="@country" selected="@(Model.Country == country ? "selected" : null)">@country</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label text-muted" for="city">城市</label>
+            <select id="city" name="city" class="form-select">
+                <option value="">全部</option>
+                @foreach (var city in Model.Cities)
+                {
+                    <option value="@city" selected="@(Model.City == city ? "selected" : null)">@city</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary">查詢</button>
+            <a asp-action="Index" class="btn btn-secondary">取消</a>
+        </div>
+
+        @if (Model.TotalCount == 0)
+        {
+            <partial name="_NoDataPartial" model="@(string.Empty)" />
+        }
+        else
+        {
+            <div class="text-muted mb-2">
+                顯示第 @Model.FirstItemIndex–@Model.LastItemIndex 筆，總計 @Model.TotalCount 筆
+            </div>
+
+            <table class="table table-bordered customers-table">
+                <thead>
+                    <tr>
+                        <th><button type="button" class="js-customer-sort" data-sort-by="CompanyName">公司名稱 @GetSortIndicator(CustomerSortField.CompanyName)</button></th>
+                        <th><button type="button" class="js-customer-sort" data-sort-by="ContactName">聯絡人 @GetSortIndicator(CustomerSortField.ContactName)</button></th>
+                        <th><button type="button" class="js-customer-sort" data-sort-by="Country">國家 @GetSortIndicator(CustomerSortField.Country)</button></th>
+                        <th><button type="button" class="js-customer-sort" data-sort-by="City">城市 @GetSortIndicator(CustomerSortField.City)</button></th>
+                        <th><button type="button" class="js-customer-sort" data-sort-by="Phone">電話 @GetSortIndicator(CustomerSortField.Phone)</button></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model.Items)
+                    {
+                        <tr>
+                            <td>@DisplayValue(customer.CompanyName)</td>
+                            <td>@DisplayValue(customer.ContactName)</td>
+                            <td>@DisplayValue(customer.Country)</td>
+                            <td>@DisplayValue(customer.City)</td>
+                            <td>@DisplayValue(customer.Phone)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        }
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        const customerScrollPositionKey = 'customers-index-scroll-position';
+        window.saveCustomersScrollPosition = () =>
+            sessionStorage.setItem(customerScrollPositionKey, window.scrollY.toString());
+        window.submitCustomersSearch = form => {
+            if (form.dataset.isSubmitting === 'true') {
+                return;
+            }
+
+            form.dataset.isSubmitting = 'true';
+            $('#loadingOverlay').removeClass('d-none');
+            requestAnimationFrame(() => window.setTimeout(() => form.submit(), 0));
+        };
+
+        const savedScrollPosition = sessionStorage.getItem(customerScrollPositionKey);
+        if (savedScrollPosition !== null) {
+            sessionStorage.removeItem(customerScrollPositionKey);
+            requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollPosition)));
+        }
+
+        const form = document.querySelector('#frmCustomerSearch');
+        const country = form.querySelector('#country');
+        const city = form.querySelector('#city');
+        country.addEventListener('change', () => {
+            city.value = '';
+            form.querySelector('input[name="pageNumber"]').value = '1';
+            window.submitCustomersSearch(form);
+        });
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            form.querySelector('input[name="pageNumber"]').value = '1';
+            window.submitCustomersSearch(event.currentTarget);
+        });
+        document.querySelectorAll('.js-customer-sort').forEach(button => {
+            button.addEventListener('click', () => {
+                const sortBy = form.querySelector('input[name="sortBy"]');
+                const sortDescending = form.querySelector('input[name="sortDescending"]');
+                const sameField = sortBy.value === button.dataset.sortBy;
+                sortBy.value = button.dataset.sortBy;
+                sortDescending.value = sameField && sortDescending.value !== 'true' ? 'true' : 'false';
+                form.querySelector('input[name="pageNumber"]').value = '1';
+                window.saveCustomersScrollPosition();
+                window.submitCustomersSearch(form);
+            });
+        });
+        window.initPagination('#frmCustomerSearch');
+    </script>
+}
+
+@functions {
+    private string GetSortIndicator(CustomerSortField field)
+        => Model.SortBy != field ? string.Empty : Model.SortDescending ? "▼" : "▲";
+
+    private static string DisplayValue(string value)
+        => string.IsNullOrWhiteSpace(value) ? "-" : value;
+}

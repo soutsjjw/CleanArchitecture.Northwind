@@ -135,6 +135,7 @@ tests/
 - Controller 不得使用 Service Locator 處理業務流程，且必須傳遞 `CancellationToken`。
 - ViewModel 僅用於顯示與 UI 驗證，不得包含業務規則或包裝 EF Core tracking entity；Application DTO 不得依賴 MVC。
 - View 只負責顯示、表單輸入、基本 UI 判斷、Tag Helper 與 ModelState 錯誤呈現，不得查詢或修改資料。
+- 清單頁表格使用功能專屬的 *-table class；可排序表格應沿用 Orders 清單頁的深色表頭與無邊框排序按鈕樣式，並集中定義於 src/Web/wwwroot/css/site.css。
 - Cookie 驗證的瀏覽器狀態變更 Request 必須使用 Anti-Forgery；Bearer Token API、Webhook 與第三方 callback 依其驗證模型處理。
 
 **Application 與 Domain**

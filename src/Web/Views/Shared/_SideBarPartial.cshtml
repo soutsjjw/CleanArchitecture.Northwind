@@ -5,6 +5,7 @@
     var systemAdmin = User.IsInRole(Roles.SystemAdmin);
     var auth = User.IsInRole(Roles.SystemAdmin) || User.IsInRole(Roles.Administrator);
     var canViewOrders = await AuthorizationService.AuthorizeAsync(User, Policies.Orders);
+    var canViewCustomers = await AuthorizationService.AuthorizeAsync(User, Policies.Customers_Read);
     var canViewProducts = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Read);
     var canViewCategories = await AuthorizationService.AuthorizeAsync(User, Policies.Categories_Read);
     var canViewSuppliers = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Read);
@@ -54,6 +55,12 @@
         {
             <li>
                 <a asp-action="Index" asp-controller="Orders" onclick="toggleLoadingOverlay();"><i class="fas fa-file-alt"></i>訂單</a>
+            </li>
+        }
+        @if (canViewCustomers.Succeeded)
+        {
+            <li>
+                <a asp-action="Index" asp-controller="Customers" onclick="toggleLoadingOverlay();"><i class="fas fa-users"></i>客戶</a>
             </li>
         }
         @if (canViewProducts.Succeeded && canViewSuppliers.Succeeded)

@@ -1,13 +1,15 @@
-﻿html {
+html {
     font-size: 100%;
 }
 
-.orders-table thead th {
+.orders-table thead th,
+.customers-table thead th {
     background-color: #343a40;
     color: #fff;
 }
 
-.orders-table .js-order-sort {
+.orders-table .js-order-sort,
+.customers-table .js-customer-sort {
     padding: 0;
     border: 0;
     background: transparent;
@@ -18,7 +20,9 @@
 }
 
 .orders-table .js-order-sort:hover,
-.orders-table .js-order-sort:focus {
+.orders-table .js-order-sort:focus,
+.customers-table .js-customer-sort:hover,
+.customers-table .js-customer-sort:focus {
     color: inherit;
     text-decoration: none;
 }
