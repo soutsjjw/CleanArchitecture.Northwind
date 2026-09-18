@@ -30,10 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Common\MailTemplate\ConfirmationEmailLetter.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -171,6 +171,13 @@ tests/
 4. EF Core 查詢只有在 `ProjectToType` 可正確轉譯且不造成 N+1 時才使用。
 5. 不得為單一需求引入新的 mapping 套件。
 
+### 4.5.1 Application DTO 放置規則
+
+1. DTO 預設與所屬 Command 或 Query 共置於 Feature 目錄，讓 Use Case 的輸入、輸出與資料形狀保持內聚。
+2. `Application/Common/DTOs` 僅放置穩定、語意一致且確實供多個 Use Case 或 Feature 共用的 DTO；是否提升為 Common 以共用契約與演進方向判斷，不以「已有兩個使用處」作為硬性門檻。
+3. 若不同 Use Case 的欄位、命名或演進需求不同，應維持各自的 DTO，避免為共用而產生耦合。
+4. `Common` DTO 不得依賴特定 Feature 的 Command、Query、Enum 或其他型別；必要的共用型別應放在合適的共同抽象位置，或將 DTO 保留在其所屬 Feature。
+
 ### 4.6 典型資料流
 
 Command：`Browser -> Web Controller／ViewModel -> ISender.Send(Command) -> Application Handler -> Domain -> Application Interface -> Infrastructure -> Database／External System -> Redirect／View`。
