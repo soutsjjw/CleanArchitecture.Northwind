@@ -56,6 +56,23 @@ public class OrdersControllerProtectedIdTests
     }
 
     [Test]
+    public async Task Details_from_customer_history_preserves_customer_return_context()
+    {
+        var mediator = new Mock<IMediator>();
+        mediator.Setup(sender => sender.Send(It.IsAny<GetOrderDetailQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<OrderDetailDto>.Success(new OrderDetailDto { Id = 42 }));
+        var protection = new Mock<IDataProtectionService>();
+        protection.Setup(service => service.Unprotect("protected-order-42")).Returns("42");
+        var controller = CreateController(mediator.Object, protection.Object);
+
+        var result = await controller.Details("protected-order-42", customerDetailsId: "protected-customer", historyPageNumber: 2);
+
+        var model = result.ShouldBeOfType<ViewResult>().Model.ShouldBeOfType<OrderDetailViewModel>();
+        model.CustomerDetailsId.ShouldBe("protected-customer");
+        model.HistoryPageNumber.ShouldBe(2);
+    }
+
+    [Test]
     public async Task DeleteConfirmation_with_valid_protected_order_id_sends_detail_query_with_unprotected_integer_id()
     {
         var mediator = new Mock<IMediator>();

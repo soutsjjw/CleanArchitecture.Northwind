@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomerDetail;
+using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomerOrderHistory;
 using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomers;
 using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Web.Extensions;
@@ -13,7 +15,9 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 [Authorize(Policy = Policies.Customers_Read)]
 public sealed class CustomersController(
     ISender sender,
-    IDataProtectionProvider dataProtectionProvider) : Controller
+    IDataProtectionProvider dataProtectionProvider,
+    IDataProtectionService dataProtectionService,
+    IAuthorizationService authorizationService) : Controller
 {
     private readonly IDataProtector _detailsIdProtector =
         dataProtectionProvider.CreateProtector("Customers.Details.CustomerId.v1");
@@ -54,6 +58,8 @@ public sealed class CustomersController(
         bool sortDescending = false,
         int pageNumber = 1,
         int pageSize = 10,
+        int historyPageNumber = 1,
+        int historyPageSize = 10,
         CancellationToken cancellationToken = default)
     {
         if (!TryUnprotectId(id, out var customerId))
@@ -70,6 +76,23 @@ public sealed class CustomersController(
         }
 
         var customer = result.Data;
+        var canViewOrderHistory = (await authorizationService.AuthorizeAsync(
+            User,
+            Policies.Orders_Read)).Succeeded;
+        var orderHistory = canViewOrderHistory
+            ? await sender.Send(new GetCustomerOrderHistoryQuery(customerId)
+            {
+                PageNumber = historyPageNumber,
+                PageSize = historyPageSize
+            }, cancellationToken)
+            : null;
+
+        if (orderHistory is { Succeeded: false })
+        {
+            return RedirectToAction(nameof(Index), new { keyword, country, city, sortBy, sortDescending, pageNumber, pageSize })
+                .WithError(this, orderHistory.Errors.ToList());
+        }
+
         return View(new CustomerDetailViewModel
         {
             Id = customer.Id,
@@ -89,7 +112,20 @@ public sealed class CustomersController(
             SortBy = sortBy,
             SortDescending = sortDescending,
             PageNumber = pageNumber,
-            PageSize = pageSize
+            PageSize = pageSize,
+            DetailsProtectedId = id,
+            CanViewOrderHistory = canViewOrderHistory,
+            OrderHistory = orderHistory?.Data.Orders,
+            HistoryPageNumber = historyPageNumber,
+            HistoryPageSize = historyPageSize,
+            Orders = orderHistory?.Data.Orders.Items.Select(order => new CustomerOrderHistoryItemViewModel
+            {
+                DetailsProtectedId = dataProtectionService.Protect(order.Id.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                ShippingStatus = order.ShippingStatus,
+                ShipperName = order.ShipperName
+            }).ToList() ?? []
         });
     }
 

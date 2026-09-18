@@ -1,4 +1,5 @@
 @model CleanArchitecture.Northwind.Web.ViewModels.Customers.CustomerDetailViewModel
+@using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders
 @{
     ViewData["Title"] = Model.CompanyName;
 }
@@ -31,9 +32,102 @@
         <dt class="col-sm-3">郵遞區號</dt><dd class="col-sm-9">@DisplayValue(Model.PostalCode)</dd>
         <dt class="col-sm-3">國家</dt><dd class="col-sm-9">@DisplayValue(Model.Country)</dd>
     </dl>
+
+    @if (Model.CanViewOrderHistory && Model.OrderHistory is not null)
+    {
+        <section id="customer-order-history" class="mt-4">
+            <h5>歷史 Sales Order</h5>
+            @if (Model.OrderHistory.TotalCount == 0)
+            {
+                <partial name="_NoDataPartial" model="@(string.Empty)" />
+            }
+            else
+            {
+                <div class="text-muted mb-2">
+                    顯示第 @Model.OrderHistory.FirstItemIndex–@Model.OrderHistory.LastItemIndex 筆，總計 @Model.OrderHistory.TotalCount 筆
+                </div>
+                <table class="table table-bordered orders-table">
+                    <thead>
+                        <tr>
+                            <th>訂單日期</th>
+                            <th class="text-end">金額</th>
+                            <th>出貨狀態</th>
+                            <th>貨運商</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.Orders)
+                        {
+                            <tr>
+                                <td>@FormatDate(order.OrderDate)</td>
+                                <td class="text-end">@order.TotalAmount.ToString("C")</td>
+                                <td><span class="badge @GetShippingStatusBadgeClass(order.ShippingStatus)">@GetShippingStatusText(order.ShippingStatus)</span></td>
+                                <td>@DisplayValue(order.ShipperName)</td>
+                                <td class="text-center">
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.DetailsProtectedId" asp-route-customerDetailsId="@Model.DetailsProtectedId" asp-route-historyPageNumber="@Model.OrderHistory.PageNumber" asp-route-historyPageSize="@Model.OrderHistory.PageSize" class="btn btn-sm btn-outline-primary">檢視明細</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <form id="customer-order-history-pagination" method="get" asp-action="Details">
+                    <input type="hidden" name="id" value="@Model.DetailsProtectedId" />
+                    <input type="hidden" name="keyword" value="@Model.Keyword" />
+                    <input type="hidden" name="country" value="@Model.CountryFilter" />
+                    <input type="hidden" name="city" value="@Model.CityFilter" />
+                    <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                    <input type="hidden" name="sortDescending" value="@Model.SortDescending" />
+                    <input type="hidden" name="pageNumber" value="@Model.PageNumber" />
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                    <input type="hidden" name="historyPageNumber" value="@Model.OrderHistory.PageNumber" />
+                    <input type="hidden" name="historyPageSize" value="@Model.OrderHistory.PageSize" />
+                    <partial name="_PaginationPartial" model="Model.OrderHistory" />
+                </form>
+            }
+        </section>
+    }
 </div>
+
+@section Scripts {
+    <script asp-add-nonce>
+        const customerOrderHistoryPagination = document.querySelector('#customer-order-history-pagination');
+        if (customerOrderHistoryPagination) {
+            customerOrderHistoryPagination.querySelectorAll('.js-page').forEach(button => {
+                button.addEventListener('click', () => {
+                    customerOrderHistoryPagination.querySelector('input[name="historyPageNumber"]').value = button.dataset.page;
+                    customerOrderHistoryPagination.submit();
+                });
+            });
+            customerOrderHistoryPagination.querySelector('.js-page-size')?.addEventListener('change', event => {
+                customerOrderHistoryPagination.querySelector('input[name="historyPageSize"]').value = event.target.value;
+                customerOrderHistoryPagination.querySelector('input[name="historyPageNumber"]').value = '1';
+                customerOrderHistoryPagination.submit();
+            });
+        }
+    </script>
+}
 
 @functions {
     private static string DisplayValue(string? value)
         => string.IsNullOrWhiteSpace(value) ? "-" : value;
+
+    private static string FormatDate(DateTime? value)
+        => value?.ToString("yyyy/MM/dd") ?? "-";
+
+    private static string GetShippingStatusText(OrderShippingStatus status)
+        => status switch
+        {
+            OrderShippingStatus.Shipped => "已出貨",
+            OrderShippingStatus.Overdue => "逾期未出貨",
+            _ => "未出貨"
+        };
+
+    private static string GetShippingStatusBadgeClass(OrderShippingStatus status)
+        => status switch
+        {
+            OrderShippingStatus.Shipped => "text-bg-success",
+            OrderShippingStatus.Overdue => "text-bg-danger",
+            _ => "text-bg-warning"
+        };
 }

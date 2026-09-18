@@ -6,7 +6,14 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>@ViewData["Title"]</h3>
-        <a asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-orderedFrom="@Model.OrderedFrom" asp-route-orderedTo="@Model.OrderedTo" asp-route-shippingStatus="@Model.ShippingStatus" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-secondary">返回清單</a>
+        @if (!string.IsNullOrWhiteSpace(Model.CustomerDetailsId))
+        {
+            <a asp-controller="Customers" asp-action="Details" asp-route-id="@Model.CustomerDetailsId" asp-route-historyPageNumber="@Model.HistoryPageNumber" asp-route-historyPageSize="@Model.HistoryPageSize" class="btn btn-secondary">返回客戶</a>
+        }
+        else
+        {
+            <a asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-orderedFrom="@Model.OrderedFrom" asp-route-orderedTo="@Model.OrderedTo" asp-route-shippingStatus="@Model.ShippingStatus" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-secondary">返回清單</a>
+        }
     </div>
 
     <dl class="row">

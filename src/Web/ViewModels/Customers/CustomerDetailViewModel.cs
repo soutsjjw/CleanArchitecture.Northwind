@@ -1,4 +1,7 @@
+using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomerOrderHistory;
 using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomers;
+using CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrders;
 
 namespace CleanArchitecture.Northwind.Web.ViewModels.Customers;
 
@@ -22,4 +25,19 @@ public sealed class CustomerDetailViewModel
     public bool SortDescending { get; init; }
     public int PageNumber { get; init; }
     public int PageSize { get; init; }
+    public string DetailsProtectedId { get; init; } = string.Empty;
+    public bool CanViewOrderHistory { get; init; }
+    public PaginatedList<CustomerOrderHistoryItemDto>? OrderHistory { get; init; }
+    public int HistoryPageNumber { get; init; } = 1;
+    public int HistoryPageSize { get; init; } = 10;
+    public IReadOnlyList<CustomerOrderHistoryItemViewModel> Orders { get; init; } = [];
+}
+
+public sealed class CustomerOrderHistoryItemViewModel
+{
+    public string DetailsProtectedId { get; init; } = string.Empty;
+    public DateTime? OrderDate { get; init; }
+    public decimal TotalAmount { get; init; }
+    public OrderShippingStatus ShippingStatus { get; init; }
+    public string ShipperName { get; init; } = string.Empty;
 }

@@ -29,6 +29,9 @@ public class OrderDetailViewModel
     public bool SortDescending { get; init; }
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 10;
+    public string? CustomerDetailsId { get; init; }
+    public int HistoryPageNumber { get; init; } = 1;
+    public int HistoryPageSize { get; init; } = 10;
 }
 
 public class OrderLineItemViewModel

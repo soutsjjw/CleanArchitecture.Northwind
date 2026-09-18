@@ -80,14 +80,18 @@ public class OrdersController : BaseController<OrdersController>
         OrderSortField? sortBy = null,
         bool sortDescending = false,
         int pageNumber = 1,
-        int pageSize = 10)
+        int pageSize = 10,
+        string? customerDetailsId = null,
+        int historyPageNumber = 1,
+        int historyPageSize = 10,
+        CancellationToken cancellationToken = default)
     {
         if (!TryUnprotectOrderId(id, out var orderId))
         {
             return RedirectToAction(nameof(Index)).WithError(this, "訂單識別碼無效。");
         }
 
-        var result = await Mediator.Send(new GetOrderDetailQuery { Id = orderId });
+        var result = await Mediator.Send(new GetOrderDetailQuery { Id = orderId }, cancellationToken);
         if (!result.Succeeded)
         {
             return RedirectToAction(nameof(Index)).WithError(this, result.Errors.ToList());
@@ -103,7 +107,7 @@ public class OrdersController : BaseController<OrdersController>
             SortDescending = sortDescending,
             PageNumber = pageNumber,
             PageSize = pageSize
-        }));
+        }, customerDetailsId, historyPageNumber, historyPageSize));
     }
 
     [HttpGet]
@@ -192,7 +196,12 @@ public class OrdersController : BaseController<OrdersController>
         };
     }
 
-    private OrderDetailViewModel MapToDetailViewModel(OrderDetailDto dto, GetOrdersQuery? listQuery = null)
+    private OrderDetailViewModel MapToDetailViewModel(
+        OrderDetailDto dto,
+        GetOrdersQuery? listQuery = null,
+        string? customerDetailsId = null,
+        int historyPageNumber = 1,
+        int historyPageSize = 10)
     {
         var viewModel = _mapper.Map<OrderDetailViewModel>(dto);
 
@@ -222,6 +231,9 @@ public class OrdersController : BaseController<OrdersController>
             SortDescending = listQuery?.SortDescending ?? false,
             PageNumber = listQuery?.PageNumber ?? 1,
             PageSize = listQuery?.PageSize ?? 10,
+            CustomerDetailsId = customerDetailsId,
+            HistoryPageNumber = historyPageNumber,
+            HistoryPageSize = historyPageSize,
             Items = viewModel.Items.Select(item => new OrderLineItemViewModel
             {
                 ProductName = item.ProductName,
