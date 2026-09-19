@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Features.Suppliers.Commands.CreateSupplier;
 using CleanArchitecture.Northwind.Application.Features.Suppliers.Commands.DeleteSupplier;
 using CleanArchitecture.Northwind.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,49 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Suppliers.C
 
 public class SupplierCommandHandlerTests
 {
+    [Test]
+    public async Task CreateSupplierShouldRejectCaseInsensitiveDuplicateCompanyName()
+    {
+        var context = SupplierCommandTestFixture.CreateContext(
+            [new Supplier { Id = 1, CompanyName = "Alpha Co", IsActive = true }], []);
+        var handler = new CreateSupplierCommandHandler(context.Object);
+
+        var result = await handler.Handle(
+            new CreateSupplierCommand { CompanyName = " alpha co " },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(409);
+    }
+
+    [Test]
+    public async Task CreateSupplierShouldAllowCompanyNameReusedAfterSoftDelete()
+    {
+        var context = SupplierCommandTestFixture.CreateContext(
+            [new Supplier { Id = 1, CompanyName = "Alpha Co", IsDelete = true }], []);
+        var handler = new CreateSupplierCommandHandler(context.Object);
+
+        var result = await handler.Handle(
+            new CreateSupplierCommand { CompanyName = "Alpha Co" },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+    }
+
+    [Test]
+    public async Task CreateSupplierShouldRejectNonHttpHomePage()
+    {
+        var context = SupplierCommandTestFixture.CreateContext([], []);
+        var handler = new CreateSupplierCommandHandler(context.Object);
+
+        var result = await handler.Handle(
+            new CreateSupplierCommand { CompanyName = "Alpha Co", HomePage = "ftp://example.test" },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeFalse();
+        result.StatusCode.ShouldBe(400);
+    }
+
     [Test]
     public async Task DeleteSupplierShouldRejectWhenAnyProductReferencesIt()
     {
