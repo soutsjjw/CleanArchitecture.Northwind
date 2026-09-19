@@ -32,6 +32,18 @@ _Avoid_: Region（未指明地址或營運語境時）
 向 Northwind 提供 Product 的外部組織。
 _Avoid_: Vendor、Provider
 
+**Active Supplier**:
+目前可在 Product 新增或改指派時被選用的 Supplier。停用後既有 Product 關聯維持不變，但不得再作為新的指派選項。
+_Avoid_: Deleted Supplier（停用不等於刪除）
+
+**Supplier Home Page**:
+Supplier 對外網站的 HTTP 或 HTTPS 網址；它是聯絡資料，不代表 Northwind 對該網站內容或可用性的保證。
+_Avoid_: Internal Supplier Portal
+
+**Supplier Company Name**:
+用來識別未軟刪除 Supplier 的公司名稱；在該範圍內不得與其他公司名稱重複，且比對時不區分大小寫。
+_Avoid_: Supplier Display Name
+
 **Shipper**:
 負責將 Sales Order 送往 Customer 的運送服務提供者。
 _Avoid_: Supplier、Carrier、Delivery Company
