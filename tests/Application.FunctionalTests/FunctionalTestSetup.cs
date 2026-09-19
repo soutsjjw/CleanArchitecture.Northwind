@@ -18,7 +18,7 @@ public class FunctionalTestSetup
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
-        _database = new MsSqlBuilder().Build();
+        _database = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
 
         await _database.StartAsync();
 

@@ -1,13 +1,23 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace CleanArchitecture.Northwind.Application.Features.Dashboard.Queries.GetOperationsDashboard;
 
+/// <summary>
+/// 取得營運儀錶板查詢處理程式
+/// </summary>
+/// <param name="context"></param>
+/// <param name="dateTimeService"></param>
 public sealed class GetOperationsDashboardQueryHandler(
     IApplicationDbContext context,
     IDateTimeService dateTimeService) : IRequestHandler<GetOperationsDashboardQuery, Result<OperationsDashboardDto>>
 {
+    /// <summary>
+    /// 處理取得營運儀錶板查詢
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<Result<OperationsDashboardDto>> Handle(GetOperationsDashboardQuery request, CancellationToken cancellationToken)
     {
         var today = dateTimeService.Now.Date;
@@ -74,6 +84,15 @@ public sealed class GetOperationsDashboardQueryHandler(
         });
     }
 
+    /// <summary>
+    /// 每月訂單資料列
+    /// </summary>
+    /// <param name="Id">訂單ID</param>
+    /// <param name="CustomerName">客戶名稱</param>
+    /// <param name="OrderDate">訂單日期</param>
+    /// <param name="ShippedDate">出貨日期</param>
+    /// <param name="RequiredDate">需求日期</param>
+    /// <param name="Revenue">營收</param>
     private sealed record MonthlyOrderRow(
         int Id,
         string CustomerName,

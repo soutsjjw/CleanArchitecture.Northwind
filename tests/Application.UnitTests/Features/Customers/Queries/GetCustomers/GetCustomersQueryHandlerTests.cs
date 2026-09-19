@@ -14,6 +14,29 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Customers.Q
 public class GetCustomersQueryHandlerTests
 {
     [Test]
+    public async Task HandleShouldExcludeDeletedCustomersFromPagesAndFilterOptions()
+    {
+        var result = await HandleAsync(new GetCustomersQuery { PageSize = 2 });
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Customers.TotalCount.ShouldBe(5);
+        result.Data.Customers.TotalPages.ShouldBe(3);
+        result.Data.Customers.Items.Select(customer => customer.Id).ShouldBe(["ALFKI", "ANATR"]);
+        result.Data.Countries.ShouldBe(["France", "Germany", "Mexico"]);
+        result.Data.Cities.ShouldBe(["Berlin", "Mexico D.F.", "Munich", "Paris"]);
+    }
+
+    [Test]
+    public async Task HandleShouldNotFindDeletedCustomersByKeyword()
+    {
+        var result = await HandleAsync(new GetCustomersQuery { Keyword = "Deleted" });
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Customers.Items.ShouldBeEmpty();
+        result.Data.Customers.TotalCount.ShouldBe(0);
+    }
+
+    [Test]
     public async Task HandleShouldMatchTrimmedKeywordAgainstPhone()
     {
         var result = await HandleAsync(new GetCustomersQuery
@@ -64,6 +87,22 @@ public class GetCustomersQueryHandlerTests
         var context = new Mock<IApplicationDbContext>();
         context.Setup(x => x.Customers).Returns(CreateDbSet(new[]
         {
+            new Customer
+            {
+                Id = "DEL01",
+                CompanyName = "A Deleted Customer",
+                Country = "Canada",
+                City = "Toronto",
+                IsDelete = true
+            },
+            new Customer
+            {
+                Id = "DEL02",
+                CompanyName = "A Deleted German Customer",
+                Country = "Germany",
+                City = "Hamburg",
+                IsDelete = true
+            },
             new Customer
             {
                 Id = "ALFKI",

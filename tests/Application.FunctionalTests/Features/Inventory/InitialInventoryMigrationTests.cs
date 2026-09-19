@@ -17,7 +17,7 @@ public class InitialInventoryMigrationTests
     [Test]
     public async Task MigrationShouldCreateOneOpeningBalanceWithoutChangingProductStock()
     {
-        await using var database = new MsSqlBuilder().Build();
+        await using var database = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
         await database.StartAsync();
 
         var connectionString = CreateIsolatedDatabaseConnectionString(database.GetConnectionString());

@@ -131,6 +131,8 @@
                 window.submitCustomersSearch(form);
             });
         });
+        window.saveOrdersScrollPosition = window.saveCustomersScrollPosition;
+        window.submitOrdersSearch = window.submitCustomersSearch;
         window.initPagination('#frmCustomerSearch');
     </script>
 }

@@ -10,7 +10,8 @@ public sealed class GetCustomersQueryHandler(IApplicationDbContext context)
         GetCustomersQuery request,
         CancellationToken cancellationToken)
     {
-        var customers = context.Customers.AsNoTracking();
+        var customers = context.Customers.AsNoTracking()
+            .Where(customer => !customer.IsDelete);
 
         var countries = await customers
             .Where(customer => !string.IsNullOrWhiteSpace(customer.Country))
