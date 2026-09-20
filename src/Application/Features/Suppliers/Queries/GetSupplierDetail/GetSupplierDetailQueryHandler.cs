@@ -28,7 +28,18 @@ public sealed class GetSupplierDetailQueryHandler(IApplicationDbContext context)
                 value.HomePage,
                 value.IsActive,
                 context.Products.Count(product =>
-                    product.SupplierId == value.Id && !product.IsDelete)))
+                    product.SupplierId == value.Id && !product.IsDelete),
+                context.Products
+                    .Where(product => product.SupplierId == value.Id
+                        && !product.IsDelete)
+                    .OrderBy(product => product.ProductName)
+                    .Select(product => new SupplierSuppliedProductDto(
+                        product.Id,
+                        product.ProductName,
+                        product.QuantityPerUnit,
+                        product.UnitPrice,
+                        product.Discontinued))
+                    .ToList()))
             .SingleOrDefaultAsync(cancellationToken);
 
         return supplier is null

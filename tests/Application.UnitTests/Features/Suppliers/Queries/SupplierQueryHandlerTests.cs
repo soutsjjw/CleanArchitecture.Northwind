@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Features.Suppliers.Queries.GetSupplierDetail;
 using CleanArchitecture.Northwind.Application.Features.Suppliers.Queries.GetSuppliers;
 using CleanArchitecture.Northwind.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,63 @@ namespace CleanArchitecture.Northwind.Application.UnitTests.Features.Suppliers.Q
 
 public class SupplierQueryHandlerTests
 {
+    [Test]
+    public async Task SupplierDetailShouldIncludeActiveAndDiscontinuedProducts()
+    {
+        var supplier = new Supplier
+        {
+            Id = 3,
+            CompanyName = "Alpha Co",
+            IsActive = false
+        };
+        var products = new[]
+        {
+            new Product
+            {
+                Id = 4,
+                ProductName = "Active product",
+                SupplierId = supplier.Id,
+                QuantityPerUnit = "12 bottles",
+                UnitPrice = 10m,
+                RowVersion = [1]
+            },
+            new Product
+            {
+                Id = 5,
+                ProductName = "Discontinued product",
+                SupplierId = supplier.Id,
+                Discontinued = true,
+                RowVersion = [1]
+            },
+            new Product
+            {
+                Id = 6,
+                ProductName = "Deleted product",
+                SupplierId = supplier.Id,
+                IsDelete = true,
+                RowVersion = [1]
+            }
+        };
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(value => value.Suppliers)
+            .Returns(CreateDbSet([supplier]).Object);
+        context.Setup(value => value.Products)
+            .Returns(CreateDbSet(products).Object);
+        var handler = new GetSupplierDetailQueryHandler(context.Object);
+
+        var result = await handler.Handle(
+            new GetSupplierDetailQuery(supplier.Id),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.IsActive.ShouldBeFalse();
+        result.Data.Products.Select(product => product.ProductName)
+            .ShouldBe(["Active product", "Discontinued product"]);
+        result.Data.Products.Single(
+            product => product.ProductName == "Discontinued product")
+            .Discontinued.ShouldBeTrue();
+    }
+
     [Test]
     public async Task SupplierListShouldFilterKeywordAndStateThenProjectProductCount()
     {

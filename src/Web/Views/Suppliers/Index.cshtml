@@ -83,9 +83,9 @@
                             <td>@(supplier.IsActive ? "啟用" : "停用")</td>
                             <td class="text-end">@supplier.ProductCount</td>
                             <td class="text-nowrap">
+                                <a asp-action="Details" asp-route-id="@supplier.DetailsProtectedId" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActive" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-primary">明細</a>
                                 @if (canEdit.Succeeded)
                                 {
-                                    <a asp-action="Edit" asp-route-id="@supplier.EditProtectedId" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActive" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-secondary">編輯</a>
                                     <form asp-action="SetActive" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@supplier.SetActiveProtectedId" />
@@ -99,7 +99,7 @@
                                         <button class="btn btn-sm btn-outline-warning">@(supplier.IsActive ? "停用" : "恢復")</button>
                                     </form>
                                 }
-                                @if (canDelete.Succeeded)
+                                @if (canDelete.Succeeded && supplier.ProductCount == 0)
                                 {
                                     <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('確定刪除？若已有商品使用，系統會拒絕刪除。');">
                                         @Html.AntiForgeryToken()

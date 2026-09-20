@@ -1,0 +1,86 @@
+@inject IAuthorizationService AuthorizationService
+@using CleanArchitecture.Northwind.Domain.Constants
+@using Microsoft.AspNetCore.Authorization
+@model CleanArchitecture.Northwind.Web.ViewModels.Suppliers.SupplierDetailViewModel
+@{
+    ViewData["Title"] = Model.CompanyName;
+    var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Update);
+    var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Delete);
+    var canReadProducts = await AuthorizationService.AuthorizeAsync(User, Policies.Products_Read);
+    var canReadInventory = await AuthorizationService.AuthorizeAsync(User, Policies.Inventory_Read);
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@ViewData["Title"]</h3>
+        <div>
+            <a asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActiveFilter" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-secondary">返回清單</a>
+            @if (canEdit.Succeeded)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.EditProtectedId" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActiveFilter" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-primary">編輯</a>
+            }
+        </div>
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">狀態</dt><dd class="col-sm-9">@(Model.IsActive ? "啟用" : "已停用")</dd>
+        <dt class="col-sm-3">聯絡人</dt><dd class="col-sm-9">@(Model.ContactName ?? "-")</dd>
+        <dt class="col-sm-3">職稱</dt><dd class="col-sm-9">@(Model.ContactTitle ?? "-")</dd>
+        <dt class="col-sm-3">地址</dt><dd class="col-sm-9">@string.Join(" ", new[] { Model.Address, Model.City, Model.Region, Model.PostalCode, Model.Country }.Where(value => !string.IsNullOrWhiteSpace(value)))</dd>
+        <dt class="col-sm-3">電話</dt><dd class="col-sm-9">@(Model.Phone ?? "-")</dd>
+        <dt class="col-sm-3">傳真</dt><dd class="col-sm-9">@(Model.Fax ?? "-")</dd>
+        <dt class="col-sm-3">網站首頁</dt>
+        <dd class="col-sm-9">
+            @if (!string.IsNullOrWhiteSpace(Model.HomePage))
+            {
+                <a href="@Model.HomePage" target="_blank" rel="noopener noreferrer">@Model.HomePage</a>
+            }
+            else { <text>-</text> }
+        </dd>
+    </dl>
+
+    <div class="d-flex gap-2 mb-4">
+        @if (canEdit.Succeeded)
+        {
+            <form asp-action="SetActive" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.SetActiveProtectedId" />
+                <input type="hidden" name="isActive" value="@((!Model.IsActive).ToString().ToLowerInvariant())" />
+                <button type="submit" class="btn btn-outline-warning">@(Model.IsActive ? "停用" : "恢復啟用")</button>
+            </form>
+        }
+        @if (canDelete.Succeeded && Model.ProductCount == 0)
+        {
+            <form asp-action="Delete" method="post" onsubmit="return confirm('確定刪除供應商？');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.DeleteProtectedId" />
+                <button type="submit" class="btn btn-outline-danger">刪除</button>
+            </form>
+        }
+    </div>
+
+    <h5>供應商品</h5>
+    @if (Model.Products.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered supplier-table align-middle">
+                <thead><tr><th>商品名稱</th><th>包裝量</th><th class="text-end">單價</th><th>狀態</th></tr></thead>
+                <tbody>
+                @foreach (var product in Model.Products)
+                {
+                    <tr>
+                        <td>@if (canReadProducts.Succeeded && canReadInventory.Succeeded) { <a asp-controller="Products" asp-action="Details" asp-route-id="@product.DetailsProtectedId">@product.ProductName</a> } else { @product.ProductName }</td>
+                        <td>@(product.QuantityPerUnit ?? "-")</td>
+                        <td class="text-end">@(product.UnitPrice?.ToString("C") ?? "-")</td>
+                        <td>@(product.Discontinued ? "已停售" : "販售中")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

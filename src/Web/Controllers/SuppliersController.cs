@@ -19,6 +19,7 @@ namespace CleanArchitecture.Northwind.Web.Controllers;
 [Authorize]
 public sealed class SuppliersController(ISender sender, IDataProtectionProvider provider) : Controller
 {
+    private readonly IDataProtector _details = provider.CreateProtector("Suppliers.Details.ItemId.v1");
     private readonly IDataProtector _edit = provider.CreateProtector("Suppliers.Edit.ItemId.v1");
     private readonly IDataProtector _delete = provider.CreateProtector("Suppliers.Delete.ItemId.v1");
     private readonly IDataProtector _active = provider.CreateProtector("Suppliers.SetActive.ItemId.v1");
@@ -29,13 +30,22 @@ public sealed class SuppliersController(ISender sender, IDataProtectionProvider 
         var result = await sender.Send(new GetSuppliersQuery { Keyword = keyword, IsActive = isActive, SortBy = sortBy, SortDescending = sortDescending, PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
         if (!result.Succeeded) return RedirectToAction("Index", "Home").WithError(this, result.Errors.ToList());
         var page = result.Data;
-        return View(new SupplierIndexViewModel { Keyword = keyword, IsActive = isActive, SortBy = sortBy, SortDescending = sortDescending, Pagination = page, Items = page.Items.Select(x => new SupplierListItemViewModel { CompanyName = x.CompanyName, ContactName = x.ContactName, Phone = x.Phone, Country = x.Country, IsActive = x.IsActive, ProductCount = x.ProductCount, EditProtectedId = Protect(_edit, x.Id), DeleteProtectedId = Protect(_delete, x.Id), SetActiveProtectedId = Protect(_active, x.Id) }).ToList() });
+        return View(new SupplierIndexViewModel { Keyword = keyword, IsActive = isActive, SortBy = sortBy, SortDescending = sortDescending, Pagination = page, Items = page.Items.Select(x => new SupplierListItemViewModel { CompanyName = x.CompanyName, ContactName = x.ContactName, Phone = x.Phone, Country = x.Country, IsActive = x.IsActive, ProductCount = x.ProductCount, DetailsProtectedId = Protect(_details, x.Id), EditProtectedId = Protect(_edit, x.Id), DeleteProtectedId = Protect(_delete, x.Id), SetActiveProtectedId = Protect(_active, x.Id) }).ToList() });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Read)]
     [ActionName(nameof(Index))]
     public Task<IActionResult> Search(string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         => Index(keyword, isActive, sortBy, sortDescending, pageNumber, pageSize, cancellationToken);
+
+    [HttpGet, Authorize(Policy = Policies.Suppliers_Read)]
+    public async Task<IActionResult> Details(string id, string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        if (!TryUnprotect(_details, id, out var supplierId)) return NotFound();
+        var result = await sender.Send(new GetSupplierDetailQuery(supplierId), cancellationToken);
+        if (!result.Succeeded) return NotFound();
+        return View(MapDetails(result.Data, keyword, isActive, sortBy, sortDescending, pageNumber, pageSize));
+    }
 
     [HttpGet, Authorize(Policy = Policies.Suppliers_Create)] public IActionResult Create() => View(new SupplierEditViewModel());
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Create)]
@@ -94,7 +104,9 @@ public sealed class SuppliersController(ISender sender, IDataProtectionProvider 
     private static CreateSupplierCommand MapCreate(SupplierEditViewModel x) => new() { CompanyName = x.CompanyName, ContactName = x.ContactName, ContactTitle = x.ContactTitle, Address = x.Address, City = x.City, Region = x.Region, PostalCode = x.PostalCode, Country = x.Country, Phone = x.Phone, Fax = x.Fax, HomePage = x.HomePage };
     private static UpdateSupplierCommand MapUpdate(SupplierEditViewModel x, int id) => new() { Id = id, CompanyName = x.CompanyName, ContactName = x.ContactName, ContactTitle = x.ContactTitle, Address = x.Address, City = x.City, Region = x.Region, PostalCode = x.PostalCode, Country = x.Country, Phone = x.Phone, Fax = x.Fax, HomePage = x.HomePage };
     private static SupplierEditViewModel MapEdit(SupplierDetailDto x, string id) => new() { ProtectedId = id, CompanyName = x.CompanyName, ContactName = x.ContactName, ContactTitle = x.ContactTitle, Address = x.Address, City = x.City, Region = x.Region, PostalCode = x.PostalCode, Country = x.Country, Phone = x.Phone, Fax = x.Fax, HomePage = x.HomePage, IsActive = x.IsActive, ProductCount = x.ProductCount };
+    private SupplierDetailViewModel MapDetails(SupplierDetailDto x, string? keyword, bool? isActive, SupplierSortField? sortBy, bool sortDescending, int pageNumber, int pageSize) => new() { Keyword = keyword, IsActiveFilter = isActive, SortBy = sortBy, SortDescending = sortDescending, PageNumber = pageNumber, PageSize = pageSize, DetailsProtectedId = Protect(_details, x.Id), EditProtectedId = Protect(_edit, x.Id), DeleteProtectedId = Protect(_delete, x.Id), SetActiveProtectedId = Protect(_active, x.Id), CompanyName = x.CompanyName, ContactName = x.ContactName, ContactTitle = x.ContactTitle, Address = x.Address, City = x.City, Region = x.Region, PostalCode = x.PostalCode, Country = x.Country, Phone = x.Phone, Fax = x.Fax, HomePage = GetSafeHomePage(x.HomePage), IsActive = x.IsActive, ProductCount = x.ProductCount, Products = x.Products.Select(product => new SupplierSuppliedProductViewModel { DetailsProtectedId = Protect(provider.CreateProtector("Products.Details.ItemId.v1"), product.Id), ProductName = product.ProductName, QuantityPerUnit = product.QuantityPerUnit, UnitPrice = product.UnitPrice, Discontinued = product.Discontinued }).ToList() };
     private void AddErrors(Result result) { foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error); }
     private static string Protect(IDataProtector protector, int id) => protector.Protect(id.ToString(CultureInfo.InvariantCulture));
+    private static string? GetSafeHomePage(string? value) => Uri.TryCreate(value, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps) ? uri.AbsoluteUri : null;
     private static bool TryUnprotect(IDataProtector protector, string? value, out int id) { id = 0; try { return !string.IsNullOrWhiteSpace(value) && int.TryParse(protector.Unprotect(value), NumberStyles.None, CultureInfo.InvariantCulture, out id) && id > 0; } catch (CryptographicException) { return false; } }
 }

@@ -14,4 +14,5 @@ public sealed record SupplierDetailDto(
     string? Fax,
     string? HomePage,
     bool IsActive,
-    int ProductCount);
+    int ProductCount,
+    IReadOnlyList<SupplierSuppliedProductDto> Products);

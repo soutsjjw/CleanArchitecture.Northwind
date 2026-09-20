@@ -43,18 +43,34 @@ public class SupplierCommandHandlerTests
         result.Succeeded.ShouldBeTrue();
     }
 
-    [Test]
-    public async Task CreateSupplierShouldRejectNonHttpHomePage()
+    [TestCase("ftp://example.test")]
+    [TestCase("/supplier")]
+    [TestCase("javascript:alert(1)")]
+    public async Task CreateSupplierShouldRejectNonHttpHomePage(string homePage)
     {
         var context = SupplierCommandTestFixture.CreateContext([], []);
         var handler = new CreateSupplierCommandHandler(context.Object);
 
         var result = await handler.Handle(
-            new CreateSupplierCommand { CompanyName = "Alpha Co", HomePage = "ftp://example.test" },
+            new CreateSupplierCommand { CompanyName = "Alpha Co", HomePage = homePage },
             CancellationToken.None);
 
         result.Succeeded.ShouldBeFalse();
         result.StatusCode.ShouldBe(400);
+    }
+
+    [TestCase("http://example.test")]
+    [TestCase("https://example.test")]
+    public async Task CreateSupplierShouldAcceptHttpHomePage(string homePage)
+    {
+        var context = SupplierCommandTestFixture.CreateContext([], []);
+        var handler = new CreateSupplierCommandHandler(context.Object);
+
+        var result = await handler.Handle(
+            new CreateSupplierCommand { CompanyName = "Alpha Co", HomePage = homePage },
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
     }
 
     [Test]

@@ -15,6 +15,7 @@ public sealed class SupplierIndexViewModel
 
 public sealed class SupplierListItemViewModel
 {
+    public string DetailsProtectedId { get; init; } = string.Empty;
     public string EditProtectedId { get; init; } = string.Empty;
     public string DeleteProtectedId { get; init; } = string.Empty;
     public string SetActiveProtectedId { get; init; } = string.Empty;

@@ -3,6 +3,7 @@ using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Suppliers.Commands.DeleteSupplier;
 using CleanArchitecture.Northwind.Application.Features.Suppliers.Commands.SetSupplierActive;
 using CleanArchitecture.Northwind.Application.Features.Suppliers.Commands.UpdateSupplier;
+using CleanArchitecture.Northwind.Application.Features.Suppliers.Queries.GetSupplierDetail;
 using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Web.Controllers;
 using CleanArchitecture.Northwind.Web.ViewModels.Suppliers;
@@ -16,6 +17,55 @@ namespace CleanArchitecture.Northwind.Web.FunctionalTests.Controllers;
 
 public class SuppliersControllerTests
 {
+    [Test]
+    public async Task SupplierEditTokenCannotAuthorizeDetails()
+    {
+        var sender = new Mock<ISender>();
+        var provider = new EphemeralDataProtectionProvider();
+        var controller = new SuppliersController(sender.Object, provider);
+        var editToken = provider.CreateProtector("Suppliers.Edit.ItemId.v1").Protect("7");
+
+        var result = await controller.Details(
+            editToken,
+            cancellationToken: CancellationToken.None);
+
+        result.ShouldBeOfType<NotFoundResult>();
+        sender.Verify(value => value.Send(
+            It.IsAny<GetSupplierDetailQuery>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Test]
+    public async Task SupplierDetailsShouldPreserveCurrentListState()
+    {
+        var sender = new Mock<ISender>();
+        sender.Setup(value => value.Send(
+                It.IsAny<GetSupplierDetailQuery>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<SupplierDetailDto>.Success(new SupplierDetailDto(
+                7, "Alpha Co", null, null, null, null, null, null, null,
+                null, null, null, true, 0, [])));
+        var provider = new EphemeralDataProtectionProvider();
+        var controller = new SuppliersController(sender.Object, provider);
+        var detailsToken = provider.CreateProtector("Suppliers.Details.ItemId.v1")
+            .Protect("7");
+
+        var result = await controller.Details(
+            detailsToken,
+            keyword: "Alpha",
+            isActive: true,
+            pageNumber: 2,
+            pageSize: 25,
+            cancellationToken: CancellationToken.None);
+
+        var view = result.ShouldBeOfType<ViewResult>();
+        var model = view.Model.ShouldBeOfType<SupplierDetailViewModel>();
+        model.Keyword.ShouldBe("Alpha");
+        model.IsActiveFilter.ShouldBeTrue();
+        model.PageNumber.ShouldBe(2);
+        model.PageSize.ShouldBe(25);
+    }
+
     [Test]
     public async Task SupplierEditTokenCannotAuthorizeDelete()
     {
@@ -101,6 +151,16 @@ public class SuppliersControllerTests
         actions.ShouldNotBeEmpty();
         actions.SelectMany(method => method.GetCustomAttributes<AuthorizeAttribute>()).Select(attribute => attribute.Policy).ShouldContain(policy);
         actions.Where(method => method.GetCustomAttribute<HttpPostAttribute>() != null).ShouldAllBe(method => method.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>() != null);
+    }
+
+    [Test]
+    public void SupplierDetailsRequiresReadPolicy()
+    {
+        var action = typeof(SuppliersController).GetMethod(nameof(SuppliersController.Details));
+
+        action!.GetCustomAttributes<AuthorizeAttribute>()
+            .Select(attribute => attribute.Policy)
+            .ShouldContain(Policies.Suppliers_Read);
     }
 
     [Test]
