@@ -1,0 +1,3 @@
+@model CleanArchitecture.Northwind.Web.ViewModels.Suppliers.SupplierEditViewModel
+@{ ViewData["Title"] = "編輯供應商"; ViewData["FormAction"] = "Edit"; }
+<div class="container mt-4"><h3>編輯供應商</h3>@if (!Model.IsActive) { <div class="alert alert-warning">此供應商目前已停用，既有商品仍保留關聯。</div> }<partial name="_SupplierForm" model="Model" view-data="ViewData" /></div>
