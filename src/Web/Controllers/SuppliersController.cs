@@ -24,13 +24,18 @@ public sealed class SuppliersController(ISender sender, IDataProtectionProvider 
     private readonly IDataProtector _active = provider.CreateProtector("Suppliers.SetActive.ItemId.v1");
 
     [HttpGet, Authorize(Policy = Policies.Suppliers_Read)]
-    public async Task<IActionResult> Index(string? keyword = null, bool? isActive = null, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetSuppliersQuery { Keyword = keyword, IsActive = isActive, PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
+        var result = await sender.Send(new GetSuppliersQuery { Keyword = keyword, IsActive = isActive, SortBy = sortBy, SortDescending = sortDescending, PageNumber = pageNumber, PageSize = pageSize }, cancellationToken);
         if (!result.Succeeded) return RedirectToAction("Index", "Home").WithError(this, result.Errors.ToList());
         var page = result.Data;
-        return View(new SupplierIndexViewModel { Keyword = keyword, IsActive = isActive, Pagination = page, Items = page.Items.Select(x => new SupplierListItemViewModel { CompanyName = x.CompanyName, ContactName = x.ContactName, Phone = x.Phone, Country = x.Country, IsActive = x.IsActive, ProductCount = x.ProductCount, EditProtectedId = Protect(_edit, x.Id), DeleteProtectedId = Protect(_delete, x.Id), SetActiveProtectedId = Protect(_active, x.Id) }).ToList() });
+        return View(new SupplierIndexViewModel { Keyword = keyword, IsActive = isActive, SortBy = sortBy, SortDescending = sortDescending, Pagination = page, Items = page.Items.Select(x => new SupplierListItemViewModel { CompanyName = x.CompanyName, ContactName = x.ContactName, Phone = x.Phone, Country = x.Country, IsActive = x.IsActive, ProductCount = x.ProductCount, EditProtectedId = Protect(_edit, x.Id), DeleteProtectedId = Protect(_delete, x.Id), SetActiveProtectedId = Protect(_active, x.Id) }).ToList() });
     }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Read)]
+    [ActionName(nameof(Index))]
+    public Task<IActionResult> Search(string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+        => Index(keyword, isActive, sortBy, sortDescending, pageNumber, pageSize, cancellationToken);
 
     [HttpGet, Authorize(Policy = Policies.Suppliers_Create)] public IActionResult Create() => View(new SupplierEditViewModel());
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Create)]
@@ -43,11 +48,19 @@ public sealed class SuppliersController(ISender sender, IDataProtectionProvider 
     }
 
     [HttpGet, Authorize(Policy = Policies.Suppliers_Update)]
-    public async Task<IActionResult> Edit(string id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Edit(string id, string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         if (!TryUnprotect(_edit, id, out var supplierId)) return NotFound();
         var result = await sender.Send(new GetSupplierDetailQuery(supplierId), cancellationToken);
-        return !result.Succeeded ? NotFound() : View(MapEdit(result.Data, Protect(_edit, supplierId)));
+        if (!result.Succeeded) return NotFound();
+        var model = MapEdit(result.Data, Protect(_edit, supplierId));
+        model.Keyword = keyword;
+        model.IsActiveFilter = isActive;
+        model.SortBy = sortBy;
+        model.SortDescending = sortDescending;
+        model.PageNumber = pageNumber;
+        model.PageSize = pageSize;
+        return View(model);
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Update)]
@@ -57,23 +70,25 @@ public sealed class SuppliersController(ISender sender, IDataProtectionProvider 
         if (!ModelState.IsValid) return View(model);
         var result = await sender.Send(MapUpdate(model, supplierId), cancellationToken);
         if (!result.Succeeded) { AddErrors(result); return View(model); }
-        return RedirectToAction(nameof(Index)).WithSuccess(this, "供應商已更新。");
+        return RedirectToAction(nameof(Index), new { model.Keyword, isActive = model.IsActiveFilter, model.SortBy, model.SortDescending, model.PageNumber, model.PageSize }).WithSuccess(this, "供應商已更新。");
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Delete)]
-    public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(string id, string? keyword = null, bool? isActive = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         if (!TryUnprotect(_delete, id, out var supplierId)) return NotFound();
         var result = await sender.Send(new DeleteSupplierCommand { Id = supplierId }, cancellationToken);
-        return result.Succeeded ? RedirectToAction(nameof(Index)).WithSuccess(this, "供應商已刪除。") : RedirectToAction(nameof(Index)).WithError(this, result.Errors.ToList());
+        var listState = new { keyword, isActive, sortBy, sortDescending, pageNumber, pageSize };
+        return result.Succeeded ? RedirectToAction(nameof(Index), listState).WithSuccess(this, "供應商已刪除。") : RedirectToAction(nameof(Index), listState).WithError(this, result.Errors.ToList());
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policies.Suppliers_Update)]
-    public async Task<IActionResult> SetActive(string id, bool isActive, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> SetActive(string id, bool isActive, string? keyword = null, bool? isActiveFilter = null, SupplierSortField? sortBy = null, bool sortDescending = false, int pageNumber = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         if (!TryUnprotect(_active, id, out var supplierId)) return NotFound();
         var result = await sender.Send(new SetSupplierActiveCommand(supplierId, isActive), cancellationToken);
-        return result.Succeeded ? RedirectToAction(nameof(Index)).WithSuccess(this, isActive ? "供應商已恢復啟用。" : "供應商已停用。") : RedirectToAction(nameof(Index)).WithError(this, result.Errors.ToList());
+        var listState = new { keyword, isActive = isActiveFilter, sortBy, sortDescending, pageNumber, pageSize };
+        return result.Succeeded ? RedirectToAction(nameof(Index), listState).WithSuccess(this, isActive ? "供應商已恢復啟用。" : "供應商已停用。") : RedirectToAction(nameof(Index), listState).WithError(this, result.Errors.ToList());
     }
 
     private static CreateSupplierCommand MapCreate(SupplierEditViewModel x) => new() { CompanyName = x.CompanyName, ContactName = x.ContactName, ContactTitle = x.ContactTitle, Address = x.Address, City = x.City, Region = x.Region, PostalCode = x.PostalCode, Country = x.Country, Phone = x.Phone, Fax = x.Fax, HomePage = x.HomePage };

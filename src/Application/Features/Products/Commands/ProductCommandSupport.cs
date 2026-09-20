@@ -85,6 +85,4 @@ internal static class ProductCommandSupport
             : "供應商不存在或已停用。";
     }
 
-    internal static string? TrimToNull(string? value)
-        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

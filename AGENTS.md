@@ -135,7 +135,7 @@ tests/
 - Controller 不得使用 Service Locator 處理業務流程，且必須傳遞 `CancellationToken`。
 - ViewModel 僅用於顯示與 UI 驗證，不得包含業務規則或包裝 EF Core tracking entity；Application DTO 不得依賴 MVC。
 - View 只負責顯示、表單輸入、基本 UI 判斷、Tag Helper 與 ModelState 錯誤呈現，不得查詢或修改資料。
-- 清單頁表格使用功能專屬的 *-table class；可排序表格應沿用 Orders 清單頁的深色表頭與無邊框排序按鈕樣式，並集中定義於 src/Web/wwwroot/css/site.css。
+- 清單頁表格使用功能專屬的 *-table class；所有管理清單表格的表頭應沿用客戶管理表格的深色表頭樣式，並集中定義於 src/Web/wwwroot/css/site.css。可排序表格另應沿用 Orders 清單頁的無邊框排序按鈕樣式。
 - Cookie 驗證的瀏覽器狀態變更 Request 必須使用 Anti-Forgery；Bearer Token API、Webhook 與第三方 callback 依其驗證模型處理。
 
 **Application 與 Domain**
@@ -154,6 +154,14 @@ tests/
 - Application 與 Infrastructure 分別提供 DI 註冊擴充方法，僅由 Web composition root 組合；Options 在此綁定，Secret 不得硬編碼。
 - Controller 優先注入 `ISender` 或 Web concern service，不得手動建立 Infrastructure 實作。
 - Health Check、Telemetry 與路由設定沿用既有架構；MVC 使用 `AddControllersWithViews()` 與既有 Controller route，API Controller 存在時可同時 `MapControllers()`。
+
+### 4.4.1 Extensions 放置規則
+
+- `Application`：放置 Use Case 輸入正規化、流程協助或 Application 專屬邏輯的擴充。
+- `Infrastructure`：放置依賴 EF Core、Identity、資料庫、檔案、外部服務或其他技術實作的擴充。
+- `Web`／未來 `API`：放置僅服務各自 HTTP 或呈現層的擴充。
+- `Shared`：只放不含業務規則、UI、HTTP 或技術依賴，且已由兩個以上獨立專案使用的共用擴充。
+- 不得僅因預期未來可能使用，就提前移至 `Shared`。
 
 ### 4.5 Mapping 規則
 

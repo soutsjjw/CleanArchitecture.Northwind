@@ -1,10 +1,177 @@
 @inject IAuthorizationService AuthorizationService
+@using CleanArchitecture.Northwind.Application.Features.Suppliers.Queries.GetSuppliers
 @using CleanArchitecture.Northwind.Domain.Constants
 @using Microsoft.AspNetCore.Authorization
 @model CleanArchitecture.Northwind.Web.ViewModels.Suppliers.SupplierIndexViewModel
-@{ ViewData["Title"] = "供應商"; var canCreate = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Create); var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Update); var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Delete); }
-<div class="container mt-4"><div class="d-flex justify-content-between align-items-center mb-3"><h3>供應商</h3>@if (canCreate.Succeeded) { <a asp-action="Create" class="btn btn-primary">新增供應商</a> }</div>
-<form asp-action="Index" method="get" class="row g-2"><div class="col-md-6"><label class="form-label">關鍵字</label><input name="keyword" value="@Model.Keyword" class="form-control" /></div><div class="col-md-3"><label class="form-label">狀態</label><select name="isActive" class="form-select"><option value="">全部</option><option value="true" selected="@(Model.IsActive == true ? "selected" : null)">啟用</option><option value="false" selected="@(Model.IsActive == false ? "selected" : null)">停用</option></select></div><div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary me-2">查詢</button><a asp-action="Index" class="btn btn-secondary">清除</a></div></form>
-@if (Model.Items.Count == 0) { <partial name="_NoDataPartial" model="@(string.Empty)" /> } else { <div class="table-responsive mt-3"><table class="table supplier-table align-middle"><thead><tr><th>公司名稱</th><th>聯絡人</th><th>電話</th><th>國家</th><th>狀態</th><th class="text-end">供應商品數</th><th>操作</th></tr></thead><tbody>@foreach (var supplier in Model.Items) { <tr><td>@supplier.CompanyName</td><td>@supplier.ContactName</td><td>@supplier.Phone</td><td>@supplier.Country</td><td>@(supplier.IsActive ? "啟用" : "停用")</td><td class="text-end">@supplier.ProductCount</td><td class="text-nowrap">@if (canEdit.Succeeded) { <a asp-action="Edit" asp-route-id="@supplier.EditProtectedId" class="btn btn-sm btn-outline-secondary">編輯</a><form asp-action="SetActive" method="post" class="d-inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@supplier.SetActiveProtectedId" /><input type="hidden" name="isActive" value="@((!supplier.IsActive).ToString().ToLowerInvariant())" /><button class="btn btn-sm btn-outline-warning">@(supplier.IsActive ? "停用" : "恢復")</button></form>} @if (canDelete.Succeeded) { <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('確定刪除？若已有商品使用，系統會拒絕刪除。');">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@supplier.DeleteProtectedId" /><button class="btn btn-sm btn-outline-danger">刪除</button></form>}</td></tr>}</tbody></table></div><form id="supplierPaginationForm" asp-action="Index" method="get"><input type="hidden" name="keyword" value="@Model.Keyword" /><input type="hidden" name="isActive" value="@Model.IsActive" /><input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" /><partial name="_PaginationPartial" model="Model.Pagination" /></form> }
+
+@{
+    ViewData["Title"] = "供應商";
+    var canCreate = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Create);
+    var canEdit = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Update);
+    var canDelete = await AuthorizationService.AuthorizeAsync(User, Policies.Suppliers_Delete);
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>供應商</h3>
+        @if (canCreate.Succeeded)
+        {
+            <a asp-action="Create" class="btn btn-primary">新增供應商</a>
+        }
+    </div>
+    <form id="supplierSearchForm" asp-action="Index" method="post" class="row g-2">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+        <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
+        <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+        <div class="col-md-6">
+            <label class="form-label">關鍵字</label>
+            <input name="keyword" value="@Model.Keyword" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">狀態</label>
+            <select name="isActive" class="form-select">
+                <option value="">全部</option>
+                <option value="true" selected="@(Model.IsActive == true ? "selected" : null)">啟用</option>
+                <option value="false" selected="@(Model.IsActive == false ? "selected" : null)">停用</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button class="btn btn-primary me-2">查詢</button>
+            <a asp-action="Index" class="btn btn-secondary">清除</a>
+        </div>
+    </form>
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_NoDataPartial" model="@(string.Empty)" />
+    }
+    else
+    {
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered supplier-table align-middle">
+                <thead>
+                    <tr>
+                        <th>
+                            <button type="button" class="js-supplier-sort" data-sort-by="CompanyName">公司名稱 @GetSortIndicator(SupplierSortField.CompanyName)</button>
+                        </th>
+                        <th>
+                            <button type="button" class="js-supplier-sort" data-sort-by="ContactName">聯絡人 @GetSortIndicator(SupplierSortField.ContactName)</button>
+                        </th>
+                        <th>
+                            <button type="button" class="js-supplier-sort" data-sort-by="Phone">電話 @GetSortIndicator(SupplierSortField.Phone)</button>
+                        </th>
+                        <th>
+                            <button type="button" class="js-supplier-sort" data-sort-by="Country">國家 @GetSortIndicator(SupplierSortField.Country)</button>
+                        </th>
+                        <th>
+                            <button type="button" class="js-supplier-sort" data-sort-by="IsActive">狀態 @GetSortIndicator(SupplierSortField.IsActive)</button>
+                        </th>
+                        <th class="text-end">
+                            <button type="button" class="js-supplier-sort" data-sort-by="ProductCount">供應商品數 @GetSortIndicator(SupplierSortField.ProductCount)</button>
+                        </th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var supplier in Model.Items)
+                    {
+                        <tr>
+                            <td>@supplier.CompanyName</td>
+                            <td>@supplier.ContactName</td>
+                            <td>@supplier.Phone</td>
+                            <td>@supplier.Country</td>
+                            <td>@(supplier.IsActive ? "啟用" : "停用")</td>
+                            <td class="text-end">@supplier.ProductCount</td>
+                            <td class="text-nowrap">
+                                @if (canEdit.Succeeded)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@supplier.EditProtectedId" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActive" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-secondary">編輯</a>
+                                    <form asp-action="SetActive" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@supplier.SetActiveProtectedId" />
+                                        <input type="hidden" name="isActive" value="@((!supplier.IsActive).ToString().ToLowerInvariant())" />
+                                        <input type="hidden" name="keyword" value="@Model.Keyword" />
+                                        <input type="hidden" name="isActiveFilter" value="@Model.IsActive" />
+                                        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                                        <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
+                                        <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+                                        <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+                                        <button class="btn btn-sm btn-outline-warning">@(supplier.IsActive ? "停用" : "恢復")</button>
+                                    </form>
+                                }
+                                @if (canDelete.Succeeded)
+                                {
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('確定刪除？若已有商品使用，系統會拒絕刪除。');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@supplier.DeleteProtectedId" />
+                                        <input type="hidden" name="keyword" value="@Model.Keyword" />
+                                        <input type="hidden" name="isActive" value="@Model.IsActive" />
+                                        <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                                        <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
+                                        <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+                                        <input type="hidden" name="pageSize" value="@Model.Pagination.PageSize" />
+                                        <button class="btn btn-sm btn-outline-danger">刪除</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <form id="supplierPaginationForm" asp-action="Index" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="keyword" value="@Model.Keyword" />
+            <input type="hidden" name="isActive" value="@Model.IsActive" />
+            <input type="hidden" name="sortBy" value="@Model.SortBy" />
+            <input type="hidden" name="sortDescending" value="@Model.SortDescending.ToString().ToLowerInvariant()" />
+            <input type="hidden" name="pageNumber" value="@Model.Pagination.PageNumber" />
+            <partial name="_PaginationPartial" model="Model.Pagination" />
+        </form>
+    }
 </div>
-@section Scripts { <script src="~/js/pagination.js"></script><script asp-add-nonce>window.initPagination('#supplierPaginationForm');</script> }
+
+@section Scripts {
+    <script src="~/js/pagination.js"></script>
+    <script asp-add-nonce>
+        const supplierSearchForm = document.querySelector('#supplierSearchForm');
+        const supplierScrollPositionKey = 'suppliers-index-scroll-position';
+        window.saveSuppliersScrollPosition = () =>
+            sessionStorage.setItem(supplierScrollPositionKey, window.scrollY.toString());
+        window.submitSuppliersSearch = form => {
+            if (form.dataset.isSubmitting === 'true') {
+                return;
+            }
+
+            form.dataset.isSubmitting = 'true';
+            $('#loadingOverlay').removeClass('d-none');
+            requestAnimationFrame(() => window.setTimeout(() => form.submit(), 0));
+        };
+
+        supplierSearchForm.addEventListener('submit', event => {
+            event.preventDefault();
+            supplierSearchForm.querySelector('input[name="pageNumber"]').value = '1';
+            window.submitSuppliersSearch(supplierSearchForm);
+        });
+        document.querySelectorAll('.js-supplier-sort').forEach(button => {
+            button.addEventListener('click', () => {
+                const sortBy = supplierSearchForm.querySelector('input[name="sortBy"]');
+                const sortDescending = supplierSearchForm.querySelector('input[name="sortDescending"]');
+                const sameField = sortBy.value === button.dataset.sortBy;
+                sortBy.value = button.dataset.sortBy;
+                sortDescending.value = sameField && sortDescending.value !== 'true' ? 'true' : 'false';
+                supplierSearchForm.querySelector('input[name="pageNumber"]').value = '1';
+                window.saveSuppliersScrollPosition();
+                window.submitSuppliersSearch(supplierSearchForm);
+            });
+        });
+        window.saveOrdersScrollPosition = window.saveSuppliersScrollPosition;
+        window.submitOrdersSearch = window.submitSuppliersSearch;
+        window.initPagination('#supplierPaginationForm');
+    </script>
+}
+
+@functions {
+    private string GetSortIndicator(SupplierSortField field)
+        => Model.SortBy != field ? string.Empty : Model.SortDescending ? "▼" : "▲";
+}

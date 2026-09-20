@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Extensions;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Products.Commands;
 
@@ -122,7 +123,7 @@ public sealed class UpdateProductCommandHandler(IApplicationDbContext context)
         product.ProductName = request.ProductName.Trim();
         product.CategoryId = request.CategoryId;
         product.SupplierId = request.SupplierId;
-        product.QuantityPerUnit = ProductCommandSupport.TrimToNull(request.QuantityPerUnit);
+        product.QuantityPerUnit = request.QuantityPerUnit.TrimToNull();
         product.UnitPrice = request.UnitPrice;
         product.ReorderLevel = request.ReorderLevel ?? 0;
 
@@ -135,7 +136,7 @@ public sealed class UpdateProductCommandHandler(IApplicationDbContext context)
         {
             product.Picture = request.Picture.ToArray();
             product.PictureContentType =
-                ProductCommandSupport.TrimToNull(request.PictureContentType);
+                request.PictureContentType.TrimToNull();
         }
 
         await context.SaveChangesAsync(cancellationToken);

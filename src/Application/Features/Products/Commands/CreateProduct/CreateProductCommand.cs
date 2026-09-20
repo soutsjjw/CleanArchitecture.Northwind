@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Extensions;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Products.Commands;
 using CleanArchitecture.Northwind.Domain.Entities;
@@ -99,14 +100,14 @@ public sealed class CreateProductCommandHandler(IApplicationDbContext context)
             ProductName = request.ProductName.Trim(),
             CategoryId = request.CategoryId,
             SupplierId = request.SupplierId,
-            QuantityPerUnit = ProductCommandSupport.TrimToNull(request.QuantityPerUnit),
+            QuantityPerUnit = request.QuantityPerUnit.TrimToNull(),
             UnitPrice = request.UnitPrice,
             UnitsInStock = 0,
             UnitsOnOrder = 0,
             ReorderLevel = request.ReorderLevel ?? 0,
             Discontinued = false,
             Picture = request.Picture?.ToArray(),
-            PictureContentType = ProductCommandSupport.TrimToNull(request.PictureContentType)
+            PictureContentType = request.PictureContentType.TrimToNull()
         };
 
         context.Products.Add(product);

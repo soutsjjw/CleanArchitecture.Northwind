@@ -39,6 +39,54 @@ public class SupplierQueryHandlerTests
         result.Data.Items.ShouldBe([new SupplierListItemDto(2, "Alpha Co", "Amy", "01", "Taiwan", true, 1)]);
     }
 
+    [Test]
+    public async Task SupplierListShouldSortByCountryDescending()
+    {
+        var suppliers = new[]
+        {
+            new Supplier { Id = 1, CompanyName = "Alpha", Country = "Taiwan", IsActive = true },
+            new Supplier { Id = 2, CompanyName = "Beta", Country = "Japan", IsActive = true },
+            new Supplier { Id = 3, CompanyName = "Gamma", Country = "Korea", IsActive = true }
+        };
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(value => value.Suppliers).Returns(CreateDbSet(suppliers).Object);
+        context.Setup(value => value.Products).Returns(CreateDbSet(Array.Empty<Product>()).Object);
+        var handler = new GetSuppliersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetSuppliersQuery
+        {
+            SortBy = SupplierSortField.Country,
+            SortDescending = true,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Items.Select(supplier => supplier.CompanyName).ShouldBe(["Alpha", "Gamma", "Beta"]);
+    }
+
+    [Test]
+    public async Task SupplierListShouldSortByStatusAscending()
+    {
+        var suppliers = new[]
+        {
+            new Supplier { Id = 1, CompanyName = "Enabled", IsActive = true },
+            new Supplier { Id = 2, CompanyName = "Disabled", IsActive = false }
+        };
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(value => value.Suppliers).Returns(CreateDbSet(suppliers).Object);
+        context.Setup(value => value.Products).Returns(CreateDbSet(Array.Empty<Product>()).Object);
+        var handler = new GetSuppliersQueryHandler(context.Object);
+
+        var result = await handler.Handle(new GetSuppliersQuery
+        {
+            SortBy = SupplierSortField.IsActive,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        result.Data.Items.Select(supplier => supplier.CompanyName).ShouldBe(["Disabled", "Enabled"]);
+    }
+
     private static Mock<DbSet<T>> CreateDbSet<T>(IEnumerable<T> source) where T : class
     {
         var queryable = source.AsQueryable();

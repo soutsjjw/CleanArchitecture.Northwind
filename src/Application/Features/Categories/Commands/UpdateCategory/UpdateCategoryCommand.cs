@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Extensions;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Categories.Commands;
 
@@ -54,7 +55,7 @@ public sealed class UpdateCategoryCommandHandler(IApplicationDbContext context)
         }
 
         category.CategoryName = request.CategoryName.Trim();
-        category.Description = CategoryCommandSupport.TrimToNull(request.Description);
+        category.Description = request.Description.TrimToNull();
         await context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

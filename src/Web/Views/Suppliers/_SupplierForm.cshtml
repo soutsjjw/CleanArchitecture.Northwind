@@ -1,2 +1,36 @@
 @model CleanArchitecture.Northwind.Web.ViewModels.Suppliers.SupplierEditViewModel
-<form asp-action="@ViewData["FormAction"]" method="post"><partial name="_ValidationSummary" /><input asp-for="ProtectedId" type="hidden" /><div class="row g-3"><div class="col-md-6"><label asp-for="CompanyName" class="form-label">公司名稱</label><input asp-for="CompanyName" class="form-control" /><span asp-validation-for="CompanyName" class="text-danger"></span></div><div class="col-md-6"><label asp-for="ContactName" class="form-label">聯絡人</label><input asp-for="ContactName" class="form-control" /></div><div class="col-md-6"><label asp-for="ContactTitle" class="form-label">聯絡人職稱</label><input asp-for="ContactTitle" class="form-control" /></div><div class="col-md-6"><label asp-for="Phone" class="form-label">電話</label><input asp-for="Phone" class="form-control" /></div><div class="col-md-6"><label asp-for="Fax" class="form-label">傳真</label><input asp-for="Fax" class="form-control" /></div><div class="col-12"><label asp-for="Address" class="form-label">地址</label><input asp-for="Address" class="form-control" /></div><div class="col-md-4"><label asp-for="City" class="form-label">城市</label><input asp-for="City" class="form-control" /></div><div class="col-md-4"><label asp-for="Region" class="form-label">地區</label><input asp-for="Region" class="form-control" /></div><div class="col-md-4"><label asp-for="PostalCode" class="form-label">郵遞區號</label><input asp-for="PostalCode" class="form-control" /></div><div class="col-md-6"><label asp-for="Country" class="form-label">國家</label><input asp-for="Country" class="form-control" /></div><div class="col-md-6"><label asp-for="HomePage" class="form-label">網站首頁</label><input asp-for="HomePage" class="form-control" /></div></div><button class="btn btn-primary mt-3">儲存</button><a asp-action="Index" class="btn btn-secondary mt-3">取消</a></form>
+@{
+    var action = ViewData["FormAction"]?.ToString() ?? "Create";
+}
+
+<form asp-action="@action" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <input asp-for="ProtectedId" type="hidden" />
+    <input asp-for="Keyword" type="hidden" />
+    <input asp-for="IsActiveFilter" type="hidden" />
+    <input asp-for="SortBy" type="hidden" />
+    <input asp-for="SortDescending" type="hidden" />
+    <input asp-for="PageNumber" type="hidden" />
+    <input asp-for="PageSize" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-6"><label asp-for="CompanyName" class="form-label">公司名稱</label><input asp-for="CompanyName" class="form-control" /><span asp-validation-for="CompanyName" class="text-danger"></span></div>
+    <div class="col-md-6"><label asp-for="ContactName" class="form-label">聯絡人</label><input asp-for="ContactName" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="ContactTitle" class="form-label">聯絡人職稱</label><input asp-for="ContactTitle" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="Phone" class="form-label">電話</label><input asp-for="Phone" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="Fax" class="form-label">傳真</label><input asp-for="Fax" class="form-control" /></div>
+    <div class="col-12"><label asp-for="Address" class="form-label">地址</label><input asp-for="Address" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="City" class="form-label">城市</label><input asp-for="City" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="Region" class="form-label">地區</label><input asp-for="Region" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="PostalCode" class="form-label">郵遞區號</label><input asp-for="PostalCode" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="Country" class="form-label">國家</label><input asp-for="Country" class="form-control" /></div>
+    <div class="col-md-6">
+        <label asp-for="HomePage" class="form-label">網站首頁</label>
+        <input asp-for="HomePage" class="form-control" />
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">儲存</button>
+        <a asp-action="Index" asp-route-keyword="@Model.Keyword" asp-route-isActive="@Model.IsActiveFilter" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.PageNumber" asp-route-pageSize="@Model.PageSize" class="btn btn-secondary">取消</a>
+    </div>
+</form>

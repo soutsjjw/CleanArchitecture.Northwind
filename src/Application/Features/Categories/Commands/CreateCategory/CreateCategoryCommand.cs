@@ -1,4 +1,5 @@
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Extensions;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Categories.Commands;
 using CleanArchitecture.Northwind.Domain.Entities;
@@ -40,7 +41,7 @@ public sealed class CreateCategoryCommandHandler(IApplicationDbContext context)
         var category = new Category
         {
             CategoryName = request.CategoryName.Trim(),
-            Description = CategoryCommandSupport.TrimToNull(request.Description),
+            Description = request.Description.TrimToNull(),
             IsActive = true
         };
 
