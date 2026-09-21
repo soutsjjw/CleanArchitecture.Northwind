@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Linq.Expressions;
 using CleanArchitecture.Northwind.Application.Common.Interfaces;
 using CleanArchitecture.Northwind.Application.Common.Models;
 using CleanArchitecture.Northwind.Application.Features.Customers.Queries.GetCustomerDetail;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace CleanArchitecture.Northwind.Application.FunctionalTests.Controllers;
 
@@ -26,9 +29,9 @@ public class CustomersControllerOrderHistoryTests
         authorization.Setup(service => service.AuthorizeAsync(
                 It.IsAny<System.Security.Claims.ClaimsPrincipal>(), It.IsAny<object?>(), Policies.Orders_Read))
             .ReturnsAsync(AuthorizationResult.Success());
-        var controller = CreateController(sender.Object, authorization.Object);
+        var (controller, protectedCustomerId) = CreateController(sender.Object, authorization.Object);
 
-        var result = await controller.Details("protected-customer", historyPageNumber: 2);
+        var result = await controller.Details(protectedCustomerId, historyPageNumber: 2);
 
         result.ShouldBeOfType<ViewResult>().Model.ShouldBeOfType<CustomerDetailViewModel>()
             .CanViewOrderHistory.ShouldBeTrue();
@@ -45,9 +48,9 @@ public class CustomersControllerOrderHistoryTests
         authorization.Setup(service => service.AuthorizeAsync(
                 It.IsAny<System.Security.Claims.ClaimsPrincipal>(), It.IsAny<object?>(), Policies.Orders_Read))
             .ReturnsAsync(AuthorizationResult.Failed());
-        var controller = CreateController(sender.Object, authorization.Object);
+        var (controller, protectedCustomerId) = CreateController(sender.Object, authorization.Object);
 
-        var result = await controller.Details("protected-customer");
+        var result = await controller.Details(protectedCustomerId);
 
         result.ShouldBeOfType<ViewResult>().Model.ShouldBeOfType<CustomerDetailViewModel>()
             .CanViewOrderHistory.ShouldBeFalse();
@@ -68,20 +71,25 @@ public class CustomersControllerOrderHistoryTests
             .ReturnsAsync(Result<CustomerOrderHistoryDto>.Success(new CustomerOrderHistoryDto
             {
                 Orders = PaginatedList<CustomerOrderHistoryItemDto>.CreateAsync(
-                    Array.Empty<CustomerOrderHistoryItemDto>().AsQueryable(), 1, 10).GetAwaiter().GetResult()
+                    new TestAsyncEnumerable<CustomerOrderHistoryItemDto>(
+                        Array.Empty<CustomerOrderHistoryItemDto>().AsQueryable().Expression),
+                    1,
+                    10).GetAwaiter().GetResult()
             }));
         return sender;
     }
 
-    private static CustomersController CreateController(ISender sender, IAuthorizationService authorizationService)
+    private static (CustomersController Controller, string ProtectedCustomerId) CreateController(
+        ISender sender,
+        IAuthorizationService authorizationService)
     {
-        var protector = new Mock<IDataProtector>();
-        protector.Setup(service => service.Unprotect("protected-customer")).Returns("ALFKI");
-        var provider = new Mock<IDataProtectionProvider>();
-        provider.Setup(service => service.CreateProtector("Customers.Details.CustomerId.v1")).Returns(protector.Object);
+        var provider = new EphemeralDataProtectionProvider();
+        var protectedCustomerId = provider
+            .CreateProtector("Customers.Details.CustomerId.v1")
+            .Protect("ALFKI");
 
         var httpContext = new DefaultHttpContext();
-        return new CustomersController(sender, provider.Object, Mock.Of<IDataProtectionService>(), authorizationService)
+        var controller = new CustomersController(sender, provider, Mock.Of<IDataProtectionService>(), authorizationService)
         {
             ControllerContext = new ControllerContext
             {
@@ -91,5 +99,40 @@ public class CustomersControllerOrderHistoryTests
             },
             TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>())
         };
+
+        return (controller, protectedCustomerId);
+    }
+
+    private sealed class TestAsyncQueryProvider<TEntity>(IQueryProvider inner) : IAsyncQueryProvider
+    {
+        public IQueryable CreateQuery(Expression expression) => new TestAsyncEnumerable<TEntity>(expression);
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression) => new TestAsyncEnumerable<TElement>(expression);
+        public object? Execute(Expression expression) => inner.Execute(expression);
+        public TResult Execute<TResult>(Expression expression) => inner.Execute<TResult>(expression);
+
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+        {
+            var resultType = typeof(TResult).GetGenericArguments()[0];
+            var result = typeof(IQueryProvider).GetMethod(nameof(IQueryProvider.Execute), 1, [typeof(Expression)])!
+                .MakeGenericMethod(resultType).Invoke(inner, [expression]);
+            return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
+                .MakeGenericMethod(resultType).Invoke(null, [result])!;
+        }
+    }
+
+    private sealed class TestAsyncEnumerable<T>(Expression expression)
+        : EnumerableQuery<T>(expression), IAsyncEnumerable<T>, IQueryable<T>
+    {
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+            => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+
+        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    }
+
+    private sealed class TestAsyncEnumerator<T>(IEnumerator<T> inner) : IAsyncEnumerator<T>
+    {
+        public T Current => inner.Current;
+        public ValueTask DisposeAsync() { inner.Dispose(); return ValueTask.CompletedTask; }
+        public ValueTask<bool> MoveNextAsync() => new(inner.MoveNext());
     }
 }

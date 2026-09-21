@@ -22,7 +22,9 @@ public class GetCustomerDetailQueryTranslationTests : TestBase
             PostalCode = "12209",
             Country = "Germany",
             Phone = "030-0074321",
-            Fax = "030-0076545"
+            Fax = "030-0076545",
+            Created = DateTimeOffset.UtcNow,
+            CreatedBy = "functional-test"
         });
 
         var result = await TestApp.SendAsync(new GetCustomerDetailQuery("ALFKI"));

@@ -168,7 +168,7 @@ public class SuppliersControllerTests
     public void SupplierIndexPostRequiresAntiForgery()
     {
         var postIndex = typeof(SuppliersController).GetMethods()
-            .Single(method => method.Name == nameof(SuppliersController.Index)
+            .Single(method => method.Name == nameof(SuppliersController.Search)
                 && method.GetCustomAttribute<HttpPostAttribute>() != null);
 
         postIndex.GetCustomAttribute<ValidateAntiForgeryTokenAttribute>().ShouldNotBeNull();

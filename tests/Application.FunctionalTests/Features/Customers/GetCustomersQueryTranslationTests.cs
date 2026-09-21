@@ -13,7 +13,9 @@ public class GetCustomersQueryTranslationTests : TestBase
         await TestApp.AddAsync(new Customer
         {
             Id = "ALFKI",
-            CompanyName = "Alfreds Futterkiste"
+            CompanyName = "Alfreds Futterkiste",
+            Created = DateTimeOffset.UtcNow,
+            CreatedBy = "functional-test"
         });
 
         var result = await TestApp.SendAsync(new GetCustomersQuery
