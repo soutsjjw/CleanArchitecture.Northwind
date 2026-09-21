@@ -1,8 +1,15 @@
 using System.Reflection;
+using CleanArchitecture.Northwind.Application.Common.Models;
+using CleanArchitecture.Northwind.Application.Features.Products.Queries.GetProductDetail;
+using CleanArchitecture.Northwind.Application.Features.Products.Queries.GetProductFormOptions;
 using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Web.Controllers;
+using CleanArchitecture.Northwind.Web.ViewModels.Products;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 
 // This controller-only suite intentionally lives outside the Application
 // functional-test SetUpFixture namespace so it does not start SQL Testcontainers.
@@ -10,6 +17,51 @@ namespace CleanArchitecture.Northwind.Web.FunctionalTests.Controllers;
 
 public class ProductsControllerTests
 {
+    [Test]
+    public async Task ProductEditShouldIncludeItsExistingInactiveSupplier()
+    {
+        var sender = new Mock<ISender>();
+        sender.Setup(value => value.Send(
+                It.IsAny<GetProductDetailQuery>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ProductDetailDto>.Success(new ProductDetailDto(
+                7, "測試商品", 3, "飲料", 5, "已停用供應商", null, 20,
+                0, 0, 0, false, [1], null, null)));
+        sender.Setup(value => value.Send(
+                It.IsAny<GetProductFormOptionsQuery>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<ProductFormOptionsDto>.Success(
+                new ProductFormOptionsDto(
+                    [new ProductFormOptionDto(3, "飲料")],
+                    [new ProductFormOptionDto(6, "啟用供應商")])));
+        var authorization = new Mock<IAuthorizationService>();
+        authorization.Setup(value => value.AuthorizeAsync(
+                It.IsAny<System.Security.Claims.ClaimsPrincipal>(),
+                It.IsAny<object?>(),
+                Policies.Suppliers_Read))
+            .ReturnsAsync(AuthorizationResult.Success());
+        var provider = new EphemeralDataProtectionProvider();
+        var controller = new ProductsController(
+            sender.Object,
+            provider,
+            authorization.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        var protectedId = provider.CreateProtector("Products.Edit.ItemId.v1")
+            .Protect("7");
+
+        var result = await controller.Edit(protectedId, CancellationToken.None);
+
+        var view = result.ShouldBeOfType<ViewResult>();
+        var model = view.Model.ShouldBeOfType<ProductEditViewModel>();
+        model.Suppliers.ShouldContain(
+            supplier => supplier.Id == 5 && supplier.Name == "已停用供應商");
+    }
+
     [Test]
     public void Product_mutating_actions_require_anti_forgery_and_scoped_policies()
     {

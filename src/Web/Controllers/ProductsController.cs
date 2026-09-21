@@ -302,7 +302,10 @@ public sealed class ProductsController(
             ReorderLevel = detail.ReorderLevel,
             HasPicture = detail.Picture is not null
         };
-        await LoadProductOptionsAsync(model, cancellationToken);
+        await LoadProductOptionsAsync(
+            model,
+            cancellationToken,
+            new ProductFormOptionDto(detail.SupplierId, detail.SupplierName));
         return View(model);
     }
 
@@ -570,7 +573,8 @@ public sealed class ProductsController(
 
     private async Task LoadProductOptionsAsync(
         ProductEditViewModel model,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ProductFormOptionDto? existingSupplier = null)
     {
         var result = await sender.Send(
             new GetProductFormOptionsQuery(),
@@ -589,6 +593,17 @@ public sealed class ProductsController(
 
         model.Categories = result.Data.Categories.Select(MapOption).ToList();
         model.Suppliers = result.Data.Suppliers.Select(MapOption).ToList();
+
+        if (existingSupplier is not null
+            && existingSupplier.Id > 0
+            && !model.Suppliers.Any(supplier => supplier.Id == existingSupplier.Id))
+        {
+            model.Suppliers =
+            [
+                .. model.Suppliers,
+                MapOption(existingSupplier)
+            ];
+        }
     }
 
     private ValidatedProductImage? ValidateOptionalImage(IFormFile? file)

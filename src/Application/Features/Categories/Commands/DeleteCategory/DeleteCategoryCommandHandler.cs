@@ -1,0 +1,37 @@
+﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Models;
+
+namespace CleanArchitecture.Northwind.Application.Features.Categories.Commands.DeleteCategory;
+
+public sealed class DeleteCategoryCommandHandler(IApplicationDbContext context)
+    : IRequestHandler<DeleteCategoryCommand, Result>
+{
+    public async Task<Result> Handle(
+        DeleteCategoryCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Id <= 0)
+        {
+            return Result.Failure("分類編號無效。", 400);
+        }
+
+        var category = await context.Categories.FindAsync([request.Id], cancellationToken);
+        if (category is null || category.IsDelete)
+        {
+            return Result.Failure("找不到分類。", 404);
+        }
+
+        var hasProducts = await context.Products
+            .AnyAsync(product => product.CategoryId == request.Id, cancellationToken);
+        if (hasProducts)
+        {
+            return Result.Failure("分類已有商品使用，請改為停用。", 409);
+        }
+
+        category.IsDelete = true;
+        category.IsActive = false;
+        await context.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+}

@@ -61,7 +61,8 @@ internal static class ProductCommandSupport
         IApplicationDbContext context,
         int categoryId,
         int supplierId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? existingSupplierId = null)
     {
         var categoryIsSelectable = await context.Categories
             .AnyAsync(
@@ -78,11 +79,10 @@ internal static class ProductCommandSupport
             .AnyAsync(
                 supplier => supplier.Id == supplierId
                     && !supplier.IsDelete
-                    && supplier.IsActive,
+                    && (supplier.IsActive || supplier.Id == existingSupplierId),
                 cancellationToken);
         return supplierIsSelectable
             ? null
             : "供應商不存在或已停用。";
     }
-
 }

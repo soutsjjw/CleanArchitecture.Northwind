@@ -7,11 +7,10 @@ using CleanArchitecture.Northwind.Application.Features.Suppliers.Queries.GetSupp
 using CleanArchitecture.Northwind.Domain.Constants;
 using CleanArchitecture.Northwind.Web.Controllers;
 using CleanArchitecture.Northwind.Web.ViewModels.Suppliers;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
-using MediatR;
-using Moq;
 
 namespace CleanArchitecture.Northwind.Web.FunctionalTests.Controllers;
 
@@ -61,7 +60,7 @@ public class SuppliersControllerTests
         var view = result.ShouldBeOfType<ViewResult>();
         var model = view.Model.ShouldBeOfType<SupplierDetailViewModel>();
         model.Keyword.ShouldBe("Alpha");
-        model.IsActiveFilter.ShouldBeTrue();
+        model.IsActiveFilter.ShouldBe(true);
         model.PageNumber.ShouldBe(2);
         model.PageSize.ShouldBe(25);
     }
@@ -74,7 +73,9 @@ public class SuppliersControllerTests
         var controller = new SuppliersController(sender.Object, provider);
         var editToken = provider.CreateProtector("Suppliers.Edit.ItemId.v1").Protect("7");
 
-        var result = await controller.Delete(editToken, CancellationToken.None);
+        var result = await controller.Delete(
+            editToken,
+            cancellationToken: CancellationToken.None);
 
         result.ShouldBeOfType<NotFoundResult>();
         sender.Verify(value => value.Send(It.IsAny<DeleteSupplierCommand>(), It.IsAny<CancellationToken>()), Times.Never);

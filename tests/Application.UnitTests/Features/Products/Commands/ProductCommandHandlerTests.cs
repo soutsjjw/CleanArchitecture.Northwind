@@ -214,6 +214,38 @@ public class ProductCommandHandlerTests
     }
 
     [Test]
+    public async Task UpdateProductShouldAllowExistingInactiveSupplierWhenNotReassigned()
+    {
+        var product = CreateProduct();
+        product.SupplierId = 5;
+        var category = new Category
+        {
+            Id = 3,
+            CategoryName = "飲料",
+            IsActive = true
+        };
+        var supplier = new Supplier
+        {
+            Id = 5,
+            CompanyName = "已停用供應商",
+            IsActive = false
+        };
+        var fixture = CreateFixture([product], [], [category], [supplier]);
+        var handler = new UpdateProductCommandHandler(fixture.Context.Object);
+
+        var result = await handler.Handle(
+            ValidUpdate(product.Id, category.Id, supplier.Id),
+            CancellationToken.None);
+
+        result.Succeeded.ShouldBeTrue();
+        product.SupplierId.ShouldBe(supplier.Id);
+        product.ProductName.ShouldBe("更新商品");
+        fixture.Context.Verify(
+            context => context.SaveChangesAsync(It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
     public async Task UpdateProductShouldPreserveInventoryAndExistingPicture()
     {
         var product = CreateProduct();

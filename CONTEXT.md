@@ -33,7 +33,7 @@ _Avoid_: Region（未指明地址或營運語境時）
 _Avoid_: Vendor、Provider
 
 **Active Supplier**:
-目前可在 Product 新增或改指派時被選用的 Supplier。停用後既有 Product 關聯維持不變，但不得再作為新的指派選項。
+目前可在 Product 新增或改指派時被選用的 Supplier。停用後既有 Product 關聯維持不變，既有 Product 仍可更新其他資料，但不得再作為新的指派選項。
 _Avoid_: Deleted Supplier（停用不等於刪除）
 
 **Supplier Home Page**:

@@ -13,5 +13,4 @@ internal static class CategoryCommandSupport
             ? null
             : "分類名稱不可超過 15 個字元。";
     }
-
 }

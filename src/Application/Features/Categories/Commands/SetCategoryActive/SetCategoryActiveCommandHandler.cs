@@ -1,0 +1,29 @@
+﻿using CleanArchitecture.Northwind.Application.Common.Interfaces;
+using CleanArchitecture.Northwind.Application.Common.Models;
+
+namespace CleanArchitecture.Northwind.Application.Features.Categories.Commands.SetCategoryActive;
+
+public sealed class SetCategoryActiveCommandHandler(IApplicationDbContext context)
+    : IRequestHandler<SetCategoryActiveCommand, Result>
+{
+    public async Task<Result> Handle(
+        SetCategoryActiveCommand request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Id <= 0)
+        {
+            return Result.Failure("分類編號無效。", 400);
+        }
+
+        var category = await context.Categories.FindAsync([request.Id], cancellationToken);
+        if (category is null || category.IsDelete)
+        {
+            return Result.Failure("找不到分類。", 404);
+        }
+
+        category.IsActive = request.IsActive;
+        await context.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
+    }
+}
