@@ -12,12 +12,26 @@ public class OrdersDto
 
     public OrderShippingStatus? ShippingStatus { get; init; }
 
+    public int? ShipperId { get; init; }
+
+    public bool UnassignedShipper { get; init; }
+
+    public string? Destination { get; init; }
+
     public OrderSortField? SortBy { get; init; }
 
     public bool SortDescending { get; init; }
 
     public PaginatedList<OrderItemDto> Orders { get; init; } = default!;
+
+    public ShippingOverviewDto ShippingOverview { get; init; } = default!;
+
+    public IReadOnlyList<ShipperOptionDto> ShipperOptions { get; init; } = Array.Empty<ShipperOptionDto>();
 }
+
+public sealed record ShippingOverviewDto(int UnshippedCount, int ShippedCount, int OverdueCount);
+
+public sealed record ShipperOptionDto(int Id, string CompanyName);
 
 public class OrderItemDto
 {

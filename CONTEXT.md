@@ -48,6 +48,10 @@ _Avoid_: Supplier Display Name
 負責將 Sales Order 送往 Customer 的運送服務提供者。
 _Avoid_: Supplier、Carrier、Delivery Company
 
+**Unassigned Shipper Sales Order**:
+尚未指定 Shipper 的 Sales Order。它可為未出貨狀態，且應能作為出貨作業中的獨立篩選條件。
+_Avoid_: Unknown Carrier Order、Unshipped Order（未出貨不必然未指定 Shipper）
+
 ### Product catalog
 
 **Category**:
@@ -83,6 +87,10 @@ _Avoid_: Due Date、Delivery Deadline
 **Shipped Date**:
 Sales Order 實際交付給 Shipper 的日期。
 _Avoid_: Delivery Date、Completed Date
+
+**Overdue Unshipped Sales Order**:
+尚未有 Shipped Date，且 Required Date 早於 Asia/Taipei 當日的 Sales Order。未設定 Required Date 的未出貨 Sales Order 不屬於逾期。
+_Avoid_: Late Delivery、Overdue Shipment
 
 **Freight**:
 Sales Order 的運送費用。

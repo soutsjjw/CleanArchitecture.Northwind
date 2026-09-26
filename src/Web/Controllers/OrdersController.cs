@@ -30,8 +30,10 @@ public class OrdersController : BaseController<OrdersController>
 
     [HttpGet]
     [Authorize(Policy = Policies.Orders_Read)]
-    public Task<IActionResult> Index()
-        => GetIndexAsync(new GetOrdersQuery());
+    public Task<IActionResult> Index(
+        [FromQuery] GetOrdersQuery query,
+        CancellationToken cancellationToken = default)
+        => GetIndexAsync(query, cancellationToken);
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -41,25 +43,32 @@ public class OrdersController : BaseController<OrdersController>
         DateTime? orderedFrom = null,
         DateTime? orderedTo = null,
         OrderShippingStatus? shippingStatus = null,
+        int? shipperId = null,
+        bool unassignedShipper = false,
+        string? destination = null,
         OrderSortField? sortBy = null,
         bool sortDescending = false,
         int pageNumber = 1,
-        int pageSize = 10)
+        int pageSize = 10,
+        CancellationToken cancellationToken = default)
         => GetIndexAsync(new GetOrdersQuery
         {
             Keyword = keyword,
             OrderedFrom = orderedFrom,
             OrderedTo = orderedTo,
             ShippingStatus = shippingStatus,
+            ShipperId = shipperId,
+            UnassignedShipper = unassignedShipper,
+            Destination = destination,
             SortBy = sortBy,
             SortDescending = sortDescending,
             PageNumber = pageNumber,
             PageSize = pageSize
-        });
+        }, cancellationToken);
 
-    private async Task<IActionResult> GetIndexAsync(GetOrdersQuery query)
+    private async Task<IActionResult> GetIndexAsync(GetOrdersQuery query, CancellationToken cancellationToken)
     {
-        var result = await Mediator.Send(query);
+        var result = await Mediator.Send(query, cancellationToken);
 
         if (!result.Succeeded)
         {
@@ -77,6 +86,9 @@ public class OrdersController : BaseController<OrdersController>
         DateTime? orderedFrom = null,
         DateTime? orderedTo = null,
         OrderShippingStatus? shippingStatus = null,
+        int? shipperId = null,
+        bool unassignedShipper = false,
+        string? destination = null,
         OrderSortField? sortBy = null,
         bool sortDescending = false,
         int pageNumber = 1,
@@ -103,6 +115,9 @@ public class OrdersController : BaseController<OrdersController>
             OrderedFrom = orderedFrom,
             OrderedTo = orderedTo,
             ShippingStatus = shippingStatus,
+            ShipperId = shipperId,
+            UnassignedShipper = unassignedShipper,
+            Destination = destination,
             SortBy = sortBy,
             SortDescending = sortDescending,
             PageNumber = pageNumber,
@@ -154,6 +169,11 @@ public class OrdersController : BaseController<OrdersController>
             dto.OrderedFrom,
             dto.OrderedTo,
             dto.ShippingStatus,
+            dto.ShipperId,
+            dto.UnassignedShipper,
+            dto.Destination,
+            dto.ShippingOverview,
+            dto.ShipperOptions,
             dto.SortBy,
             dto.SortDescending,
             Pagination = dto.Orders,
@@ -169,6 +189,11 @@ public class OrdersController : BaseController<OrdersController>
             OrderedFrom = viewModel.OrderedFrom,
             OrderedTo = viewModel.OrderedTo,
             ShippingStatus = viewModel.ShippingStatus,
+            ShipperId = dto.ShipperId,
+            UnassignedShipper = dto.UnassignedShipper,
+            Destination = dto.Destination,
+            ShippingOverview = dto.ShippingOverview,
+            ShipperOptions = dto.ShipperOptions,
             SortBy = viewModel.SortBy,
             SortDescending = viewModel.SortDescending,
             Pagination = viewModel.Pagination,
@@ -227,6 +252,9 @@ public class OrdersController : BaseController<OrdersController>
             OrderedFrom = listQuery?.OrderedFrom,
             OrderedTo = listQuery?.OrderedTo,
             ShippingStatus = listQuery?.ShippingStatus,
+            ShipperId = listQuery?.ShipperId,
+            UnassignedShipper = listQuery?.UnassignedShipper ?? false,
+            Destination = listQuery?.Destination,
             SortBy = listQuery?.SortBy,
             SortDescending = listQuery?.SortDescending ?? false,
             PageNumber = listQuery?.PageNumber ?? 1,

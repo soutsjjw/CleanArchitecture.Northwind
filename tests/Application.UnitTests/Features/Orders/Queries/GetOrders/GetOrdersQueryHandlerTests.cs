@@ -36,7 +36,7 @@ public class GetOrdersQueryHandlerTests
                 }
             }
         }));
-        var handler = new GetOrdersQueryHandler(context.Object);
+        var handler = CreateHandler(context);
 
         var result = await handler.Handle(new GetOrdersQuery
         {
@@ -65,7 +65,7 @@ public class GetOrdersQueryHandlerTests
                 }
             }
         }));
-        var handler = new GetOrdersQueryHandler(context.Object);
+        var handler = CreateHandler(context);
 
         var result = await handler.Handle(new GetOrdersQuery
         {
@@ -121,7 +121,7 @@ public class GetOrdersQueryHandlerTests
             }
         }));
 
-        var handler = new GetOrdersQueryHandler(context.Object);
+        var handler = CreateHandler(context);
 
         var result = await handler.Handle(new GetOrdersQuery
         {
@@ -155,13 +155,81 @@ public class GetOrdersQueryHandlerTests
             new Order { Id = 10248, Customer = new Customer { CompanyName = "Active" }, OrderDate = new DateTime(2026, 1, 10) },
             new Order { Id = 10249, Customer = new Customer { CompanyName = "Deleted" }, OrderDate = new DateTime(2026, 1, 11), IsDelete = true }
         }));
-        var handler = new GetOrdersQueryHandler(context.Object);
+        var handler = CreateHandler(context);
 
         var result = await handler.Handle(new GetOrdersQuery { PageNumber = 1, PageSize = 10 }, CancellationToken.None);
 
         result.Succeeded.ShouldBeTrue();
         result.Data.Orders.TotalCount.ShouldBe(1);
         result.Data.Orders.Items.Single().Id.ShouldBe(10248);
+    }
+
+    [Test]
+    public async Task HandleShouldReturnShippingOverviewCountsWithoutSoftDeletedOrders()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order { Id = 1, RequiredDate = DateTime.Today.AddDays(1) },
+            new Order { Id = 2, ShippedDate = DateTime.Today },
+            new Order { Id = 3, RequiredDate = DateTime.Today.AddDays(-1) },
+            new Order { Id = 4, RequiredDate = DateTime.Today.AddDays(-1), IsDelete = true }
+        }));
+        var handler = CreateHandler(context);
+
+        var result = await handler.Handle(new GetOrdersQuery { PageNumber = 1, PageSize = 10 }, CancellationToken.None);
+        result.Data.ShippingOverview.UnshippedCount.ShouldBe(1);
+        result.Data.ShippingOverview.ShippedCount.ShouldBe(1);
+        result.Data.ShippingOverview.OverdueCount.ShouldBe(1);
+    }
+
+    [Test]
+    public async Task HandleShouldFilterShippingListByDateStatusShipperAndDestination()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order { Id = 1, OrderDate = new DateTime(2026, 7, 20), RequiredDate = new DateTime(2026, 7, 25), ShipVia = 1, ShipCity = "Taipei" },
+            new Order { Id = 2, OrderDate = new DateTime(2026, 7, 20), RequiredDate = new DateTime(2026, 7, 23), ShipVia = 1, ShipCity = "Taipei" },
+            new Order { Id = 3, OrderDate = new DateTime(2026, 7, 20), RequiredDate = new DateTime(2026, 7, 25), ShipVia = 2, ShipCity = "Taipei" },
+            new Order { Id = 4, OrderDate = new DateTime(2026, 6, 30), RequiredDate = new DateTime(2026, 7, 25), ShipVia = 1, ShipCity = "Taipei" },
+            new Order { Id = 5, OrderDate = new DateTime(2026, 7, 20), RequiredDate = new DateTime(2026, 7, 25), ShipVia = 1, ShipCity = "Tokyo" }
+        }));
+
+        var result = await CreateHandler(context, new DateTime(2026, 7, 24)).Handle(new GetOrdersQuery
+        {
+            OrderedFrom = new DateTime(2026, 7, 1),
+            OrderedTo = new DateTime(2026, 7, 31),
+            ShippingStatus = OrderShippingStatus.Unshipped,
+            ShipperId = 1,
+            Destination = "taipei",
+            PageNumber = 1,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Data.Orders.Items.Select(order => order.Id).ShouldBe([1]);
+        result.Data.ShippingOverview.ShouldBe(new ShippingOverviewDto(1, 0, 1));
+    }
+
+    [Test]
+    public async Task HandleShouldFilterOrdersWithoutAssignedShipper()
+    {
+        var context = new Mock<IApplicationDbContext>();
+        context.Setup(x => x.Orders).Returns(CreateDbSet(new[]
+        {
+            new Order { Id = 1, RequiredDate = new DateTime(2026, 7, 25), ShipVia = null, ShipCountry = "Taiwan" },
+            new Order { Id = 2, RequiredDate = new DateTime(2026, 7, 25), ShipVia = 1, ShipCountry = "Taiwan" }
+        }));
+
+        var result = await CreateHandler(context, new DateTime(2026, 7, 24)).Handle(new GetOrdersQuery
+        {
+            UnassignedShipper = true,
+            PageNumber = 1,
+            PageSize = 10
+        }, CancellationToken.None);
+
+        result.Data.Orders.Items.Select(order => order.Id).ShouldBe([1]);
+        result.Data.ShippingOverview.ShouldBe(new ShippingOverviewDto(1, 0, 0));
     }
 
     [Test]
@@ -173,7 +241,7 @@ public class GetOrdersQueryHandlerTests
             new Order { Id = 10248, Customer = new Customer { CompanyName = "Zebra" }, OrderDate = new DateTime(2026, 1, 10) },
             new Order { Id = 10249, Customer = new Customer { CompanyName = "Alpha" }, OrderDate = new DateTime(2026, 1, 11) }
         }));
-        var handler = new GetOrdersQueryHandler(context.Object);
+        var handler = CreateHandler(context);
 
         var result = await handler.Handle(new GetOrdersQuery
         {
@@ -203,6 +271,14 @@ public class GetOrdersQueryHandlerTests
         dbSet.As<IQueryable<T>>().Setup(x => x.GetEnumerator()).Returns(() => queryable.GetEnumerator());
 
         return dbSet.Object;
+    }
+
+    private static GetOrdersQueryHandler CreateHandler(Mock<IApplicationDbContext> context, DateTime? now = null)
+    {
+        context.Setup(x => x.Shippers).Returns(CreateDbSet(Array.Empty<Shipper>()));
+        return new GetOrdersQueryHandler(
+            context.Object,
+            Mock.Of<IDateTimeService>(x => x.Now == (now ?? DateTime.Today)));
     }
 
     private sealed class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider

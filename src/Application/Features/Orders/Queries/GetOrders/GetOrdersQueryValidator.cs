@@ -13,5 +13,6 @@ public class GetOrdersQueryValidator : AbstractValidator<GetOrdersQuery>
         RuleFor(x => x)
             .Must(x => !x.OrderedFrom.HasValue || !x.OrderedTo.HasValue || x.OrderedFrom.Value.Date <= x.OrderedTo.Value.Date)
             .WithMessage("訂單起始日期不可晚於結束日期");
+
     }
 }

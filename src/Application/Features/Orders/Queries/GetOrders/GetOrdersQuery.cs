@@ -16,6 +16,12 @@ public record GetOrdersQuery : IRequest<Result<OrdersDto>>
 
     public OrderShippingStatus? ShippingStatus { get; init; }
 
+    public int? ShipperId { get; init; }
+
+    public bool UnassignedShipper { get; init; }
+
+    public string? Destination { get; init; }
+
     public OrderSortField? SortBy { get; init; }
 
     public bool SortDescending { get; init; }

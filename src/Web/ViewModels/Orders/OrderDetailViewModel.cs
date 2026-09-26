@@ -25,6 +25,9 @@ public class OrderDetailViewModel
     public DateTime? OrderedFrom { get; init; }
     public DateTime? OrderedTo { get; init; }
     public OrderShippingStatus? ShippingStatus { get; init; }
+    public int? ShipperId { get; init; }
+    public bool UnassignedShipper { get; init; }
+    public string? Destination { get; init; }
     public OrderSortField? SortBy { get; init; }
     public bool SortDescending { get; init; }
     public int PageNumber { get; init; } = 1;

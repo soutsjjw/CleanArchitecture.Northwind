@@ -6,15 +6,17 @@ namespace CleanArchitecture.Northwind.Application.Features.Orders.Queries.GetOrd
 public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<OrdersDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IDateTimeService _dateTimeService;
 
-    public GetOrdersQueryHandler(IApplicationDbContext context)
+    public GetOrdersQueryHandler(IApplicationDbContext context, IDateTimeService dateTimeService)
     {
         _context = context;
+        _dateTimeService = dateTimeService;
     }
 
     public async Task<Result<OrdersDto>> Handle(GetOrdersQuery request, CancellationToken cancellationToken)
     {
-        var today = DateTime.Today;
+        var today = _dateTimeService.Now.Date;
         var ordersQuery = _context.Orders
             .AsNoTracking()
             .Where(order => !order.IsDelete);
@@ -33,6 +35,25 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
                 order.OrderDetails.Any(detail =>
                     detail.ProductId.ToString().Contains(keyword) ||
                     (detail.Product != null && detail.Product.ProductName.ToLower().Contains(keyword))));
+        }
+
+        if (request.ShipperId.HasValue && !request.UnassignedShipper)
+        {
+            ordersQuery = ordersQuery.Where(order => order.ShipVia == request.ShipperId.Value);
+        }
+
+        if (request.UnassignedShipper)
+        {
+            ordersQuery = ordersQuery.Where(order => !order.ShipVia.HasValue);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Destination))
+        {
+            var destination = request.Destination.Trim().ToLower();
+            ordersQuery = ordersQuery.Where(order =>
+                (order.ShipCity != null && order.ShipCity.ToLower().Contains(destination)) ||
+                (order.ShipRegion != null && order.ShipRegion.ToLower().Contains(destination)) ||
+                (order.ShipCountry != null && order.ShipCountry.ToLower().Contains(destination)));
         }
 
         var query = ordersQuery
@@ -71,6 +92,11 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
             query = query.Where(order => order.OrderDate.HasValue && order.OrderDate.Value.Date <= orderedTo);
         }
 
+        var shippingOverview = new ShippingOverviewDto(
+            await query.CountAsync(order => order.ShippingStatus == OrderShippingStatus.Unshipped, cancellationToken),
+            await query.CountAsync(order => order.ShippingStatus == OrderShippingStatus.Shipped, cancellationToken),
+            await query.CountAsync(order => order.ShippingStatus == OrderShippingStatus.Overdue, cancellationToken));
+
         if (request.ShippingStatus.HasValue && request.ShippingStatus.Value != OrderShippingStatus.All)
         {
             query = query.Where(order => order.ShippingStatus == request.ShippingStatus.Value);
@@ -97,15 +123,26 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, Result<Orde
             request.PageSize,
             cancellationToken);
 
+        var shipperOptions = await _context.Shippers
+            .AsNoTracking()
+            .OrderBy(shipper => shipper.CompanyName)
+            .Select(shipper => new ShipperOptionDto(shipper.Id, shipper.CompanyName))
+            .ToListAsync(cancellationToken);
+
         return await Result<OrdersDto>.SuccessAsync(new OrdersDto
         {
             Keyword = request.Keyword,
             OrderedFrom = request.OrderedFrom,
             OrderedTo = request.OrderedTo,
             ShippingStatus = request.ShippingStatus,
+            ShipperId = request.ShipperId,
+            UnassignedShipper = request.UnassignedShipper,
+            Destination = request.Destination,
             SortBy = request.SortBy,
             SortDescending = request.SortDescending,
-            Orders = orders
+            Orders = orders,
+            ShippingOverview = shippingOverview,
+            ShipperOptions = shipperOptions
         });
     }
 }

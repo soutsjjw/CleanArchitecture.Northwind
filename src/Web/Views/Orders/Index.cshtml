@@ -57,10 +57,38 @@
                 }
             </select>
         </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">貨運商</label>
+            <select name="shipperId" class="form-select">
+                <option value="">@(CleanArchitecture.Northwind.Web.Common.WebConstants.SelectOptionLabel)</option>
+                @foreach (var shipper in Model.ShipperOptions)
+                {
+                    <option value="@shipper.Id" selected="@(Model.ShipperId == shipper.Id ? "selected" : null)">@shipper.CompanyName</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label text-muted">目的地</label>
+            <input type="text" name="destination" class="form-control" placeholder="城市、地區或國家" value="@Model.Destination" />
+        </div>
+        <div class="col-12 col-md-6 d-flex align-items-end">
+            <div class="form-check mb-2">
+                <input id="unassignedShipper" name="unassignedShipper" type="checkbox" class="form-check-input" value="true" checked="@Model.UnassignedShipper" />
+                <label for="unassignedShipper" class="form-check-label">未指派貨運商</label>
+            </div>
+        </div>
 
         <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary">查詢</button>
             <a asp-action="Index" class="btn btn-secondary">取消</a>
+        </div>
+
+        <div class="col-12">
+            <div class="row g-2 mb-3" aria-label="出貨總覽">
+                <div class="col-12 col-md-4"><div class="card border-warning"><div class="card-body"><div class="text-muted">未出貨</div><div class="fs-4 fw-semibold">@Model.ShippingOverview.UnshippedCount</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="card border-success"><div class="card-body"><div class="text-muted">已出貨</div><div class="fs-4 fw-semibold">@Model.ShippingOverview.ShippedCount</div></div></div></div>
+                <div class="col-12 col-md-4"><div class="card border-danger"><div class="card-body"><div class="text-muted">逾期未出貨</div><div class="fs-4 fw-semibold">@Model.ShippingOverview.OverdueCount</div></div></div></div>
+            </div>
         </div>
 
     @if (Model.TotalCount == 0)
@@ -109,7 +137,7 @@
                             </td>
                             <td class="text-end">@order.TotalAmount.ToString("C")</td>
                             <td class="text-center text-nowrap">
-                                <a asp-action="Details" asp-route-id="@order.ProtectedId" asp-route-keyword="@Model.Keyword" asp-route-orderedFrom="@Model.OrderedFrom" asp-route-orderedTo="@Model.OrderedTo" asp-route-shippingStatus="@Model.ShippingStatus" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-primary">檢視</a>
+                                <a asp-action="Details" asp-route-id="@order.ProtectedId" asp-route-keyword="@Model.Keyword" asp-route-orderedFrom="@Model.OrderedFrom" asp-route-orderedTo="@Model.OrderedTo" asp-route-shippingStatus="@Model.ShippingStatus" asp-route-shipperId="@Model.ShipperId" asp-route-unassignedShipper="@Model.UnassignedShipper" asp-route-destination="@Model.Destination" asp-route-sortBy="@Model.SortBy" asp-route-sortDescending="@Model.SortDescending" asp-route-pageNumber="@Model.Pagination.PageNumber" asp-route-pageSize="@Model.Pagination.PageSize" class="btn btn-sm btn-outline-primary">檢視</a>
                                 @if (canDeleteOrders.Succeeded)
                                 {
                                     <button type="button" class="btn btn-sm btn-outline-danger js-open-delete-modal" data-url="@Url.Action("DeleteConfirmation", "Orders", new { id = order.ProtectedId })">刪除</button>
@@ -167,6 +195,11 @@
                 window.saveOrdersScrollPosition();
                 window.submitOrdersSearch(form);
             });
+        });
+        document.querySelector('#unassignedShipper').addEventListener('change', event => {
+            if (event.currentTarget.checked) {
+                document.querySelector('select[name="shipperId"]').value = '';
+            }
         });
         document.querySelectorAll('.js-open-delete-modal').forEach(button => {
             button.addEventListener('click', async () => {
