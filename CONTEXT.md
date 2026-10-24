@@ -114,6 +114,14 @@ _Avoid_: Region、District
 Employee 與 Territory 之間的責任關係；一名 Employee 可被指派多個 Territory。
 _Avoid_: Employee Region、Territory Ownership
 
+**Employee Performance**:
+在指定日期區間內，依 Employee 彙總 Order Date 落於該期間的 Sales Order 數與折後銷售額；折後銷售額為 Sales Order Line 的單價、數量與折扣計算總和，不含 Freight。日期起訖可各自省略，起訖日均包含，未設定 Order Date 或未指派 Employee 的 Sales Order 不納入。未特別指定 Employee 時，只列出至少有一筆符合條件 Sales Order 的 Employee；明確指定但無符合訂單的 Employee 顯示為零業績且不排名。以折後銷售額由高至低排名，同額為並列名次。
+_Avoid_: Salesperson Performance、Employee Productivity
+
+**Employee Performance Geographic Filter**:
+以查詢當下的 Employee Territory Assignment 限縮納入 Employee Performance 的 Employee；Employee、Region 與 Territory 篩選同時存在時採交集。Region 或 Territory 不會用來將單一 Sales Order 直接歸屬至特定地理範圍，也不回推歷史責任區域。
+_Avoid_: Order Territory Filter、Sales Order Region
+
 ### Customer classification
 
 **Customer Demographic**:
