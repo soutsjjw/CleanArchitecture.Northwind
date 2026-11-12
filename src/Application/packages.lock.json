@@ -20,11 +20,11 @@
       },
       "Mapster": {
         "type": "Direct",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "MesrjeIg4lyaxJKVFHysc1GH4TooIuuY/RJRCgBPoFwDD3D1tngF362cKBkxhxR/8EhpfMfGLeU4nzCEz6hPaQ==",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "lsJwj0ALW/I8LSCxF6WVa9bqp5E693CC5wDzNUxkiLWr/sD2hjNMvc1p/9A9BLMfCsK6ra4hgPYg7ILkouG2Kw==",
         "dependencies": {
-          "Mapster.Core": "10.0.11"
+          "Mapster.Core": "10.0.14"
         }
       },
       "Mapster.DependencyInjection": {
@@ -113,8 +113,8 @@
       },
       "Mapster.Core": {
         "type": "Transitive",
-        "resolved": "10.0.11",
-        "contentHash": "vpChY4hsk+CvIR3AFN/uQJkkP6gwYSUZFnuqgWBiTTbThbFEnB6chP7QUoSWZBcuPAnOjol09Ev7F1PVwECAIg=="
+        "resolved": "10.0.14",
+        "contentHash": "8ad9PtJ9iKXjdwanPBGQrFb3ww0qJLkNE7y2A1vueCoqNaA2rSQZjyFvYPw9708uKTKy4zMhgKUPqNXUg/1ZUw=="
       },
       "Microsoft.AspNetCore.Cryptography.Internal": {
         "type": "Transitive",
